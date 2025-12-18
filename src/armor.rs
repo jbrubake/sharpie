@@ -1,0 +1,438 @@
+use crate::{Hull, DeckType};
+use crate::unit_types::Units;
+
+use serde::{Serialize, Deserialize};
+
+use std::f64::consts::PI;
+
+// Armor {{{1
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct Armor {
+    /// Units
+    pub units: Units,
+    /// Main belt armor.
+    pub main: Belt,
+    /// End belt armor.
+    pub end: Belt,
+    /// Uppper belt armor.
+    pub upper: Belt,
+    /// Incline of belt armor.
+    pub incline: f64,
+    /// Torpedo bulge armor.
+    pub bulge: Belt,
+    /// Bulkhead armor.
+    pub bulkhead: Belt,
+    /// true: strengthened bulkhead, false: additional bulkhead
+    pub strengthened_bulkhead: bool,
+    /// Beam between outer and inner bulkheads.
+    pub beam_between: f64,
+    /// Deck armor.
+    pub deck: Deck,
+    /// Forward conning tower armor.
+    pub ct_fwd: CT,
+    /// Aft conning tower armor.
+    pub ct_aft: CT,
+}
+
+impl Default for Armor { // {{{1
+    fn default() -> Self {
+        Armor {
+            units: Units::Imperial,
+
+            main: Belt::new(BeltType::Main),
+            end: Belt::new(BeltType::End),
+            upper: Belt::new(BeltType::Upper),
+            incline: 0.0,
+            bulge: Belt::new(BeltType::Bulge),
+            bulkhead: Belt::new(BeltType::Bulkhead),
+            strengthened_bulkhead: false,
+            beam_between: 0.0,
+            deck: Deck::default(),
+            ct_fwd: CT::default(),
+            ct_aft: CT::default(),
+        }
+    }
+}
+
+impl Armor { // {{{1
+    // XXX: I don't know what this is supposed to be
+    pub const INCH: f64 = 0.0185; 
+
+    // wgt {{{2
+    /// Total weight of armor
+    ///
+    pub fn wgt(&self, hull: Hull, wgt_mag: f64, wgt_engine: f64) -> f64 {
+        self.main.wgt(hull.lwl(), hull.cwp(), hull.b) +
+        self.end.wgt(hull.lwl(), hull.cwp(), hull.b) +
+        self.upper.wgt(hull.lwl(), hull.cwp(), hull.b) +
+        self.bulge.wgt(hull.lwl(), hull.cwp(), hull.b) +
+        self.bulkhead.wgt(hull.lwl(), hull.cwp(), hull.b) +
+        self.deck.wgt(hull.clone(), wgt_mag, wgt_engine) +
+        self.ct_fwd.wgt(hull.d()) +
+        self.ct_aft.wgt(hull.d())
+    }
+
+    // belt_coverage {{{2
+    // XXX: Is this description accurate?
+    /// Percentage of the "vital areas" covered by the main belt.
+    ///
+    pub fn belt_coverage(&self, lwl: f64) -> f64 {
+        self.main.len / (lwl * 0.65)
+    }
+
+    // max_hgt {{{2
+    // XXX: ???
+    /// Maximum belt height.
+    ///
+    pub fn max_belt_hgt(&self, t: f64, dist: f64) -> f64 {
+        // incline * PI / 180 => convert to radians
+        (t + dist) * (1.0 / (self.incline * PI / 180.0).abs().cos()) + 0.02
+    }
+
+    // new {{{2
+    pub fn new() -> Armor {
+        Default::default()
+    }
+}
+
+#[cfg(test)] // Belt {{{1
+mod armor {
+    use super::*;
+    use crate::test_support::*;
+    use crate::Hull;
+
+    // Test belt_coverage {{{2
+    macro_rules! test_belt_coverage {
+        ($($name:ident: $value:expr,)*) => {
+            $(
+                #[test]
+                fn $name() {
+                    let (expected, belt_len, lwl) = $value;
+
+                    let mut armor = Armor::default();
+                    armor.main.len = belt_len;
+
+                    assert!(expected == to_place(armor.belt_coverage(lwl), 2));
+                }
+            )*
+        }
+    }
+    test_belt_coverage! {
+        // name:         (belt_coverage, belt_len, lwl)
+        belt_coverage_1: (1.0, 0.65, 1.0),
+        belt_coverage_2: (1.54, 1.0, 1.0),
+    }
+
+    // Test max_hgt {{{2
+    macro_rules! test_max_hgt {
+        ($($name:ident: $value:expr,)*) => {
+            $(
+                #[test]
+                fn $name() {
+                    let (expected, incline) = $value;
+
+                    let t = 10.0;
+
+                    let mut armor = Armor::default();
+                    armor.incline = incline;
+
+                    let mut hull = Hull::default();
+                    hull.fc_len = 0.2;
+
+                    hull.fd_len = 0.3;
+                    hull.fd_fwd = 10.0;
+                    hull.fd_aft = 10.0;
+
+                    hull.ad_fwd = 10.0;
+                    hull.ad_aft = 10.0;
+
+                    hull.qd_len = 0.15;
+
+                    assert!(expected == to_place(armor.max_belt_hgt(t, hull.freeboard_dist()), 2));
+                }
+            )*
+        }
+    }
+    test_max_hgt! {
+        // name:        (max_hgt, incline)
+        max_belt_hgt_0: (20.02, 0.0),
+        max_belt_hgt_45: (28.3, 45.0),
+    }
+}
+
+// Belt {{{1
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct Belt {
+    /// Belt thickness.
+    pub thick: f64,
+    /// Belth length.
+    pub len: f64,
+    /// Belt height.
+    pub hgt: f64,
+    /// Type of belt.
+    /// Using this "set once" field allows Belt to represent the multiple types
+    /// that differ only in how their weight is calculated.
+        kind: BeltType, // Belt kind cannot be changed after creation
+}
+
+impl Belt { // {{{1
+    // wgt {{{2
+    /// Belt weight.
+    ///
+    pub fn wgt(&self, lwl: f64, cwp: f64, b: f64) -> f64 {
+        let adj = match self.kind {
+            BeltType::Main     => 1.0,
+            BeltType::Upper    => 1.0,
+            BeltType::End      => 0.0,
+            BeltType::Bulge    => 0.0,
+            BeltType::Bulkhead => 0.0,
+        };
+
+        (self.len + adj * ((lwl - self.len)/lwl).powf(1.0 - cwp) * b) * self.hgt * self.thick * Armor::INCH * 2.0
+    }
+
+    // new {{{2
+    /// Create a Belt of type "kind".
+    ///
+    pub fn new(kind: BeltType) -> Belt {
+        Belt {
+            thick: 0.0,
+            len: 0.0,
+            hgt: 0.0,
+            kind,
+        }
+    }
+}
+
+#[cfg(test)] // Belt {{{1
+mod belt {
+    use super::*;
+    use crate::test_support::*;
+
+    // Test wgt {{{2
+    macro_rules! test_wgt {
+        ($($name:ident: $value:expr,)*) => {
+            $(
+                #[test]
+                fn $name() {
+                    let lwl = 500.0;
+                    let cwp = 0.5;
+                    let b = 10.0;
+
+                    let (expected, thick, len, hgt, kind) = $value;
+                    let mut belt = Belt::new(kind);
+                    belt.thick = thick; belt.len = len; belt.hgt = hgt;
+
+                    assert!(expected == to_place(belt.wgt(lwl, cwp, b), 2));
+                }
+            )*
+        }
+    }
+    test_wgt! {
+        // name:      (wgt, thick, len, hgt, kind)
+        wgt_zero:     (0.0, 0.0, 0.0, 0.0, BeltType::Main),
+        wgt_main:     (40.31, 1.0, 100.0, 10.0, BeltType::Main),
+        wgt_end:      (37.0, 1.0, 100.0, 10.0, BeltType::End),
+        wgt_upper:    (40.31, 1.0, 100.0, 10.0, BeltType::Upper),
+        wgt_bulge:    (37.0, 1.0, 100.0, 10.0, BeltType::Bulge),
+        wgt_bulkhead: (37.0, 1.0, 100.0, 10.0, BeltType::Bulkhead),
+    }
+}
+
+// BeltType {{{1
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub enum BeltType {
+    /// Main belt.
+    Main,
+    /// End belt.
+    End,
+    /// Upper belt.
+    Upper,
+    /// Torpedo bulge belt.
+    Bulge,
+    /// Bulkhead belt.
+    Bulkhead,
+}
+
+// CT {{{1
+#[derive(Serialize, Deserialize, Debug, Clone, Default)]
+pub struct CT {
+    /// Armor thickness.
+    pub thick: f64,
+}
+
+impl CT {
+    // wgt {{{2
+    /// Weight of armor.
+    ///
+    pub fn wgt(&self, d: f64) -> f64 {
+        10.0 * (d / 10_000.0).powf(2.0/3.0) * self.thick
+    }
+    // new {{{2
+    pub fn new() -> CT {
+        Default::default()
+    }
+}
+
+#[cfg(test)] // CT {{{1
+mod ct {
+    use super::*;
+    use crate::test_support::*;
+
+    // Test wgt {{{2
+    macro_rules! test_wgt {
+        ($($name:ident: $value:expr,)*) => {
+            $(
+                #[test]
+                fn $name() {
+                    let d = 1000.0;
+                    let (expected, thick) = $value;
+                    let mut ct = CT::default();
+                    ct.thick = thick;
+
+                    assert!(expected == to_place(ct.wgt(d), 2));
+                }
+            )*
+        }
+    }
+    test_wgt! {
+        //  name: (wgt, thick)
+        wgt_zero: (0.0, 0.0),
+        wgt_test: (2.15, 1.0),
+    }
+}
+
+// Deck {{{1
+#[derive(Serialize, Deserialize, Debug, Clone, Default)]
+pub struct Deck {
+    /// Deck armor configuration.
+    pub kind: DeckType,
+    /// Forecastle deck thickness.
+    pub fc: f64,
+    /// Main deck thickness.
+    pub md: f64,
+    /// Quarterdeck deck thickness.
+    pub qd: f64,
+}
+
+impl Deck {
+    // wgt {{{2
+    /// Weight of deck armor.
+    ///
+    // XXX: pass wgt_engine once I figure out the circular reference
+    pub fn wgt(&self, hull: Hull, wgt_mag: f64, wgt_engine: f64) -> f64 {
+        let d      = hull.d();
+        let lwl    = hull.lwl();
+        let b      = hull.b;
+        let fc_len = hull.fc_len;
+        let qd_len = hull.qd_len;
+        let cwp    = hull.cwp();
+        let wp     = hull.wp();
+
+        let main_deck =
+            if self.kind == DeckType::MultipleArmored ||
+                self.kind == DeckType::SingleArmored ||
+                self.kind == DeckType::MultipleProtected ||
+                self.kind == DeckType::SingleProtected
+            {
+                (
+                    wp - (fc_len * 2.0).powf(1.0 - cwp.powf(2.0)) * b * lwl * fc_len / 2.0 -
+                    (
+                        qd_len.powf(1.0 - cwp) * b * lwl * qd_len * 0.25 +
+                        (
+                            qd_len.powf(1.0 - cwp) +
+                            (qd_len * 2.0).powf(1.0 - cwp)
+                         ) * b * lwl * qd_len * 0.25
+                     )
+                 ) * 1.01
+            } else if self.kind == DeckType::BoxOverMachinery {
+                (wgt_engine * 3.0 / (d * 0.94) * 0.65 * lwl + 16.0) * (b + 16.0) - 256.0
+            } else if self.kind == DeckType::BoxOverMagazine {
+                (wgt_mag / (d * 0.94) * 0.65 * lwl + 16.0) * (b + 16.0) - 256.0
+            } else if self.kind == DeckType::BoxOverBoth {
+                ((wgt_engine * 3.0 + wgt_mag) / (d * 0.94) * 0.65 * lwl + 16.0) * (b + 16.0) - 256.0
+            } else {
+                0.0
+            } * self.md;
+
+        let fc_deck = (fc_len * 2.0).powf(1.0 - cwp.powf(2.0)) * b * lwl * fc_len * 0.5 * self.fc;
+
+        let qd_deck = qd_len.powf(1.0 - cwp) * b * lwl * qd_len / 4.0 * (2.0 + 2.0_f64.powf(1.0 - cwp)) * self.qd;
+
+        (main_deck + fc_deck + qd_deck) * Armor::INCH
+    }
+
+    // new {{{2
+    pub fn new() -> Deck {
+        Default::default()
+    }
+}
+#[cfg(test)] // Deck {{{1
+mod deck {
+    use super::*;
+    use crate::test_support::*;
+    use crate::Hull;
+    use crate::SternType;
+
+    // Test wgt {{{2
+    macro_rules! test_wgt {
+        ($($name:ident: $value:expr,)*) => {
+            $(
+                #[test]
+                fn $name() {
+                    let (expected, kind, fc, md, qd) = $value;
+
+                    let wgt_mag = 100.0;
+                    let wgt_engine = 100.0;
+
+                    let mut deck = Deck::default();
+                    deck.kind = kind;
+                    deck.fc = fc;
+                    deck.md = md;
+                    deck.qd = qd;
+
+                    let mut hull = Hull::default();
+                    hull.set_lwl(100.0);
+                    hull.set_d(1000.0);
+                    hull.boxy = false;
+                    hull.b = 50.0;
+                    hull.bb = hull.b;
+                    hull.t = 10.0;
+                    hull.stern_type = SternType::Cruiser;
+
+                    hull.fc_len = 0.2;
+                    hull.fc_fwd = 10.0;
+                    hull.fc_aft = 10.0;
+
+                    hull.fd_len = 0.3;
+                    hull.fd_fwd = hull.fc_fwd;
+                    hull.fd_aft = hull.fc_fwd;
+
+                    hull.ad_fwd = hull.fc_fwd;
+                    hull.ad_aft = hull.fc_fwd;
+
+                    hull.qd_len = 0.15;
+                    hull.qd_fwd = hull.fc_fwd;
+                    hull.qd_aft = hull.fc_fwd;
+
+                    assert!(expected == to_place(deck.wgt(hull, wgt_mag, wgt_engine), 2));
+                }
+            )*
+        }
+    }
+    test_wgt! {
+        //  name:             (wgt, deck, fc, md, qd)
+        wgt_mult_arm_fc:      (6.67, DeckType::MultipleArmored, 1.0, 0.0, 0.0),
+        wgt_mult_arm_md:      (60.58, DeckType::MultipleArmored, 0.0, 1.0, 0.0),
+        wgt_mult_arm_qd:      (7.49, DeckType::MultipleArmored, 0.0, 0.0, 1.0),
+        wgt_mult_arm:         (74.74, DeckType::MultipleArmored, 1.0, 1.0, 1.0),
+
+        wgt_one_arm_fc:       (6.67, DeckType::SingleArmored, 1.0, 0.0, 0.0),
+        wgt_mult_prot_fc:     (6.67, DeckType::MultipleProtected, 1.0, 0.0, 0.0),
+        wgt_one_prot_fc:      (6.67, DeckType::SingleProtected, 1.0, 0.0, 0.0),
+        wgt_box_machinery_md: (40.13, DeckType::BoxOverMachinery, 0.0, 1.0, 0.0),
+        wgt_box_magazine_md:  (23.24, DeckType::BoxOverMagazine, 0.0, 1.0, 0.0),
+        wgt_box_both_md:      (48.57, DeckType::BoxOverBoth, 0.0, 1.0, 0.0),
+    }
+}
+

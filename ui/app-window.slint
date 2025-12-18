@@ -1,0 +1,29 @@
+import {
+    Button,
+    TextEdit,
+    VerticalBox,
+} from "std-widgets.slint";
+
+export component MainWindow inherits Window {
+    callback load_ship();
+    callback convert_ship();
+
+    in-out property <string> report_str: "Load or convert a ship";
+
+    VerticalBox {
+        Button {
+            text: "Load Ship";
+            clicked => { root.load_ship(); }
+        }
+        Button {
+            text: "Convert Springsharp Ship";
+            clicked => { root.convert_ship(); }
+        }
+
+        report := TextEdit {
+            width: 600px;
+            height: 500px;
+            text: root.report_str;
+        }
+    }
+}
