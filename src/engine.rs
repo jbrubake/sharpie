@@ -28,7 +28,7 @@ pub struct Engine {
     /// Maximum range at crusing speed.
     pub range: u32,
 
-    /// Number of properllor shafts.
+    /// Number of propeller shafts.
     ///
     // TODO: If this is < 2, the 'boxy' field in the corresponding Hull should be set to true.
     pub shafts: u32,
