@@ -1138,7 +1138,7 @@ pub enum SternType {
     Round,
 }
 
-impl From<String> for SternType {
+impl From<String> for SternType { // {{{2
     fn from(index: String) -> Self {
         index.as_str().into()
     }
@@ -1155,7 +1155,7 @@ impl From<&str> for SternType {
     }
 }
 
-impl fmt::Display for SternType {
+impl fmt::Display for SternType { // {{{2
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", match self {
             SternType::TransomSm => "a small transom stern",
@@ -1166,8 +1166,8 @@ impl fmt::Display for SternType {
     }
 }
 
-impl SternType {
-    // wp_calc {{{2
+impl SternType { // {{{2
+    // wp_calc {{{3
     /// XXX: ???
     ///
     pub fn wp_calc(&self) -> (f64, f64) {
@@ -1179,7 +1179,7 @@ impl SternType {
         }
     }
 
-    // leff {{{2
+    // leff {{{3
     /// XXX: ???
     ///
     pub fn leff(&self, lwl: f64, bb: f64, cs: f64) -> f64 {
@@ -1193,12 +1193,12 @@ impl SternType {
     }
 }
 
-#[cfg(test)] // SternType {{{1
+#[cfg(test)] // SternType {{{2
 mod stern_type {
     use super::*;
     use crate::test_support::*;
 
-    // Test wp_calc {{{2
+    // Test wp_calc {{{3
     macro_rules! test_wp_calc {
         ($($name:ident: $value:expr,)*) => {
             $(
@@ -1220,7 +1220,7 @@ mod stern_type {
         wp_calc_round:      ((0.262, 0.76), SternType::Round),
     }
 
-    // Test leff {{{2
+    // Test leff {{{3
     macro_rules! test_leff {
         ($($name:ident: $value:expr,)*) => {
             $(
@@ -1259,7 +1259,7 @@ pub enum BowType {
     Normal,
 }
 
-impl From<String> for BowType {
+impl From<String> for BowType { // {{{2
     fn from(index: String) -> Self {
         index.as_str().into()
     }
@@ -1276,7 +1276,7 @@ impl From<&str> for BowType {
     }
 }
 
-impl fmt::Display for BowType {
+impl fmt::Display for BowType { // {{{2
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", match self {
             Self::Ram(_)       => "a ram bow",
@@ -1287,8 +1287,8 @@ impl fmt::Display for BowType {
     }
 }
 
-impl BowType {
-    // ram_len {{{2
+impl BowType { // {{{2
+    // ram_len {{{3
     /// Return length of the ram.
     ///
     pub fn ram_len(&self) -> f64 {

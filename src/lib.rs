@@ -31,7 +31,8 @@ use std::io::BufRead;
 pub const SHIP_FILE_EXT: &str = "ship";
 pub const SS_SHIP_FILE_EXT: &str = "sship";
 
-#[cfg(test)] // Testing support {{{1
+// Testing support {{{1
+#[cfg(test)]
 mod test_support {
     // Round a float to a given number of digits
     //
@@ -2033,7 +2034,8 @@ impl Ship {
     }
 }
 
-#[cfg(test)] // Ship {{{2
+// Ship {{{2
+#[cfg(test)]
 mod ship {
     use super::*;
     use crate::test_support::*;
