@@ -3,6 +3,8 @@ use crate::units::Units;
 
 use serde::{Serialize, Deserialize};
 
+use std::fmt;
+
 // Armor {{{1
 /// The ship's armor, excluding gun armor.
 ///
@@ -387,7 +389,7 @@ mod deck {
     use super::*;
     use crate::test_support::*;
     use crate::Hull;
-    use crate::SternType;
+    use crate::hull::SternType;
 
     // Test wgt {{{3
     macro_rules! test_wgt {
@@ -448,6 +450,57 @@ mod deck {
         wgt_box_machinery_md: (40.13, DeckType::BoxOverMachinery, 0.0, 1.0, 0.0),
         wgt_box_magazine_md:  (23.24, DeckType::BoxOverMagazine, 0.0, 1.0, 0.0),
         wgt_box_both_md:      (48.57, DeckType::BoxOverBoth, 0.0, 1.0, 0.0),
+    }
+}
+
+// DeckType {{{1
+/// Deck armor configuration types.
+///
+#[derive(PartialEq, Serialize, Deserialize, Clone, Debug, Default)]
+pub enum DeckType {
+    #[default]
+    MultipleArmored,
+    SingleArmored,
+    MultipleProtected,
+    SingleProtected,
+    BoxOverMachinery,
+    BoxOverMagazine,
+    BoxOverBoth,
+}
+
+impl fmt::Display for DeckType { // {{{2
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}",
+            match self {
+                Self::MultipleArmored   => "Armoured deck - multiple decks",
+                Self::SingleArmored     => "Armoured deck - single deck",
+                Self::MultipleProtected => "Protected deck - multiple decks",
+                Self::SingleProtected   => "Protected deck - single deck",
+                Self::BoxOverMachinery  => "Box over machinery",
+                Self::BoxOverMagazine   => "Box over magazines",
+                Self::BoxOverBoth       => "Box over machiner & magazines",
+            }
+        )
+    }
+}
+
+impl From<String> for DeckType { // {{{2
+    fn from(index: String) -> Self {
+        index.as_str().into()
+    }
+}
+
+impl From<&str> for DeckType {
+    fn from(index: &str) -> Self {
+        match index {
+            "1" => Self::SingleArmored,
+            "2" => Self::MultipleProtected,
+            "3" => Self::SingleProtected,
+            "4" => Self::BoxOverMachinery,
+            "5" => Self::BoxOverMagazine,
+            "6" => Self::BoxOverBoth,
+            "0" | _ => Self::MultipleArmored,
+        }
     }
 }
 

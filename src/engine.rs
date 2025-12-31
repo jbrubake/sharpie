@@ -1,6 +1,7 @@
+use bitflags::{bitflags, bitflags_match};
 use serde::{Serialize, Deserialize};
 
-use crate::{FuelType, BoilerType, DriveType};
+use std::fmt;
 
 // Engine {{{1
 /// The ship's engine and speed and range characteristics.
@@ -544,6 +545,310 @@ mod engine {
         // name:     (d_engine, year)
         d_engine_early: (168.32, 1889),
         d_engine_late: (165.21, 1890),
+    }
+}
+
+// FuelType {{{1
+//
+bitflags! {
+    /// Types of fuel used by the engine.
+    ///
+    #[derive(PartialEq, Serialize, Deserialize, Clone, Debug, Default)]
+    pub struct FuelType: u8 {
+        const Coal     = 1 << 0;
+        const Oil      = 1 << 1;
+        const Diesel   = 1 << 2;
+        const Gasoline = 1 << 3;
+        const Battery  = 1 << 4;
+    }
+}
+
+impl fmt::Display for FuelType { // {{{2
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}",
+            bitflags_match!(*self, {
+                Self::Coal        => "Coal fired boilers",
+                Self::Oil         => "Oil fired boilers",
+                Self::Coal |
+                    Self::Oil     => "Coal and oil fired boilers",
+
+                Self::Coal |
+                    Self::Diesel  => "Coal fired boilers plus diesel motors",
+                Self::Oil |
+                    Self::Diesel  => "Oil fired boilers plus diesel motors",
+                Self::Coal |
+                    Self::Oil |
+                    Self::Diesel  => "Coal and oil fired boilers plus diesel motors",
+
+                Self::Diesel      => "Diesel internal combustion motors",
+                Self::Diesel |
+                    Self::Battery => "Diesel internal combustion engines plus batteries",
+
+                Self::Gasoline    => "Gasoline internal combustion motors",
+                Self::Gasoline |
+                    Self::Battery => "Gasoline internal combustion motors plus batteries",
+
+                Self::Battery     => "Battery powered",
+
+                _                 => "ERROR: Revise fuels",
+            })
+        )
+    }
+}
+
+impl FuelType { // {{{2
+    // is_steam {{{3
+    /// Return true if the fuel indicates a steam engine.
+    ///
+    pub fn is_steam(&self) -> bool {
+        self.contains(Self::Coal) || self.contains(Self::Oil)
+    }
+}
+
+// Testing FuelType {{{2
+#[cfg(test)]
+mod fuel_type {
+    use super::*;
+
+    // Test is_steam {{{3
+    macro_rules! test_is_steam {
+        ($($name:ident: $value:expr,)*) => {
+            $(
+                #[test]
+                fn $name() {
+                    let (expected, fuel) = $value;
+
+                    assert_eq!(expected, fuel.is_steam());
+                }
+            )*
+        }
+    }
+
+    test_is_steam! {
+        // name:           (is_steam, fuel)
+        is_steam_coal:     (true, FuelType::Coal),
+        is_steam_oil:      (true, FuelType::Oil),
+        is_steam_diesel:   (false, FuelType::Diesel),
+        is_steam_gas:      (false, FuelType::Gasoline),
+        is_steam_battery:  (false, FuelType::Battery),
+        is_steam_multiple: (true, FuelType::Coal | FuelType::Diesel),
+    }
+}
+
+// BoilerType {{{1
+//
+bitflags! {
+    /// Types of boilers used by the engine.
+    ///
+    #[derive(PartialEq, Serialize, Deserialize, Clone, Debug, Default)]
+    pub struct BoilerType: u8 {
+        /// Simple, reciprocating engines.
+        const Simple  = 1 << 0;
+        /// Complex, reciprocating engines.
+        const Complex = 1 << 1;
+        /// Steam turbine engines.
+        const Turbine = 1 << 2;
+    }
+}
+
+impl fmt::Display for BoilerType { // {{{2
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}",
+            bitflags_match!(*self, {
+                Self::Simple => "simple receiprocating steam engines",
+                Self::Complex => "complex receiprocating steam engines",
+                Self::Turbine => "steam turbines",
+
+                Self::Simple |
+                    Self::Complex => "reciprocating steam engines",
+
+                Self::Simple |
+                    Self::Turbine => "reciprocating cruising steam engines and steam turbines",
+
+                Self::Simple |
+                    Self::Complex | 
+                    Self::Turbine => "ERROR: Too many types of steam engines",
+
+                _ => "ERROR: No steam engines",
+            })
+        )
+    }
+}
+
+// BoilerType Implementation {{{2
+impl BoilerType {
+    // hp_type {{{3
+    /// Return the string for the type of
+    /// horsepower used with the boiler type.
+    ///
+    pub fn hp_type(&self) -> String {
+        match self.is_reciprocating() {
+            true => "ihp".into(),
+            false => "shp".into(),
+        }
+    }
+
+    // num_engines {{{3
+    /// Number of steam engines with each
+    /// boiler type representing one engine.
+    ///
+    pub fn num_engines(&self) -> u32 {
+        u8::count_ones(self.bits())
+    }
+
+    // is_simple {{{3
+    /// Return true if the boiler has simple reciprocating engines.
+    ///
+    pub fn is_simple(&self) -> bool {
+        self.contains(Self::Simple)
+    }
+
+    // is_complex {{{3
+    /// Return true if the boiler has complex reciprocating engines.
+    ///
+    pub fn is_complex(&self) -> bool {
+        self.contains(Self::Complex)
+    }
+
+    // is_reciprocating {{{3
+    /// Return true if the boiler has any type of reciprocating engines.
+    ///
+    pub fn is_reciprocating(&self) -> bool {
+        self.is_simple() || self.is_complex()
+    }
+
+    // is_turbine {{{3
+    /// Return true if the boiler has steam turbines.
+    ///
+    pub fn is_turbine(&self) -> bool {
+        self.contains(Self::Turbine)
+    }
+
+    // d_engine_factor {{{3
+    /// XXX: I do not know what this does.
+    ///
+    pub fn d_engine_factor(&self, year: u32, fuel: FuelType) -> f64 {
+        let a = if self.is_simple() {
+                    if year <= 1884 { 1.2 + (year - 1860) as f64 * 0.05 }
+               else if year <= 1949 { 2.45 + (year - 1885) as f64 * 0.025 }
+               else                 { 4.075 }
+            } else { 0.0 };
+
+        let b = if self.is_complex() {
+                    if year <= 1905 { 1.2 + (year - 1860) as f64 * 0.05 }
+               else if year <= 1910 { 3.5 + (year - 1906) as f64 }
+               else if year <= 1949 { 7.5 + (year - 1910) as f64 * 0.025 }
+               else                 { 8.5 }
+            } else { 0.0 };
+
+        let c = if self.is_turbine() || ! fuel.is_steam()
+            {
+                    if year <= 1897 { 1.2 + (year - 1860) as f64 * 0.05 }
+               else if year <= 1902 { 1.0 + (year - 1898) as f64 * 0.5 }
+               else if year <= 1909 { 4.0 + (year - 1903) as f64 }
+               else if year <= 1949 { 11.0 + (year - 1910) as f64 * 0.2 }
+               else                 { 19.0 }
+            } else { 0.0 };
+
+        a + b + c
+    }
+
+    // bunker_factor {{{3
+    /// XXX: I do not know what this does.
+    ///
+    pub fn bunker_factor(&self, year: u32) -> f64 {
+        if self.is_reciprocating() {
+            1.0 - (1910 - year) as f64 / 70.0 
+        } else if year < 1898 {
+            1.0 - (1910 - year) as f64 / 70.0
+        } else if year < 1920 {
+            1.0 + (year - 1910) as f64 / 20.0
+        } else if year < 1950 {
+            1.5 + (year - 1920) as f64 / 60.0
+        } else {
+            2.0
+        }
+    }
+}
+
+// Testing BoilerType {{{2
+#[cfg(test)]
+mod boiler_type {
+    use super::*;
+    use crate::test_support::*;
+
+    // Test d_engine_factor {{{3
+    macro_rules! test_d_engine_factor {
+        ($($name:ident: $value:expr,)*) => {
+            $(
+                #[test]
+                fn $name() {
+                    let (expected, boiler, fuel, year) = $value;
+
+                    assert_eq!(expected, to_place(boiler.d_engine_factor(year, fuel), 3));
+                }
+            )*
+        }
+    }
+
+    test_d_engine_factor! {
+        // name:                  (d_engine_factor, boiler, fuel, year)
+        // Test the years
+        d_engine_factor_simple_1: (2.4, BoilerType::Simple, FuelType::Oil, 1884),
+        d_engine_factor_simple_2: (4.05, BoilerType::Simple, FuelType::Oil, 1949),
+        d_engine_factor_simple_3: (4.075, BoilerType::Simple, FuelType::Oil, 1950),
+
+        d_engine_factor_complex_1: (3.45, BoilerType::Complex, FuelType::Oil, 1905),
+        d_engine_factor_complex_2: (7.5, BoilerType::Complex, FuelType::Oil, 1910),
+        d_engine_factor_complex_3: (8.475, BoilerType::Complex, FuelType::Oil, 1949),
+        d_engine_factor_complex_4: (8.5, BoilerType::Complex, FuelType::Oil, 1950),
+
+        d_engine_factor_other_1: (3.05, BoilerType::Turbine, FuelType::Oil, 1897),
+        d_engine_factor_other_2: (3.0, BoilerType::Turbine, FuelType::Oil, 1902),
+        d_engine_factor_other_3: (10.0, BoilerType::Turbine, FuelType::Oil, 1909),
+        d_engine_factor_other_4: (18.8, BoilerType::Turbine, FuelType::Oil, 1949),
+        d_engine_factor_other_5: (19.0, BoilerType::Turbine, FuelType::Oil, 1950),
+
+        // Test ! fuel.is_steam()
+        d_engine_factor_not_steam: (4.825, BoilerType::Simple, FuelType::Gasoline, 1900),
+
+        // Test sum of the three checks
+        d_engine_factor_recip:           (6.025, BoilerType::Simple | BoilerType::Complex, FuelType::Oil, 1900),
+        d_engine_factor_simple_turbine:  (4.825, BoilerType::Simple | BoilerType::Turbine, FuelType::Oil, 1900),
+        d_engine_factor_complex_turbine: (5.2, BoilerType::Complex | BoilerType::Turbine, FuelType::Oil, 1900),
+    }
+}
+
+// DriveType {{{1
+//
+bitflags! {
+    /// Type of drive used by the engine.
+    ///
+    #[derive(PartialEq, Serialize, Deserialize, Clone, Debug, Default)]
+    pub struct DriveType: u8 {
+        const Direct    = 1 << 0;
+        const Geared    = 1 << 1;
+        const Electric  = 1 << 2;
+        const Hydraulic = 1 << 3;
+    }
+}
+
+impl fmt::Display for DriveType { // {{{2
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}",
+            bitflags_match!(*self, {
+                Self::Direct    => "Direct drive",
+                Self::Geared    => "Geared drive",
+                Self::Electric  => "Electric motors",
+                Self::Hydraulic => "Hydraulic drive",
+
+                Self::Geared |
+                    Self::Electric => "Electric cruising motors plus geared drives",
+
+                // TODO: DriveType {0}   => "ERROR: No drive to shaft",
+                _               => "ERROR: Revise drives",
+            })
+        )
     }
 }
 

@@ -3,9 +3,7 @@ use crate::units::Units;
 use serde::{Serialize, Deserialize};
 
 use std::f64::consts::PI;
-
-use crate::SternType;
-use crate::BowType;
+use std::fmt;
 
 // Hull {{{1
 /// Hull characteristics.
@@ -1125,3 +1123,179 @@ mod hull {
     }
 
 }
+// SternType {{{1
+#[derive(Serialize, Deserialize, Clone, Debug, Default)]
+pub enum SternType {
+    /// Transom stern (small).
+    TransomSm,
+    /// Transom stern (large).
+    TransomLg,
+    #[default]
+    /// Cruiser stern (default).
+    Cruiser,
+    /// Round stern.
+    Round,
+}
+
+impl From<String> for SternType {
+    fn from(index: String) -> Self {
+        index.as_str().into()
+    }
+}
+
+impl From<&str> for SternType {
+    fn from(index: &str) -> Self {
+        match index {
+            "1" => Self::TransomSm,
+            "2" => Self::TransomLg,
+            "3" => Self::Round,
+            "0" | _ => Self::Cruiser,
+        }
+    }
+}
+
+impl fmt::Display for SternType {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", match self {
+            SternType::TransomSm => "a small transom stern",
+            SternType::TransomLg => "a large transom stern",
+            SternType::Cruiser   => "a cruiser stern",
+            SternType::Round     => "a round stern",
+        })
+    }
+}
+
+impl SternType {
+    // wp_calc {{{2
+    /// XXX: ???
+    ///
+    pub fn wp_calc(&self) -> (f64, f64) {
+        match self {
+            Self::TransomSm => (0.262, 0.79),
+            Self::TransomLg => (0.262, 0.81),
+            Self::Cruiser   => (0.262, 0.76),
+            Self::Round     => (0.262, 0.76),
+        }
+    }
+
+    // leff {{{2
+    /// XXX: ???
+    ///
+    pub fn leff(&self, lwl: f64, bb: f64, cs: f64) -> f64 {
+        if cs == 0.0 { return 0.0 } // catch divide by zero
+
+        match self {
+            Self::TransomSm => bb * 0.5 / cs + lwl,
+            Self::TransomLg => bb / cs + lwl,
+            _               => lwl,
+        }
+    }
+}
+
+#[cfg(test)] // SternType {{{1
+mod stern_type {
+    use super::*;
+    use crate::test_support::*;
+
+    // Test wp_calc {{{2
+    macro_rules! test_wp_calc {
+        ($($name:ident: $value:expr,)*) => {
+            $(
+                #[test]
+                fn $name() {
+                    let (expected, stern) = $value;
+
+                    assert_eq!(expected, stern.wp_calc());
+                }
+            )*
+        }
+    }
+
+    test_wp_calc! {
+        // name:                 (factors, stern)
+        wp_calc_transom_sm: ((0.262, 0.79), SternType::TransomSm),
+        wp_calc_transom_lg: ((0.262, 0.81), SternType::TransomLg),
+        wp_calc_cruiser:    ((0.262, 0.76), SternType::Cruiser),
+        wp_calc_round:      ((0.262, 0.76), SternType::Round),
+    }
+
+    // Test leff {{{2
+    macro_rules! test_leff {
+        ($($name:ident: $value:expr,)*) => {
+            $(
+                #[test]
+                fn $name() {
+                    let (expected, stern) = $value;
+
+                    let lwl = 500.0; let bb = 50.0; let cs = 0.2563;
+                    assert_eq!(expected, to_place(stern.leff(lwl, bb, cs), 2));
+                }
+            )*
+        }
+    }
+
+    test_leff! {
+        // name:         (leff, stern, fuel, year)
+        leff_transom_lg: (695.08, SternType::TransomLg),
+        leff_transom_sm: (597.54, SternType::TransomSm),
+        leff_cruiser:    (500.0, SternType::Cruiser),
+        leff_round:      (500.0, SternType::Round),
+    }
+}
+
+
+// BowType {{{1
+#[derive(PartialEq, Serialize, Deserialize, Clone, Debug, Default)]
+pub enum BowType {
+    /// Ram bow, including length.
+    Ram(f64),
+    /// Bulbous, straight bow.
+    BulbStraight,
+    /// Bulbous, forward bow.
+    BulbForward,
+    #[default]
+    /// Normal bow (default).
+    Normal,
+}
+
+impl From<String> for BowType {
+    fn from(index: String) -> Self {
+        index.as_str().into()
+    }
+}
+
+impl From<&str> for BowType {
+    fn from(index: &str) -> Self {
+        match index {
+            "1" => Self::BulbStraight,
+            "2" => Self::BulbForward,
+            "3" => Self::Ram(0.0),
+            "0" | _ => Self::Normal,
+        }
+    }
+}
+
+impl fmt::Display for BowType {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", match self {
+            Self::Ram(_)       => "a ram bow",
+            Self::BulbStraight => "a straight bulbous bow",
+            Self::BulbForward  => "an extended bulbous bow",
+            Self::Normal       => "a normal bow",
+        })
+    }
+}
+
+impl BowType {
+    // ram_len {{{2
+    /// Return length of the ram.
+    ///
+    pub fn ram_len(&self) -> f64 {
+        match self {
+            Self::Ram(len) => *len,
+            _              => 0.0,
+        }
+    }
+}
+
+
