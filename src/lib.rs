@@ -1037,11 +1037,12 @@ impl Ship { // {{{2
 
             if self.armor.deck.fc + self.armor.deck.md + self.armor.deck.qd > 0.0 {
                 report.push(format!("    - Armour Deck: {:.0} tons, {:.1} %",
+                    // TODO: Replace with the following once the circular references are fixed:
+                    // (self.armor.deck.wgt(self.hull.clone(), self.wgt_mag(), self.wgt_engine())),
+                    // Ship::percent_calc(self.hull.d(), self.armor.deck.wgt(self.hull.clone(), self.wgt_mag(), self.wgt_engine())));
                     (self.armor.deck.wgt(self.hull.clone(), self.wgt_mag(), 0.0)),
                     Ship::percent_calc(self.hull.d(), self.armor.deck.wgt(self.hull.clone(), self.wgt_mag(), 0.0))
                 ));
-                    // TODO: (self.armor.deck.wgt(self.hull.clone(), self.wgt_mag(), self.wgt_engine())),
-                    // TODO: Ship::percent_calc(self.hull.d(), self.armor.deck.wgt(self.hull.clone(), self.wgt_mag(), self.wgt_engine())));
             }
 
             if self.armor.ct_fwd.thick + self.armor.ct_aft.thick > 0.0 {
@@ -1286,6 +1287,8 @@ impl Ship { // {{{2
         s.push(format!("main belt = {}", self.armor.main.wgt(self.hull.d(), self.hull.cwp(), self.hull.b)));
         s.push(format!("upper belt = {}", self.armor.upper.wgt(self.hull.d(), self.hull.cwp(), self.hull.b)));
         s.push(format!("end belt = {}", self.armor.end.wgt(self.hull.d(), self.hull.cwp(), self.hull.b)));
+        // TODO: Replace with the following once circular references are fixed:
+        // s.push(format!("deck = {}", self.armor.deck.wgt(self.hull.clone(), self.wgt_mag(), self.wgt_engine())));
         s.push(format!("deck = {}", self.armor.deck.wgt(self.hull.clone(), self.wgt_mag(), 0.0)));
         s.push("".to_string());
 
@@ -1614,8 +1617,9 @@ impl Ship {
             self.armor.upper.wgt(self.hull.d(), self.hull.cwp(), self.hull.b) * 2.0 +
             self.armor.main.wgt(self.hull.d(), self.hull.cwp(), self.hull.b) +
             self.armor.end.wgt(self.hull.d(), self.hull.cwp(), self.hull.b) +
+            // TODO: Replace with the following once the circular references are fixed:
+            // self.armor.deck.wgt(self.hull.clone(), self.wgt_mag(), self.wgt_engine()) +
             self.armor.deck.wgt(self.hull.clone(), self.wgt_mag(), 0.0) +
-            // TODO: self.armor.deck.wgt(self.hull.clone(), self.wgt_mag(), self.wgt_engine()) +
             (self.wgt_hull_plus() + self.wgt_guns() + self.wgt_gun_mounts() - self.wgt_borne()) * 1.5 * self.hull.freeboard() / self.hull.t;
 
         let b = a +
@@ -1947,8 +1951,9 @@ impl Ship {
     /// Weight of ship and battery armor.
     ///
     fn wgt_armor(&self) -> f64 {
+        // TODO: Replace with the following once the circular references are fixed:
+        // self.armor.wgt(self.hull.clone(), self.wgt_mag(), self.wgt_engine()) + self.wgt_gun_armor()
         self.armor.wgt(self.hull.clone(), self.wgt_mag(), 0.0) + self.wgt_gun_armor()
-        // TODO: self.armor.wgt(self.hull.clone(), self.wgt_mag(), self.wgt_engine()) + self.wgt_gun_armor()
     }
 
     // gun_wtf {{{3
