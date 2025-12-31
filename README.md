@@ -31,7 +31,7 @@ The report output by `sharpie` is supposed to be formatted exactly like a
 through the following command you should be able to use `diff(1)` to easily spot
 differences between the two reports:
 
-    sed -e 's/\t\t* */ /g' -e 's/^ *//' [REPORT] > [REPORT].nospaces
+    sed -e 's/\t\t*/ /g' -e 's/  */ /g' -e 's/^ *//' [REPORT] > [REPORT].nospaces
 
 Please file an [issue](https://github.com/jbrubake/sharpie/issues/new/choose)
 for any `sharpie` reports that differ from `Springsharp`. Include both the
