@@ -197,15 +197,13 @@ impl Belt { // {{{2
     /// Belt weight.
     ///
     pub fn wgt(&self, lwl: f64, cwp: f64, b: f64) -> f64 {
-        let adj = match self.kind {
-            BeltType::Main     => 1.0,
-            BeltType::Upper    => 1.0,
-            BeltType::End      => 0.0,
-            BeltType::Bulge    => 0.0,
-            BeltType::Bulkhead => 0.0,
+        let extra = match self.kind {
+            BeltType::Main | BeltType::Upper =>
+                (1.0 - self.len / lwl).powf(1.0 - cwp) * b,
+            _ => 0.0
         };
 
-        (self.len + adj * ((lwl - self.len)/lwl).powf(1.0 - cwp) * b) * self.hgt * self.thick * Armor::INCH * 2.0
+        (self.len + extra) * self.hgt * self.thick * Armor::INCH * 2.0
     }
 
     // new {{{3
