@@ -150,9 +150,7 @@ impl Hull { // {{{2
 
             if self.ad_aft > self.qd_fwd {
                 s.push("low quarterdeck".into());
-            }
-
-            if self.ad_aft < self.qd_fwd {
+            } else if self.ad_aft < self.qd_fwd {
                 s.push("raised quarterdeck".into());
             }
         }
