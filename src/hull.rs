@@ -136,20 +136,16 @@ impl Hull { // {{{2
 
             s.push("flush deck".into());
         } else {
-            if self.fc_aft != self.fd_fwd {
-                if self.fc_aft > self.fd_fwd {
-                    s.push("raised forecastle".into());
-                } else if self.fc_aft < self.fd_fwd {
-                    s.push("low forecastle".into());
-                }
+            if self.fc_aft > self.fd_fwd {
+                s.push("raised forecastle".into());
+            } else if self.fc_aft < self.fd_fwd {
+                s.push("low forecastle".into());
             }
 
-            if self.fd_aft != self.ad_fwd {
-                if self.fd_aft > self.ad_fwd {
-                    s.push("rise forward of midbreak".into());
-                } else if self.fd_aft < self.ad_fwd {
-                    s.push("rise aft of midbreak".into());
-                }
+            if self.fd_aft > self.ad_fwd {
+                s.push("rise forward of midbreak".into());
+            } else if self.fd_aft < self.ad_fwd {
+                s.push("rise aft of midbreak".into());
             }
 
             if self.ad_aft > self.qd_fwd {
