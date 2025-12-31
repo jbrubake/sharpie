@@ -1476,7 +1476,7 @@ impl Ship {
     /// If ship has an excessive risk of capsizing.
     ///
     fn tender_warn(&self) -> bool {
-        if self.metacenter() <= 0.995 {
+        if self.stability_adj() <= 0.995 {
             true
         } else {
             false
@@ -1487,7 +1487,7 @@ impl Ship {
     /// If ship will capsize.
     ///
     fn capsize_warn(&self) -> bool {
-        if self.stability_adj() <= 0.0 {
+        if self.metacenter() <= 0.0 {
             true
         } else {
             false
