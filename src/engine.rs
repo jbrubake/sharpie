@@ -845,7 +845,7 @@ impl fmt::Display for DriveType { // {{{2
                 Self::Geared |
                     Self::Electric => "Electric cruising motors plus geared drives",
 
-                // TODO: DriveType {0}   => "ERROR: No drive to shaft",
+                Self::empty()   => "ERROR: No drive to shaft",
                 _               => "ERROR: Revise drives",
             })
         )
