@@ -383,11 +383,10 @@ impl Battery { // {{{2
             super_ += g.super_()
         }
 
-        let free = self.free(hull);
-
-        if free == 0.0 { return 0.0 } // catch divide by zero
-
-        ((super_ as f64 / self.num as f64) * (self.cal * 0.6).max(7.5) + free) / free
+        match self.free(hull) {
+            0.0 => 0.0, // Catch divide by zero
+            free => ((super_ as f64 / self.num as f64) * (self.cal * 0.6).max(7.5) + free) / free,
+        }
     }
 
     // free {{{3
