@@ -589,7 +589,7 @@ impl Ship { // {{{2
             { report.push("DESIGN FAILURE: Armour weight too much for hull".to_string()); }
         if self.str_comp() < 0.5
             { report.push("DESIGN FAILURE: Overall load weight too much for hull".to_string()); }
-        if self.metacenter() < 0.0
+        if self.capsize_warn()
             { report.push("DESIGN FAILURE: Ship will capsize".to_string()); }
 
         report.push("".to_string());
