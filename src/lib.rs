@@ -1,6 +1,3 @@
-pub const SHIP_FILE_EXT: &str = "ship";
-pub const SS_SHIP_FILE_EXT: &str = "sship";
-
 mod hull;
 mod armor;
 mod engine;
@@ -30,6 +27,9 @@ use std::fs;
 use std::fs::File;
 use std::io::BufReader;
 use std::io::BufRead;
+
+pub const SHIP_FILE_EXT: &str = "ship";
+pub const SS_SHIP_FILE_EXT: &str = "sship";
 
 #[cfg(test)] // Testing support {{{1
 mod test_support {
