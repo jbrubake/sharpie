@@ -5,7 +5,7 @@ use serde::{Serialize, Deserialize};
 use std::f64::consts::PI;
 
 // SubBattery {{{1
-#[derive(Serialize, Deserialize, Debug, Clone, Default)]
+#[derive(Serialize, Deserialize, Clone, Debug, Default)]
 pub struct SubBattery {
     /// Gun layout.
     pub layout: GunLayoutType,
@@ -1107,7 +1107,7 @@ impl Torpedoes {
 }
 
 // Mines {{{1
-#[derive(Serialize, Deserialize, Debug, Clone, Default)]
+#[derive(Serialize, Deserialize, Clone, Debug, Default)]
 pub struct Mines {
     /// Units
     pub units: Units,
@@ -1146,7 +1146,7 @@ impl Mines {
 }
 
 // ASW {{{1
-#[derive(Serialize, Deserialize, Debug, Clone, Default)]
+#[derive(Serialize, Deserialize, Clone, Debug, Default)]
 pub struct ASW {
     /// Units.
     pub units: Units,

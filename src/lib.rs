@@ -2340,7 +2340,7 @@ impl BowType {
 
 // FuelType {{{1
 bitflags! {
-    #[derive(PartialEq, Serialize, Deserialize, Default, Debug, Clone)]
+    #[derive(PartialEq, Serialize, Deserialize, Clone, Debug, Default)]
     pub struct FuelType: u8 {
         const Coal     = 1 << 0;
         const Oil      = 1 << 1;
@@ -2423,7 +2423,7 @@ mod fuel_type {
 
 // BoilerType {{{1
 bitflags! {
-    #[derive(PartialEq, Serialize, Deserialize, Default, Clone, Debug)]
+    #[derive(PartialEq, Serialize, Deserialize, Clone, Debug, Default)]
     pub struct BoilerType: u8 {
         /// Simple, reciprocating engines.
         const Simple  = 1 << 0;
@@ -2597,7 +2597,7 @@ mod boiler_type {
 
 // DriveType {{{1
 bitflags! {
-    #[derive(PartialEq, Serialize, Deserialize, Default, Clone, Debug)]
+    #[derive(PartialEq, Serialize, Deserialize, Clone, Debug, Default)]
     pub struct DriveType: u8 {
         const Direct    = 1 << 0;
         const Geared    = 1 << 1;
@@ -2626,7 +2626,7 @@ impl fmt::Display for DriveType {
 }
 
 // MineType {{{1
-#[derive(Serialize, Deserialize, Default, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug, Default)]
 pub enum MineType {
     #[default]
     SternRails,
@@ -2701,7 +2701,7 @@ mod mine_type {
 
 
 // ASWType {{{1
-#[derive(Serialize, Deserialize, Default, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug, Default)]
 pub enum ASWType {
     #[default]
     SternRacks,
@@ -2784,7 +2784,7 @@ mod asw_type {
 }
 
 // TorpedoMountType {{{1
-#[derive(Serialize, Deserialize, Default, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug, Default)]
 pub enum TorpedoMountType {
     #[default]
     FixedTubes,
@@ -3007,7 +3007,7 @@ mod torpedo_mount_type {
 }
 
 // GunType {{{1
-#[derive(Serialize, Deserialize, Default, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug, Default)]
 pub enum GunType {
     MuzzleLoading,
     #[default]
@@ -3165,7 +3165,7 @@ mod gun_type {
 }
 
 // MountType {{{1
-#[derive(PartialEq, Serialize, Deserialize, Default, Clone, Debug)]
+#[derive(PartialEq, Serialize, Deserialize, Clone, Debug, Default)]
 pub enum MountType {
     Broadside,
     ColesTurret,
@@ -3500,7 +3500,7 @@ mod mount_type {
 }
 
 // GunDistributionType {{{1
-#[derive(PartialEq, Serialize, Deserialize, Default, Clone, Debug)]
+#[derive(PartialEq, Serialize, Deserialize, Clone, Debug, Default)]
 pub enum GunDistributionType {
     #[default]
     CenterlineEven,
@@ -4012,7 +4012,7 @@ mod gun_dist_type {
 }
 
 // GunLayoutType {{{1
-#[derive(Serialize, Deserialize, Default, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug, Default)]
 pub enum GunLayoutType {
     #[default]
     Single,
@@ -4150,7 +4150,7 @@ impl GunLayoutType { // {{{1
 }
 
 // DeckType {{{1
-#[derive(PartialEq, Serialize, Deserialize, Default, Clone, Debug)]
+#[derive(PartialEq, Serialize, Deserialize, Clone, Debug, Default)]
 pub enum DeckType {
     #[default]
     MultipleArmored,
@@ -4203,7 +4203,7 @@ pub mod unit_types { // {{{1
     use std::fmt;
 
     // Units {{{2
-    #[derive(PartialEq, Serialize, Deserialize, Default, Clone, Copy, Debug)]
+    #[derive(PartialEq, Serialize, Deserialize, Clone, Copy, Debug, Default)]
     pub enum Units {
         #[default]
         Imperial,

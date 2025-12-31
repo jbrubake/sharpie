@@ -255,7 +255,7 @@ pub enum BeltType {
 }
 
 // CT {{{1
-#[derive(Serialize, Deserialize, Debug, Clone, Default)]
+#[derive(Serialize, Deserialize, Clone, Debug, Default)]
 pub struct CT {
     /// Armor thickness.
     pub thick: f64,
@@ -303,7 +303,7 @@ mod ct {
 }
 
 // Deck {{{1
-#[derive(Serialize, Deserialize, Debug, Clone, Default)]
+#[derive(Serialize, Deserialize, Clone, Debug, Default)]
 pub struct Deck {
     /// Deck armor configuration.
     pub kind: DeckType,
