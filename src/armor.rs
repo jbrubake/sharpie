@@ -3,8 +3,6 @@ use crate::units::Units;
 
 use serde::{Serialize, Deserialize};
 
-use std::f64::consts::PI;
-
 // Armor {{{1
 /// The ship's armor, excluding gun armor.
 ///
@@ -99,6 +97,8 @@ impl Armor { // {{{2
     /// Maximum allowable belt height.
     ///
     pub fn max_belt_hgt(&self, t: f64, dist: f64) -> f64 {
+        use std::f64::consts::PI;
+
         // incline * PI / 180 => convert to radians
         (t + dist) * (1.0 / (self.incline * PI / 180.0).abs().cos()) + 0.02
     }
