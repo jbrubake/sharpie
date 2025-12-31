@@ -120,42 +120,6 @@ impl Default for Hull { // {{{2
     }
 }
 
-// Hull API {{{1
-impl Hull {
-    pub fn new(
-        d: f64,
-        b: f64,
-        bb: f64,
-        t: f64,
-    ) -> Hull {
-        Hull {
-            units: Units::Imperial,
-
-            cb: None,
-            d: Some(d),
-            lwl: None,
-            loa: None,
-
-            b: b.into(),
-            bb: bb.into(),
-            t: t.into(),
-
-            boxy: false,
-
-            bow_type: BowType::Normal,
-            stern_type: SternType::Cruiser,
-            stern_overhang: 0.0,
-
-            fc_len: 0.0, fc_fwd: 0.0, fc_aft: 0.0,
-            fd_len: 0.0, fd_fwd: 0.0, fd_aft: 0.0,
-                         ad_fwd: 0.0, ad_aft: 0.0,
-            qd_len: 0.0, qd_fwd: 0.0, qd_aft: 0.0,
-
-            bow_angle: 0.0,
-        }
-    }
-}
-
 impl Hull { // {{{2
     /// Volume of one long ton of seawater in cubic feet.
     pub const FT3_PER_TON_SEA: f64 = 35.0;

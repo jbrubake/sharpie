@@ -608,11 +608,6 @@ impl Battery { // {{{2
     pub fn mag_wgt(&self) -> f64 {
         (self.num * self.shells) as f64 * self.shell_wgt() / Ship::POUND2TON * (1.0 + Self::CORDITE_FACTOR)
     }
-
-    // new {{{2
-    pub fn new() -> Battery {
-        Default::default()
-    }
 }
 
 // Testing Battery {{{2
@@ -1088,11 +1083,6 @@ pub struct Torpedoes {
 }
 
 impl Torpedoes { // {{{2
-    // new {{{2
-    pub fn new() -> Torpedoes {
-        Default::default()
-    }
-
     // wgt {{{3
     /// Weight of all torpedoes and mounts in the set.
     ///
@@ -1158,11 +1148,6 @@ pub struct Mines {
 }
 
 impl Mines { // {{{2
-    // new {{{2
-    pub fn new() -> Mines {
-        Default::default()
-    }
-
     // wgt {{{3
     /// Weight of mines, reloads and deployment gear.
     ///
@@ -1209,11 +1194,6 @@ pub struct ASW {
 }
 
 impl ASW { // {{{2
-    // new {{{2
-    pub fn new() -> ASW {
-        Default::default()
-    }
-
     // wgt {{{3
     /// Weight of weapons, reloads and mounts.
     ///

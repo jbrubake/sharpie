@@ -194,10 +194,6 @@ impl Engine { // {{{2
         ) / early
     }
 
-    // new {{{2
-    pub fn new() -> Engine {
-        Default::default()
-    }
 }
 
 // Testing Engine {{{2

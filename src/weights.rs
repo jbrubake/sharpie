@@ -18,11 +18,6 @@ pub struct MiscWgts {
 }
 
 impl MiscWgts { // {{{2
-    // new {{{2
-    pub fn new() -> MiscWgts {
-        Default::default()
-    }
-
     // wgt {{{3
     /// Total of miscellaneous weights.
     ///

@@ -102,11 +102,6 @@ impl Armor { // {{{2
         // incline * PI / 180 => convert to radians
         (t + dist) * (1.0 / (self.incline * PI / 180.0).abs().cos()) + 0.02
     }
-
-    // new {{{2
-    pub fn new() -> Armor {
-        Default::default()
-    }
 }
 
 // Testing Armor {{{2
@@ -292,10 +287,6 @@ impl CT { // {{{2
     pub fn wgt(&self, d: f64) -> f64 {
         10.0 * (d / 10_000.0).powf(2.0/3.0) * self.thick
     }
-    // new {{{2
-    pub fn new() -> CT {
-        Default::default()
-    }
 }
 
 // Testing CT {{{2
@@ -387,11 +378,6 @@ impl Deck { // {{{2
         let qd_deck = qd_len.powf(1.0 - cwp) * b * lwl * qd_len / 4.0 * (2.0 + 2.0_f64.powf(1.0 - cwp)) * self.qd;
 
         (main_deck + fc_deck + qd_deck) * Armor::INCH
-    }
-
-    // new {{{2
-    pub fn new() -> Deck {
-        Default::default()
     }
 }
 

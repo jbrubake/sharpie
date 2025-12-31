@@ -81,47 +81,6 @@ pub struct Ship {
     pub notes: Vec<String>,
 }
 
-// Ship API {{{1
-impl Ship {
-    pub fn name(&self) -> String { self.name.clone() }
-    pub fn country(&self) -> String { self.country.clone() }
-    pub fn kind(&self) -> String { self.kind.clone() }
-    pub fn year(&self) -> String { self.year.to_string() }
-
-    pub fn new(
-        name: String,
-        country: String,
-        kind: String,
-        year: String,
-    ) -> Ship {
-        Ship {
-            name: name.clone(),
-            country: country.clone(),
-            kind: kind.clone(),
-            year: match year.parse() { Ok(n) => n, Err(_) => 0, },
-
-            trim: 50,
-
-            hull: Hull::default(),
-            wgts: MiscWgts::default(),
-            engine: Engine::default(),
-            armor: Armor::default(),
-            torps: vec![Torpedoes::default(), Torpedoes::default()],
-            mines: Mines::default(),
-            asw: vec![ASW::default(), ASW::default()],
-            batteries: vec![
-                Battery::default(),
-                Battery::default(),
-                Battery::default(),
-                Battery::default(),
-                Battery::default(),
-            ],
-
-            notes: Vec::new(),
-        }
-    }
-}
-
 impl Default for Ship { // {{{2
     fn default() -> Ship {
         Ship {
