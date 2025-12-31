@@ -7,223 +7,6 @@ use serde::{Serialize, Deserialize};
 use std::f64::consts::PI;
 use std::fmt;
 
-// SubBattery {{{1
-/// Gun grouping within a battery.
-///
-#[derive(Serialize, Deserialize, Clone, Debug, Default)]
-pub struct SubBattery {
-    /// Layout of guns within a turret.
-    pub layout: GunLayoutType,
-    /// Placement of guns on the ship.
-    pub distribution: GunDistributionType,
-
-    /// Number of mounts above the waterline.
-    pub above: u32,
-    /// Number of mounts on the waterline.
-    pub on: u32,
-    /// Number of mounts below the waterline.
-    pub below: u32,
-
-    /// If mounts above the deck are superfiring
-    pub two_mounts_up: bool,
-    /// If mounts below the waterline are on the lower deck
-    pub lower_deck: bool,
-}
-
-impl SubBattery { // Internals Output {{{2
-    pub fn internals(&self, hull: Hull, cal: f64) -> () {
-        eprintln!("layout = {}", self.layout);
-        eprintln!("distribution = {}", self.distribution);
-        eprintln!("above = {}", self.above);
-        eprintln!("on = {}", self.on);
-        eprintln!("below = {}", self.below);
-        eprintln!("two_mounts_up = {}", self.two_mounts_up);
-        eprintln!("lower_deck = {}", self.lower_deck);
-        eprintln!("super_() = {}", self.super_());
-        eprintln!("num_mounts() = {}", self.num_mounts());
-        eprintln!("diameter_calc() = {}", self.diameter_calc(cal));
-        eprintln!("wgt_adj() = {}", self.wgt_adj());
-        eprintln!("free() = {}", self.free(hull.clone()));
-        eprintln!("");
-    }
-}
-
-impl SubBattery { // {{{2
-    // super_ {{{3
-    /// Number of barrels above the waterline, reduced by the number of barrels
-    /// below the waterline. Superfiring and lower deck barrels count double.
-    ///
-    pub fn super_(&self) -> i32 {
-        let above: i32 = (self.above * if self.two_mounts_up { 2 } else { 1 }) as i32;
-        let below: i32 = (self.below * if self.lower_deck    { 2 } else { 1 }) as i32;
-
-        (above - below) * self.layout.guns_per() as i32
-    }
-
-    // num_mounts {{{3
-    /// Total number of gun mounts.
-    ///
-    pub fn num_mounts(&self) -> u32 {
-        self.above + self.on + self.below
-    }
-
-    // diameter_calc {{{3
-    /// XXX: I do not know what this is doing.
-    ///
-    pub fn diameter_calc(&self, cal: f64) -> f64 {
-        if cal == 0.0 { return 0.0; } // Catch divide by zero
-
-        let (factor, power) = self.layout.diameter_calc_nums();
-
-        let mut calc = factor * cal * (1.0 + (1.0/cal).powf(power));
-
-        if cal < 12.0                               { calc += 12.0 / cal; }
-        if cal > 1.0 && self.layout.wgt_adj() < 1.0 { calc *= 0.9; }
-
-        calc
-    }
-
-    // wgt_adj {{{3
-    /// XXX: I do not know what this is doing.
-    ///
-    pub fn wgt_adj(&self) -> f64 {
-        self.layout.wgt_adj() * self.num_mounts() as f64
-    }
-
-    // free {{{3
-    /// XXX: I do not know what this is doing.
-    ///
-    pub fn free(&self, hull: Hull) -> f64 {
-        let free = self.distribution.free(self.num_mounts(), hull);
-
-        free * self.num_mounts() as f64
-    }
-}
-
-// Testing SubBattery {{{2
-#[cfg(test)]
-mod sub_battery {
-    use super::*;
-    use crate::test_support::*;
-
-    // Test super_ {{{3
-    macro_rules! test_super_ {
-        ($($name:ident: $value:expr,)*) => {
-            $(
-                #[test]
-                fn $name() {
-                    let (expected, above, two_mounts_up, below, lower_deck) = $value;
-
-                    let mut sub_btry = SubBattery::default();
-                    sub_btry.layout = GunLayoutType::Single;
-
-                    sub_btry.above = above;
-                    sub_btry.below = below;
-                    sub_btry.two_mounts_up = two_mounts_up;
-                    sub_btry.lower_deck = lower_deck;
-
-                    assert!(expected == sub_btry.super_());
-                }
-            )*
-        }
-    }
-    test_super_! {
-        // name:      (super_, above, two_mounts_up, below, lower_deck)
-        super_test_1: ( 1, 1, false, 0, false),
-        super_test_2: (-1, 0, false, 1, false),
-        super_test_3: ( 2, 1, true, 0, true),
-        super_test_4: (-2, 0, true, 1, true),
-        super_test_5: ( 0, 1, false, 1, false),
-        super_test_6: ( 0, 1, true, 1, true),
-        super_test_7: (-1, 1, false, 1, true),
-        super_test_8: ( 1, 1, true, 1, false),
-    }
-
-    // Test diameter_calc {{{3
-    macro_rules! test_diameter_calc {
-        ($($name:ident: $value:expr,)*) => {
-            $(
-                #[test]
-                fn $name() {
-                    let (expected, cal) = $value;
-
-                    let mut sub_btry = SubBattery::default();
-                    sub_btry.layout = GunLayoutType::Single;
-
-                    assert!(expected == to_place(sub_btry.diameter_calc(cal), 2));
-                }
-            )*
-        }
-    }
-    test_diameter_calc! {
-        // name:      (diameter_calc, cal)
-        diameter_calc_cal_eq_0: (0.0, 0.0),
-        diameter_calc_cal_lt_12: (19.14, 10.0),
-        diameter_calc_cal_gt_1:  (12.30, 5.0),
-        diameter_calc_cal_sm:  (25.82, 0.5),
-    }
-
-    // Test wgt_adj {{{3
-    macro_rules! test_wgt_adj {
-        ($($name:ident: $value:expr,)*) => {
-            $(
-                #[test]
-                fn $name() {
-                    let (expected, num_mounts) = $value;
-
-                    let mut sub_btry = SubBattery::default();
-                    sub_btry.layout = GunLayoutType::Single;
-                    sub_btry.above = num_mounts;
-                    sub_btry.on = 0;
-                    sub_btry.below = 0;
-
-                    assert!(expected == to_place(sub_btry.wgt_adj(), 2));
-                }
-            )*
-        }
-    }
-    test_wgt_adj! {
-        // name:      (wgt_adj, num_mounts)
-        wgt_adj_test: (10.0, 10),
-    }
-
-    // Test free {{{3
-    macro_rules! test_free {
-        ($($name:ident: $value:expr,)*) => {
-            $(
-                #[test]
-                fn $name() {
-                    let (expected, num_mounts) = $value;
-
-                    let mut sub_btry = SubBattery::default();
-                    sub_btry.distribution = GunDistributionType::CenterlineEven;
-                    sub_btry.above = num_mounts;
-                    sub_btry.on = 0;
-                    sub_btry.below = 0;
-
-                    let mut hull = Hull::default();
-                    hull.fc_len = 0.2;
-
-                    hull.fd_len = 0.3;
-                    hull.fd_fwd = 10.0;
-                    hull.fd_aft = 0.0;
-
-                    hull.ad_fwd = 20.0;
-                    hull.ad_aft = 0.0;
-
-                    hull.qd_len = 0.15;
-
-                    assert!(expected == to_place(sub_btry.free(hull), 2));
-                }
-            )*
-        }
-    }
-    test_free! {
-        // name:   (free, num_mounts)
-        free_test: (35.0, 5),
-    }
-}
-
 // Battery {{{1
 /// A battery of one type of gun.
 ///
@@ -293,48 +76,6 @@ impl Default for Battery { // {{{2
                 SubBattery::default(),
                 SubBattery::default(),
             ],
-        }
-    }
-}
-
-impl Battery { // Internals Output {{{2
-    pub fn internals(&self, hull: Hull, wgt_broad: f64) -> () {
-        eprintln!("units = {}", self.units);
-        eprintln!("num = {}", self.num);
-        eprintln!("cal = {}", self.cal);
-        eprintln!("len = {}", self.len);
-        eprintln!("year = {}", self.year);
-        eprintln!("shells = {}", self.shells);
-        eprintln!("kind = {}", self.kind);
-        eprintln!("mount_num = {}", self.mount_num);
-        eprintln!("mount_kind = {}", self.mount_kind);
-        eprintln!("armor_face = {}", self.armor_face);
-        eprintln!("armor_back = {}", self.armor_back);
-        eprintln!("armor_barb = {}", self.armor_barb);
-
-        eprintln!("broad_and_below() = {}", self.broad_and_below());
-        eprintln!("concentration() = {}", self.concentration(wgt_broad));
-        eprintln!("super_() = {}", self.super_(hull.clone()));
-        eprintln!("free() = {}", self.free(hull.clone()));
-        eprintln!("house_hgt() = {}", self.house_hgt());
-        eprintln!("armor_face_wgt() = {}", self.armor_face_wgt());
-        eprintln!("armor_back_wgt() = {}", self.armor_back_wgt());
-        eprintln!("armor_barb_wgt() = {}", self.armor_barb_wgt(hull.clone()));
-        eprintln!("armor_wgt() = {}", self.armor_wgt(hull.clone()));
-        eprintln!("wgt_adj() = {}", self.wgt_adj());
-        eprintln!("date_factor() = {}", self.date_factor());
-        eprintln!("shell_wgt() = {}", self.shell_wgt());
-        eprintln!("shell_wgt_est() = {}", self.shell_wgt_est());
-        eprintln!("gun_wgt() = {}", self.gun_wgt());
-        eprintln!("mount_wgt() = {}", self.mount_wgt());
-        eprintln!("broadside_wgt() = {}", self.broadside_wgt());
-        eprintln!("mag_wgt() = {}", self.mag_wgt());
-        eprintln!("");
-
-        for (i, g) in self.groups.iter().enumerate() {
-            eprintln!("Group {}", i);
-            eprintln!("--------");
-            g.internals(hull.clone(), self.cal);
         }
     }
 }
@@ -600,6 +341,48 @@ impl Battery { // {{{2
     ///
     pub fn mag_wgt(&self) -> f64 {
         (self.num * self.shells) as f64 * self.shell_wgt() / Ship::POUND2TON * (1.0 + Self::CORDITE_FACTOR)
+    }
+}
+
+impl Battery { // Internals Output {{{2
+    pub fn internals(&self, hull: Hull, wgt_broad: f64) -> () {
+        eprintln!("units = {}", self.units);
+        eprintln!("num = {}", self.num);
+        eprintln!("cal = {}", self.cal);
+        eprintln!("len = {}", self.len);
+        eprintln!("year = {}", self.year);
+        eprintln!("shells = {}", self.shells);
+        eprintln!("kind = {}", self.kind);
+        eprintln!("mount_num = {}", self.mount_num);
+        eprintln!("mount_kind = {}", self.mount_kind);
+        eprintln!("armor_face = {}", self.armor_face);
+        eprintln!("armor_back = {}", self.armor_back);
+        eprintln!("armor_barb = {}", self.armor_barb);
+
+        eprintln!("broad_and_below() = {}", self.broad_and_below());
+        eprintln!("concentration() = {}", self.concentration(wgt_broad));
+        eprintln!("super_() = {}", self.super_(hull.clone()));
+        eprintln!("free() = {}", self.free(hull.clone()));
+        eprintln!("house_hgt() = {}", self.house_hgt());
+        eprintln!("armor_face_wgt() = {}", self.armor_face_wgt());
+        eprintln!("armor_back_wgt() = {}", self.armor_back_wgt());
+        eprintln!("armor_barb_wgt() = {}", self.armor_barb_wgt(hull.clone()));
+        eprintln!("armor_wgt() = {}", self.armor_wgt(hull.clone()));
+        eprintln!("wgt_adj() = {}", self.wgt_adj());
+        eprintln!("date_factor() = {}", self.date_factor());
+        eprintln!("shell_wgt() = {}", self.shell_wgt());
+        eprintln!("shell_wgt_est() = {}", self.shell_wgt_est());
+        eprintln!("gun_wgt() = {}", self.gun_wgt());
+        eprintln!("mount_wgt() = {}", self.mount_wgt());
+        eprintln!("broadside_wgt() = {}", self.broadside_wgt());
+        eprintln!("mag_wgt() = {}", self.mag_wgt());
+        eprintln!("");
+
+        for (i, g) in self.groups.iter().enumerate() {
+            eprintln!("Group {}", i);
+            eprintln!("--------");
+            g.internals(hull.clone(), self.cal);
+        }
     }
 }
 
@@ -1059,886 +842,6 @@ mod battery {
         // name: (mag_wgt, num, shells, shell_wgt)
         mag_wgt_test_1: (5.56, 10, 10, 100.0),
         mag_wgt_test_2: (1.0+Battery::CORDITE_FACTOR, 1, 1, Ship::POUND2TON),
-    }
-}
-
-// Torpedoes {{{1
-/// A set of torpedo mounts or tubes.
-///
-#[derive(Serialize, Deserialize, Clone, Debug, Default)]
-pub struct Torpedoes {
-    /// Units
-    pub units: Units,
-    /// Year torpedo was designed.
-    pub year: u32,
-
-    /// Number of mounts.
-    pub mounts: u32,
-    /// Type of mount.
-    pub mount_kind: TorpedoMountType,
-
-    /// Number of torpedoes in the set
-    pub num: u32,
-
-    /// Torpedo diameter.
-    pub diam: f64,
-    /// Torpedo length.
-    pub len: f64,
-}
-
-impl Torpedoes { // {{{2
-    // wgt {{{3
-    /// Weight of all torpedoes and mounts in the set.
-    ///
-    pub fn wgt(&self) -> f64 {
-        self.wgt_weaps() + self.wgt_mounts()
-    }
-
-    // wgt_weaps {{{3
-    /// Weight of torpedoes in the set.
-    ///
-    pub fn wgt_weaps(&self) -> f64 {
-        (
-            PI * self.diam.powf(2.0) * self.len /
-            (
-                (f64::max(1907.0 - self.year as f64, 0.0) + 25.0) * 937.0
-            ) + (self.year as f64 - 1890.0) * 0.004
-        ) * self.num as f64
-    }
-
-    // wgt_mounts {{{3
-    /// Weight of mounts in the set.
-    ///
-    pub fn wgt_mounts(&self) -> f64 {
-        self.mount_kind.wgt_factor() * self.wgt_weaps()
-    }
-
-    // hull_space {{{3
-    /// Hull space taken up by the set.
-    ///
-    pub fn hull_space(&self) -> f64 {
-        self.mount_kind.hull_space(self.len, self.diam) * self.num as f64
-    }
-
-    // deck_space {{{3
-    /// Deck space taken up by the set.
-    ///
-    pub fn deck_space(&self, b: f64) -> f64 {
-        self.mount_kind.deck_space(b, self.num, self.len, self.diam, self.mounts)
-    }
-}
-
-// Mines {{{1
-/// Mines and deployement gear.
-///
-#[derive(Serialize, Deserialize, Clone, Debug, Default)]
-pub struct Mines {
-    /// Units
-    pub units: Units,
-
-    /// Year mines were designed.
-    pub year: u32,
-
-    /// Number of mines.
-    pub num: u32,
-    /// Number of mine reloads.
-    pub reload: u32,
-
-    /// Weight of a single mine.
-    pub wgt: f64,
-
-    /// Type of mine deployment system.
-    pub mount_kind: MineType,
-}
-
-impl Mines { // {{{2
-    // wgt {{{3
-    /// Weight of mines, reloads and deployment gear.
-    ///
-    pub fn wgt(&self) -> f64 {
-        self.wgt_weaps() + self.wgt_mounts()
-    }
-
-    // wgt_weaps {{{3
-    /// Weight of mines and reloads.
-    ///
-    pub fn wgt_weaps(&self) -> f64 {
-        (self.num + self.reload) as f64 * self.wgt / Ship::POUND2TON
-    }
-
-    // wgt_mounts {{{3
-    /// Weight of deployment gear.
-    ///
-    pub fn wgt_mounts(&self) -> f64 {
-        self.wgt_weaps() * self.mount_kind.wgt_factor()
-    }
-}
-
-// ASW {{{1
-/// ASW weapons and deployment gear.
-///
-#[derive(Serialize, Deserialize, Clone, Debug, Default)]
-pub struct ASW {
-    /// Units.
-    pub units: Units,
-
-    /// Year ASW system was designed.
-    pub year: u32,
-
-    /// Number of weapons.
-    pub num: u32,
-    /// Number of reloads.
-    pub reload: u32,
-
-    /// Weight of a single weapon.
-    pub wgt: f64,
-
-    /// Type of weapon.
-    pub kind: ASWType,
-}
-
-impl ASW { // {{{2
-    // wgt {{{3
-    /// Weight of weapons, reloads and mounts.
-    ///
-    pub fn wgt(&self) -> f64 {
-        self.wgt_weaps() + self.wgt_mounts()
-    }
-
-    // wgt_weaps {{{3
-    /// Weight of weapons and reloads.
-    ///
-    pub fn wgt_weaps(&self) -> f64 {
-        (self.num + self.reload) as f64 * self.wgt / Ship::POUND2TON
-    }
-
-    // wgt_mounts {{{3
-    /// Weight of mounts.
-    ///
-    pub fn wgt_mounts(&self) -> f64 {
-        self.wgt_weaps() * self.kind.mount_wgt_factor()
-    }
-}
-
-// Testing Torpedoes, Mines and ASW {{{2
-#[cfg(test)]
-mod weapons {
-    use super::*;
-    use crate::test_support::*;
-
-    // Test mines_wgt_weaps {{{3
-    macro_rules! test_mines_wgt_weaps {
-        ($($name:ident: $value:expr,)*) => {
-            $(
-                #[test]
-                fn $name() {
-                    let (expected, kind, num, reload, wgt) = $value;
-
-                    let mut mines = Mines::default();
-                    mines.mount_kind = kind;
-                    mines.num = num;
-                    mines.reload = reload;
-                    mines.wgt = wgt;
-
-                    assert!(expected == to_place(mines.wgt_weaps(), 3));
-                }
-            )*
-        }
-    }
-    test_mines_wgt_weaps! {
-        // name:                    (expected, kind, num, reload, wgt)
-        wgt_weaps_mines_stern_rails: (0.893, MineType::SternRails, 100, 100, 10.0),
-        wgt_weaps_mines_bow_tubes:   (0.893, MineType::BowTubes, 100, 100, 10.0),
-        wgt_weaps_mines_stern_tubes: (0.893, MineType::SternTubes, 100, 100, 10.0),
-        wgt_weaps_mines_side_tubes:  (0.893, MineType::SideTubes, 100, 100, 10.0),
-    }
-
-    // Test mines_wgt_mounts {{{3
-    macro_rules! test_mines_wgt_mounts {
-        ($($name:ident: $value:expr,)*) => {
-            $(
-                #[test]
-                fn $name() {
-                    let (expected, kind, num, reload, wgt) = $value;
-
-                    let mut mines = Mines::default();
-                    mines.mount_kind = kind;
-                    mines.num = num;
-                    mines.reload = reload;
-                    mines.wgt = wgt;
-
-                    assert!(expected == to_place(mines.wgt_mounts(), 3));
-                }
-            )*
-        }
-    }
-    test_mines_wgt_mounts! {
-        // name:                    (expected, kind, num, reload, wgt)
-        wgt_mounts_mines_stern_rails: (0.223, MineType::SternRails, 100, 100, 10.0),
-        wgt_mounts_mines_bow_tubes:   (0.893, MineType::BowTubes, 100, 100, 10.0),
-        wgt_mounts_mines_stern_tubes: (0.893, MineType::SternTubes, 100, 100, 10.0),
-        wgt_mounts_mines_side_tubes:  (0.893, MineType::SideTubes, 100, 100, 10.0),
-    }
-
-    // Test mines_wgt {{{3
-    macro_rules! test_mines_wgt {
-        ($($name:ident: $value:expr,)*) => {
-            $(
-                #[test]
-                fn $name() {
-                    let (expected, kind, num, reload, wgt) = $value;
-
-                    let mut mines = Mines::default();
-                    mines.mount_kind = kind;
-                    mines.num = num;
-                    mines.reload = reload;
-                    mines.wgt = wgt;
-
-                    assert!(expected == to_place(mines.wgt(), 3));
-                }
-            )*
-        }
-    }
-    test_mines_wgt! {
-        // name:                    (expected, kind, num, reload, wgt)
-        wgt_mines_stern_rails: (1.116, MineType::SternRails, 100, 100, 10.0),
-        wgt_mines_bow_tubes:   (1.786, MineType::BowTubes, 100, 100, 10.0),
-        wgt_mines_stern_tubes: (1.786, MineType::SternTubes, 100, 100, 10.0),
-        wgt_mines_side_tubes:  (1.786, MineType::SideTubes, 100, 100, 10.0),
-    }
-
-    // Test asw_wgt_weaps {{{3
-    macro_rules! test_asw_wgt_weaps {
-        ($($name:ident: $value:expr,)*) => {
-            $(
-                #[test]
-                fn $name() {
-                    let (expected, kind, num, reload, wgt) = $value;
-
-                    let mut asw = ASW::default();
-                    asw.kind = kind; asw.num = num; asw.reload = reload; asw.wgt = wgt;
-
-                    assert!(expected == to_place(asw.wgt_weaps(), 3));
-                }
-            )*
-        }
-    }
-    test_asw_wgt_weaps! {
-        // name:                     (wgt, kind, num, reload, wgt)
-        wgt_weaps_asw_stern_racks:   (0.893, ASWType::SternRacks, 100, 100, 10.0),
-        wgt_weaps_asw_throwers:      (0.893, ASWType::Throwers, 100, 100, 10.0),
-        wgt_weaps_asw_hedgehogs:     (0.893, ASWType::Hedgehogs, 100, 100, 10.0),
-        wgt_weaps_asw_squid_mortars: (0.893, ASWType::SquidMortars, 100, 100, 10.0),
-    }
-
-    // Test asw_wgt_mounts {{{3
-    macro_rules! test_asw_wgt_mounts {
-        ($($name:ident: $value:expr,)*) => {
-            $(
-                #[test]
-                fn $name() {
-                    let (expected, kind, num, reload, wgt) = $value;
-
-                    let mut asw = ASW::default();
-                    asw.kind = kind; asw.num = num; asw.reload = reload; asw.wgt = wgt;
-
-                    assert!(expected == to_place(asw.wgt_mounts(), 3));
-                }
-            )*
-        }
-    }
-    test_asw_wgt_mounts! {
-        // name:                      (expected, kind, num, reload, wgt)
-        wgt_mounts_asw_stern_racks:   (0.223, ASWType::SternRacks, 100, 100, 10.0),
-        wgt_mounts_asw_throwers:      (0.446, ASWType::Throwers, 100, 100, 10.0),
-        wgt_mounts_asw_hedgehogs:     (0.446, ASWType::Hedgehogs, 100, 100, 10.0),
-        wgt_mounts_asw_squid_mortars: (8.929, ASWType::SquidMortars, 100, 100, 10.0),
-    }
-
-    // Test asw_wgt {{{3
-    macro_rules! test_asw_wgt {
-        ($($name:ident: $value:expr,)*) => {
-            $(
-                #[test]
-                fn $name() {
-                    let (expected, kind, num, reload, wgt) = $value;
-
-                    let mut asw = ASW::default();
-                    asw.kind = kind; asw.num = num; asw.reload = reload; asw.wgt = wgt;
-
-                    assert!(expected == to_place(asw.wgt(), 3));
-                }
-            )*
-        }
-    }
-    test_asw_wgt! {
-        // name:                      (expected, kind, num, reload, wgt)
-        wgt_asw_stern_racks:   (1.116, ASWType::SternRacks, 100, 100, 10.0),
-        wgt_asw_throwers:      (1.339, ASWType::Throwers, 100, 100, 10.0),
-        wgt_asw_hedgehogs:     (1.339, ASWType::Hedgehogs, 100, 100, 10.0),
-        wgt_asw_squid_mortars: (9.821, ASWType::SquidMortars, 100, 100, 10.0),
-    }
-
-    // Test torpedo_wgt_weaps {{{3
-    macro_rules! test_torpedo_wgt_weaps {
-        ($($name:ident: $value:expr,)*) => {
-            $(
-                #[test]
-                fn $name() {
-                    let (expected, kind, diam, len, num, year) = $value;
-
-                    let mut torp = Torpedoes::default();
-                    torp.mount_kind = kind; torp.diam = diam; torp.len = len; torp.num = num; torp.year = year;
-
-                    assert!(expected == to_place(torp.wgt_weaps(), 3));
-                }
-            )*
-        }
-    }
-    test_torpedo_wgt_weaps! {
-        // name:                       (wgt, kind, diam, len, num, year)
-        wgt_weaps_torps_fixed_tubes:         (4.450, TorpedoMountType::FixedTubes,         18.0, 21.0, 4, 1940),
-        wgt_weaps_torps_deck_side_tubes:     (4.450, TorpedoMountType::DeckSideTubes,      18.0, 21.0, 4, 1940),
-        wgt_weaps_torps_center_tubes:        (4.450, TorpedoMountType::CenterTubes,        18.0, 21.0, 4, 1940),
-        wgt_weaps_torps_deck_reloads:        (4.450, TorpedoMountType::DeckReloads,        18.0, 21.0, 4, 1940),
-        wgt_weaps_torps_bow_tubes:           (4.450, TorpedoMountType::BowTubes,           18.0, 21.0, 4, 1940),
-        wgt_weaps_torps_stern_tubes:         (4.450, TorpedoMountType::SternTubes,         18.0, 21.0, 4, 1940),
-        wgt_weaps_torps_bow_and_stern_tubes: (4.450, TorpedoMountType::BowAndSternTubes,   18.0, 21.0, 4, 1940),
-        wgt_weaps_torps_submerged_tubes:     (4.450, TorpedoMountType::SubmergedSideTubes, 18.0, 21.0, 4, 1940),
-        wgt_weaps_torps_submerged_reloads:   (4.450, TorpedoMountType::SubmergedReloads,   18.0, 21.0, 4, 1940),
-    }
-
-    // Test torpedo_wgt_mounts {{{3
-    macro_rules! test_torpedo_wgt_mounts {
-        ($($name:ident: $value:expr,)*) => {
-            $(
-                #[test]
-                fn $name() {
-                    let (expected, kind, diam, len, num, year) = $value;
-
-                    let mut torp = Torpedoes::default();
-                    torp.mount_kind = kind; torp.diam = diam; torp.len = len; torp.num = num; torp.year = year;
-
-                    assert!(expected == to_place(torp.wgt_mounts(), 3));
-                }
-            )*
-        }
-    }
-    test_torpedo_wgt_mounts! {
-        // name:                       (wgt, kind, diam, len, num, year)
-        wgt_mounts_torps_fixed_tubes:         (1.113, TorpedoMountType::FixedTubes,         18.0, 21.0, 4, 1940),
-        wgt_mounts_torps_deck_side_tubes:     (4.450, TorpedoMountType::DeckSideTubes,      18.0, 21.0, 4, 1940),
-        wgt_mounts_torps_center_tubes:        (4.450, TorpedoMountType::CenterTubes,        18.0, 21.0, 4, 1940),
-        wgt_mounts_torps_deck_reloads:        (1.113, TorpedoMountType::DeckReloads,        18.0, 21.0, 4, 1940),
-        wgt_mounts_torps_bow_tubes:           (4.450, TorpedoMountType::BowTubes,           18.0, 21.0, 4, 1940),
-        wgt_mounts_torps_stern_tubes:         (4.450, TorpedoMountType::SternTubes,         18.0, 21.0, 4, 1940),
-        wgt_mounts_torps_bow_and_stern_tubes: (4.450, TorpedoMountType::BowAndSternTubes,   18.0, 21.0, 4, 1940),
-        wgt_mounts_torps_submerged_tubes:     (4.450, TorpedoMountType::SubmergedSideTubes, 18.0, 21.0, 4, 1940),
-        wgt_mounts_torps_submerged_reloads:   (1.113, TorpedoMountType::SubmergedReloads,   18.0, 21.0, 4, 1940),
-    }
-
-    // Test torpedo_wgt {{{3
-    macro_rules! test_torpedo_wgt {
-        ($($name:ident: $value:expr,)*) => {
-            $(
-                #[test]
-                fn $name() {
-                    let (expected, kind, diam, len, num, year) = $value;
-
-                    let mut torp = Torpedoes::default();
-                    torp.mount_kind = kind; torp.diam = diam; torp.len = len; torp.num = num; torp.year = year;
-
-                    assert!(expected == to_place(torp.wgt(), 3));
-                }
-            )*
-        }
-    }
-    test_torpedo_wgt! {
-        // name:                       (wgt, kind, diam, len, num, year)
-        wgt_torps_fixed_tubes:         (5.563, TorpedoMountType::FixedTubes,         18.0, 21.0, 4, 1940),
-        wgt_torps_deck_side_tubes:     (8.900, TorpedoMountType::DeckSideTubes,      18.0, 21.0, 4, 1940),
-        wgt_torps_center_tubes:        (8.900, TorpedoMountType::CenterTubes,        18.0, 21.0, 4, 1940),
-        wgt_torps_deck_reloads:        (5.563, TorpedoMountType::DeckReloads,        18.0, 21.0, 4, 1940),
-        wgt_torps_bow_tubes:           (8.900, TorpedoMountType::BowTubes,           18.0, 21.0, 4, 1940),
-        wgt_torps_stern_tubes:         (8.900, TorpedoMountType::SternTubes,         18.0, 21.0, 4, 1940),
-        wgt_torps_bow_and_stern_tubes: (8.900, TorpedoMountType::BowAndSternTubes,   18.0, 21.0, 4, 1940),
-        wgt_torps_submerged_tubes:     (8.900, TorpedoMountType::SubmergedSideTubes, 18.0, 21.0, 4, 1940),
-        wgt_torps_submerged_reloads:   (5.563, TorpedoMountType::SubmergedReloads,   18.0, 21.0, 4, 1940),
-    }
-
-    // Test torpedo_hull_space {{{3
-    macro_rules! test_torpedo_hull_space {
-        ($($name:ident: $value:expr,)*) => {
-            $(
-                #[test]
-                fn $name() {
-                    let (expected, kind, diam, len, num) = $value;
-                    let mut torp = Torpedoes::default();
-                    torp.mount_kind = kind; torp.diam = diam; torp.len = len; torp.num = num;
-
-                    assert!(expected == to_place(torp.hull_space(), 3));
-                }
-            )*
-        }
-    }
-    test_torpedo_hull_space! {
-        // name:                             (space, kind, diam, len, num, year)
-        test_hull_space_fixed_tubes:         (0.0, TorpedoMountType::FixedTubes,         18.0, 21.0, 4),
-        test_hull_space_deck_side_tubes:     (0.0, TorpedoMountType::DeckSideTubes,      18.0, 21.0, 4),
-        test_hull_space_center_tubes:        (0.0, TorpedoMountType::CenterTubes,        18.0, 21.0, 4),
-        test_hull_space_deck_reloads:        (0.0, TorpedoMountType::DeckReloads,        18.0, 21.0, 4),
-        test_hull_space_bow_tubes:           (3573.281, TorpedoMountType::BowTubes,           18.0, 21.0, 4),
-        test_hull_space_stern_tubes:         (3573.281, TorpedoMountType::SternTubes,         18.0, 21.0, 4),
-        test_hull_space_bow_and_stern_tubes: (3573.281, TorpedoMountType::BowAndSternTubes,   18.0, 21.0, 4),
-        test_hull_space_submerged_tubes:     (3573.281, TorpedoMountType::SubmergedSideTubes, 18.0, 21.0, 4),
-        test_hull_space_submerged_reloads:   (637.875, TorpedoMountType::SubmergedReloads,   18.0, 21.0, 4),
-    }
-
-    // Test torpedo_deck_space {{{3
-    macro_rules! test_torpedo_deck_space {
-        ($($name:ident: $value:expr,)*) => {
-            $(
-                #[test]
-                fn $name() {
-                    let (expected,kind, diam, len, num, mounts) = $value;
-
-                    let mut torp = Torpedoes::default();
-                    torp.mount_kind = kind; torp.diam = diam; torp.len = len; torp.num = num; torp.mounts = mounts;
-
-                    let b = 10.0;
-                    assert!(expected == to_place(torp.deck_space(b), 3));
-                }
-            )*
-        }
-    }
-    test_torpedo_deck_space! {
-        // name:                             (space, kind, diam, len, num, mounts)
-        test_deck_space_fixed_tubes:         (126.0, TorpedoMountType::FixedTubes,         18.0, 21.0, 4, 2),
-        test_deck_space_deck_side_tubes:     (392.732, TorpedoMountType::DeckSideTubes,      18.0, 21.0, 4, 2),
-        test_deck_space_center_tubes:        (425.793, TorpedoMountType::CenterTubes,        18.0, 21.0, 4, 2),
-        test_deck_space_deck_reloads:        (252.0, TorpedoMountType::DeckReloads,        18.0, 21.0, 4, 2),
-        test_deck_space_bow_tubes:           (0.0, TorpedoMountType::BowTubes,           18.0, 21.0, 4, 2),
-        test_deck_space_stern_tubes:         (0.0, TorpedoMountType::SternTubes,         18.0, 21.0, 4, 2),
-        test_deck_space_bow_and_stern_tubes: (0.0, TorpedoMountType::BowAndSternTubes,   18.0, 21.0, 4, 2),
-        test_deck_space_submerged_tubes:     (0.0, TorpedoMountType::SubmergedSideTubes, 18.0, 21.0, 4, 2),
-        test_deck_space_submerged_reloads:   (0.0, TorpedoMountType::SubmergedReloads,   18.0, 21.0, 4, 2),
-    }
-}
-
-// MineType {{{1
-/// Types of mine deployment gear.
-///
-#[derive(Serialize, Deserialize, Clone, Debug, Default)]
-pub enum MineType {
-    #[default]
-    SternRails,
-    BowTubes,
-    SternTubes,
-    SideTubes,
-}
-
-impl From<String> for MineType { // {{{2
-    fn from(index: String) -> Self {
-        index.as_str().into()
-    }
-}
-
-impl From<&str> for MineType {
-    fn from(index: &str) -> Self {
-        match index {
-            "1" => Self::BowTubes,
-            "2" => Self::SternTubes,
-            "3" => Self::SideTubes,
-            "0" | _ => Self::SternRails,
-        }
-    }
-}
-
-impl MineType { // {{{2
-    // wgt_factor {{{3
-    /// Multiplier to determine weight of mine deployment gear.
-    ///
-    pub fn wgt_factor(&self) -> f64 {
-        match self {
-            Self::SternRails => 0.25,
-            Self::BowTubes   => 1.0,
-            Self::SternTubes => 1.0,
-            Self::SideTubes  => 1.0,
-        }
-    }
-
-    // desc {{{3
-    /// Description of mine deployment gear type.
-    ///
-    pub fn desc(&self) -> String {
-        match self {
-            Self::SternRails => "in Above water - Stern racks/rails",
-            Self::BowTubes   => "in Below water - bow tubes",
-            Self::SternTubes => "",
-            Self::SideTubes  => "",
-        }.into()
-    }
-}
-
-// Testing MineType {{{2
-#[cfg(test)]
-mod mine_type {
-    use super::*;
-
-    // Test wgt_factor {{{3
-    macro_rules! test_wgt_factor {
-        ($($name:ident: $value:expr,)*) => {
-            $(
-                #[test]
-                fn $name() {
-                    let (expected, mines) = $value;
-
-                    assert_eq!(expected, mines.wgt_factor());
-                }
-            )*
-        }
-    }
-
-    test_wgt_factor! {
-        // name: (factor, mines)
-        rails:   (0.25, MineType::SternRails),
-        bow:     (1.0, MineType::BowTubes),
-        stern:   (1.0, MineType::SternTubes),
-        side:    (1.0, MineType::SideTubes),
-    }
-}
-
-
-// ASWType {{{1
-/// Type of ASW deployment gear.
-///
-#[derive(Serialize, Deserialize, Clone, Debug, Default)]
-pub enum ASWType {
-    #[default]
-    SternRacks,
-    Throwers,
-    Hedgehogs,
-    SquidMortars,
-}
-
-impl From<String> for ASWType { // {{{2
-    fn from(index: String) -> Self {
-        index.as_str().into()
-    }
-}
-
-impl From<&str> for ASWType {
-    fn from(index: &str) -> Self {
-        match index {
-            "1" => Self::Throwers,
-            "2" => Self::Hedgehogs,
-            "3" => Self::SquidMortars,
-            "0" | _ => Self::SternRacks,
-        }
-    }
-}
-
-impl ASWType { // {{{2
-    // mount_wgt_factor {{{3
-    /// Multiplier used to calculate total mount weight.
-    ///
-    pub fn mount_wgt_factor(&self) -> f64 {
-        match self {
-            Self::SternRacks   => 0.25,
-            Self::Throwers     => 0.5,
-            Self::Hedgehogs    => 0.5,
-            Self::SquidMortars => 10.0,
-        }
-    }
-
-    // desc {{{3
-    /// Description of deployment gear.
-    ///
-    pub fn desc(&self) -> String {
-        match self {
-            Self::SternRacks   => "Depth Charges",
-            Self::Throwers     => "Depth Charges",
-            Self::Hedgehogs    => "ahead throwing AS Mortars",
-            Self::SquidMortars => "trainable AS Mortars",
-        }.into()
-    }
-
-    // dc_desc {{{3
-    /// Description used to differentiate DC types.
-    ///
-    pub fn dc_desc(&self) -> String {
-        match self {
-            Self::SternRacks   => "in Stern depth charge racks",
-            Self::Throwers     => "in Depth depth throwers",
-            Self::Hedgehogs    => "",
-            Self::SquidMortars => "",
-        }.into()
-    }
-}
-
-// Testing ASWType {{{2
-#[cfg(test)]
-mod asw_type {
-    use super::*;
-
-    // Test mount_wgt_factor {{{3
-    macro_rules! test_mount_wgt_factor {
-        ($($name:ident: $value:expr,)*) => {
-            $(
-                #[test]
-                fn $name() {
-                    let (expected, asw) = $value;
-
-                    assert_eq!(expected, asw.mount_wgt_factor());
-                }
-            )*
-        }
-    }
-
-    test_mount_wgt_factor! {
-        // name: (factor, asw)
-        racks:   (0.25, ASWType::SternRacks),
-        throw:   (0.5, ASWType::Throwers),
-        hedge:   (0.5, ASWType::Hedgehogs),
-        squid:   (10.0, ASWType::SquidMortars),
-    }
-}
-
-// TorpedoMountType {{{1
-/// Type of torpedo mount.
-///
-#[derive(Serialize, Deserialize, Clone, Debug, Default)]
-pub enum TorpedoMountType {
-    #[default]
-    FixedTubes,
-    DeckSideTubes,
-    CenterTubes,
-    DeckReloads,
-    BowTubes,
-    SternTubes,
-    BowAndSternTubes,
-    SubmergedSideTubes,
-    SubmergedReloads,
-}
-
-impl From<String> for TorpedoMountType { // {{{2
-    fn from(index: String) -> Self {
-        index.as_str().into()
-    }
-}
-
-impl From<&str> for TorpedoMountType {
-    fn from(index: &str) -> Self {
-        match index {
-            "1" => Self::DeckSideTubes,
-            "2" => Self::CenterTubes,
-            "3" => Self::DeckReloads,
-            "4" => Self::BowTubes,
-            "5" => Self::SternTubes,
-            "6" => Self::BowAndSternTubes,
-            "7" => Self::SubmergedSideTubes,
-            "8" => Self::SubmergedReloads,
-            "0" | _ => Self::FixedTubes,
-        }
-    }
-}
-
-impl TorpedoMountType { // {{{2
-    // wgt_factor {{{3
-    /// Multiplier used to determine weight of torpedo mounts.
-    ///
-    pub fn wgt_factor(&self) -> f64 {
-        match self {
-            Self::FixedTubes         => 0.25,
-            Self::DeckSideTubes      => 1.0,
-            Self::CenterTubes        => 1.0,
-            Self::DeckReloads        => 0.25,
-            Self::BowTubes           => 1.0,
-            Self::SternTubes         => 1.0,
-            Self::BowAndSternTubes   => 1.0,
-            Self::SubmergedSideTubes => 1.0,
-            Self::SubmergedReloads   => 0.25,
-        }
-    }
-
-    // hull_space {{{3
-    /// Hull space taken up by torpedo mounts.
-    ///
-    pub fn hull_space(&self, len: f64, diam: f64) -> f64 {
-        match self {
-            Self::FixedTubes |
-            Self::DeckSideTubes |
-            Self::CenterTubes |
-            Self::DeckReloads => 0.0,
-
-            Self::BowTubes |
-            Self::SternTubes |
-            Self::BowAndSternTubes |
-            Self::SubmergedSideTubes => len * 2.5 * (diam * 2.75/12.0).powf(2.0),
-
-            Self::SubmergedReloads   => len * 1.5 * (diam * 1.5/12.0).powf(2.0),
-        }
-    }
-
-    // deck_space {{{3
-    /// Deck space taken up by torpedo mounts.
-    ///
-    pub fn deck_space(&self, b: f64, num: u32, len: f64, diam: f64, mounts: u32) -> f64 {
-        use std::f64::consts::PI;
-
-        let num = num as f64;
-        let mounts = mounts as f64;
-
-        match self {
-            Self::FixedTubes => len * diam / 12.0 * num,
-
-            Self::DeckSideTubes => {
-                f64::powf(
-                    f64::sqrt(
-                        f64::powf(len,2.0) + f64::powf(((num/mounts)*diam/12.0)+(num/mounts-1.0)*0.5,2.0)
-                    )*0.5,2.0
-                )*PI+(((num/mounts)*diam/12.0)+(num/mounts-1.0)*0.5)*0.5*len
-            },
-
-            Self::CenterTubes => {
-                let x = f64::powf(len,2.0);
-                let y = f64::powf((num/mounts)*diam/12.0 + (num/mounts-1.0)*0.5, 2.0);
-
-                f64::sqrt(x + y)*b * mounts
-            },
-
-            Self::DeckReloads => len * 1.5 * (diam + 6.0) / 12.0 * num,
-
-            Self::BowTubes |
-            Self::SternTubes |
-            Self::BowAndSternTubes |
-            Self::SubmergedSideTubes |
-            Self::SubmergedReloads   => 0.0,
-        }
-    }
-
-    // desc {{{3
-    /// Description of torpedo mounts.
-    ///
-    pub fn desc(&self, tubes: u32, mounts: u32) -> String {
-        let desc = match self {
-            Self::FixedTubes         => "deck mounted carriage/fixed tube",
-            Self::DeckSideTubes      => "deck mounted side rotating tube",
-            Self::CenterTubes        => "deck mounted centre rotating tube",
-            Self::DeckReloads        => "deck mounted reload",
-            Self::BowTubes           => "submerged bow tube",
-            Self::SternTubes         => "submerged stern tube",
-            Self::BowAndSternTubes   => &format!("submerged bow {} stern tube", if tubes > 1 { "&" } else { "OR" }).to_owned(),
-            Self::SubmergedSideTubes => "submerged side tube",
-            Self::SubmergedReloads   => "below water reload",
-        };
-
-        let prefix = match self {
-            Self::FixedTubes |
-            Self::DeckSideTubes |
-            Self::CenterTubes |
-            Self::DeckReloads =>
-                if tubes > 1 {
-                    format!("In {} sets of ", mounts)
-                } else {
-                    "In a ".into()
-                },
-
-            _ => "".into(),
-        };
-
-        prefix + desc + if tubes > 1 { "s" } else { "" }
-    }
-}
-
-// Testing Torpedo MountType {{{2
-#[cfg(test)]
-mod torpedo_mount_type {
-    use super::*;
-    use crate::test_support::*;
-
-    // Test wgt_factor {{{3
-    macro_rules! test_wgt_factor {
-        ($($name:ident: $value:expr,)*) => {
-            $(
-                #[test]
-                fn $name() {
-                    let (expected, torp) = $value;
-
-                    assert_eq!(expected, torp.wgt_factor());
-                }
-            )*
-        }
-    }
-
-    test_wgt_factor! {
-        // name:               (factor, torp)
-        wgt_factor_fixed:      (0.25, TorpedoMountType::FixedTubes),
-        wgt_factor_deck:       (1.0, TorpedoMountType::DeckSideTubes),
-        wgt_factor_center:     (1.0, TorpedoMountType::CenterTubes),
-        wgt_factor_reload:     (0.25, TorpedoMountType::DeckReloads),
-        wgt_factor_bow:        (1.0, TorpedoMountType::BowTubes),
-        wgt_factor_stern:      (1.0, TorpedoMountType::SternTubes),
-        wgt_factor_bow_stern:  (1.0, TorpedoMountType::BowAndSternTubes),
-        wgt_factor_sub_side:   (1.0, TorpedoMountType::SubmergedSideTubes),
-        wgt_factor_sub_reload: (0.25, TorpedoMountType::SubmergedReloads),
-    }
-
-    // Test hull_space {{{3
-    macro_rules! test_hull_space {
-        ($($name:ident: $value:expr,)*) => {
-            $(
-                #[test]
-                fn $name() {
-                    let (expected, torp) = $value;
-
-                    let len = 18.0; let diam = 21.0;
-                    assert_eq!(expected, to_place(torp.hull_space(len, diam), 2));
-                }
-            )*
-        }
-    }
-
-    test_hull_space! {
-        // name:               (factor, torp)
-        hull_space_fixed:      (0.0, TorpedoMountType::FixedTubes),
-        hull_space_deck:       (0.0, TorpedoMountType::DeckSideTubes),
-        hull_space_center:     (0.0, TorpedoMountType::CenterTubes),
-        hull_space_reload:     (0.0, TorpedoMountType::DeckReloads),
-        hull_space_bow:        (1042.21, TorpedoMountType::BowTubes),
-        hull_space_stern:      (1042.21, TorpedoMountType::SternTubes),
-        hull_space_bow_stern:  (1042.21, TorpedoMountType::BowAndSternTubes),
-        hull_space_sub_side:   (1042.21, TorpedoMountType::SubmergedSideTubes),
-        hull_space_sub_reload: (186.05, TorpedoMountType::SubmergedReloads),
-    }
-
-    // Test deck_space {{{3
-    macro_rules! test_deck_space {
-        ($($name:ident: $value:expr,)*) => {
-            $(
-                #[test]
-                fn $name() {
-                    let (expected, torp) = $value;
-
-                    let len = 18.0; let diam = 21.0; let num = 2; let mounts = 2;
-                    let b = 50.0; 
-                    assert_eq!(expected, to_place(torp.deck_space(b, num, len, diam, mounts), 2));
-                }
-            )*
-        }
-    }
-
-    test_deck_space! {
-        // name:               (factor, torp)
-        deck_space_fixed:      (63.0, TorpedoMountType::FixedTubes),
-        deck_space_deck:       (272.62, TorpedoMountType::DeckSideTubes),
-        deck_space_center:     (1808.49, TorpedoMountType::CenterTubes),
-        deck_space_reload:     (121.5, TorpedoMountType::DeckReloads),
-        deck_space_bow:        (0.0, TorpedoMountType::BowTubes),
-        deck_space_stern:      (0.0, TorpedoMountType::SternTubes),
-        deck_space_bow_stern:  (0.0, TorpedoMountType::BowAndSternTubes),
-        deck_space_sub_side:   (0.0, TorpedoMountType::SubmergedSideTubes),
-        deck_space_sub_reload: (0.0, TorpedoMountType::SubmergedReloads),
     }
 }
 
@@ -2463,6 +1366,223 @@ mod mount_type {
         face_wgt_if_no_back_deckhoist:   (1.0, MountType::DeckAndHoist),
         face_wgt_if_no_back_deck:        (1.0, MountType::Deck),
         face_wgt_if_no_back_casemate:    (0.0, MountType::Casemate),
+    }
+}
+
+// SubBattery {{{1
+/// Gun grouping within a battery.
+///
+#[derive(Serialize, Deserialize, Clone, Debug, Default)]
+pub struct SubBattery {
+    /// Layout of guns within a turret.
+    pub layout: GunLayoutType,
+    /// Placement of guns on the ship.
+    pub distribution: GunDistributionType,
+
+    /// Number of mounts above the waterline.
+    pub above: u32,
+    /// Number of mounts on the waterline.
+    pub on: u32,
+    /// Number of mounts below the waterline.
+    pub below: u32,
+
+    /// If mounts above the deck are superfiring
+    pub two_mounts_up: bool,
+    /// If mounts below the waterline are on the lower deck
+    pub lower_deck: bool,
+}
+
+impl SubBattery { // Internals Output {{{2
+    pub fn internals(&self, hull: Hull, cal: f64) -> () {
+        eprintln!("layout = {}", self.layout);
+        eprintln!("distribution = {}", self.distribution);
+        eprintln!("above = {}", self.above);
+        eprintln!("on = {}", self.on);
+        eprintln!("below = {}", self.below);
+        eprintln!("two_mounts_up = {}", self.two_mounts_up);
+        eprintln!("lower_deck = {}", self.lower_deck);
+        eprintln!("super_() = {}", self.super_());
+        eprintln!("num_mounts() = {}", self.num_mounts());
+        eprintln!("diameter_calc() = {}", self.diameter_calc(cal));
+        eprintln!("wgt_adj() = {}", self.wgt_adj());
+        eprintln!("free() = {}", self.free(hull.clone()));
+        eprintln!("");
+    }
+}
+
+impl SubBattery { // {{{2
+    // super_ {{{3
+    /// Number of barrels above the waterline, reduced by the number of barrels
+    /// below the waterline. Superfiring and lower deck barrels count double.
+    ///
+    pub fn super_(&self) -> i32 {
+        let above: i32 = (self.above * if self.two_mounts_up { 2 } else { 1 }) as i32;
+        let below: i32 = (self.below * if self.lower_deck    { 2 } else { 1 }) as i32;
+
+        (above - below) * self.layout.guns_per() as i32
+    }
+
+    // num_mounts {{{3
+    /// Total number of gun mounts.
+    ///
+    pub fn num_mounts(&self) -> u32 {
+        self.above + self.on + self.below
+    }
+
+    // diameter_calc {{{3
+    /// XXX: I do not know what this is doing.
+    ///
+    pub fn diameter_calc(&self, cal: f64) -> f64 {
+        if cal == 0.0 { return 0.0; } // Catch divide by zero
+
+        let (factor, power) = self.layout.diameter_calc_nums();
+
+        let mut calc = factor * cal * (1.0 + (1.0/cal).powf(power));
+
+        if cal < 12.0                               { calc += 12.0 / cal; }
+        if cal > 1.0 && self.layout.wgt_adj() < 1.0 { calc *= 0.9; }
+
+        calc
+    }
+
+    // wgt_adj {{{3
+    /// XXX: I do not know what this is doing.
+    ///
+    pub fn wgt_adj(&self) -> f64 {
+        self.layout.wgt_adj() * self.num_mounts() as f64
+    }
+
+    // free {{{3
+    /// XXX: I do not know what this is doing.
+    ///
+    pub fn free(&self, hull: Hull) -> f64 {
+        let free = self.distribution.free(self.num_mounts(), hull);
+
+        free * self.num_mounts() as f64
+    }
+}
+
+// Testing SubBattery {{{2
+#[cfg(test)]
+mod sub_battery {
+    use super::*;
+    use crate::test_support::*;
+
+    // Test super_ {{{3
+    macro_rules! test_super_ {
+        ($($name:ident: $value:expr,)*) => {
+            $(
+                #[test]
+                fn $name() {
+                    let (expected, above, two_mounts_up, below, lower_deck) = $value;
+
+                    let mut sub_btry = SubBattery::default();
+                    sub_btry.layout = GunLayoutType::Single;
+
+                    sub_btry.above = above;
+                    sub_btry.below = below;
+                    sub_btry.two_mounts_up = two_mounts_up;
+                    sub_btry.lower_deck = lower_deck;
+
+                    assert!(expected == sub_btry.super_());
+                }
+            )*
+        }
+    }
+    test_super_! {
+        // name:      (super_, above, two_mounts_up, below, lower_deck)
+        super_test_1: ( 1, 1, false, 0, false),
+        super_test_2: (-1, 0, false, 1, false),
+        super_test_3: ( 2, 1, true, 0, true),
+        super_test_4: (-2, 0, true, 1, true),
+        super_test_5: ( 0, 1, false, 1, false),
+        super_test_6: ( 0, 1, true, 1, true),
+        super_test_7: (-1, 1, false, 1, true),
+        super_test_8: ( 1, 1, true, 1, false),
+    }
+
+    // Test diameter_calc {{{3
+    macro_rules! test_diameter_calc {
+        ($($name:ident: $value:expr,)*) => {
+            $(
+                #[test]
+                fn $name() {
+                    let (expected, cal) = $value;
+
+                    let mut sub_btry = SubBattery::default();
+                    sub_btry.layout = GunLayoutType::Single;
+
+                    assert!(expected == to_place(sub_btry.diameter_calc(cal), 2));
+                }
+            )*
+        }
+    }
+    test_diameter_calc! {
+        // name:      (diameter_calc, cal)
+        diameter_calc_cal_eq_0: (0.0, 0.0),
+        diameter_calc_cal_lt_12: (19.14, 10.0),
+        diameter_calc_cal_gt_1:  (12.30, 5.0),
+        diameter_calc_cal_sm:  (25.82, 0.5),
+    }
+
+    // Test wgt_adj {{{3
+    macro_rules! test_wgt_adj {
+        ($($name:ident: $value:expr,)*) => {
+            $(
+                #[test]
+                fn $name() {
+                    let (expected, num_mounts) = $value;
+
+                    let mut sub_btry = SubBattery::default();
+                    sub_btry.layout = GunLayoutType::Single;
+                    sub_btry.above = num_mounts;
+                    sub_btry.on = 0;
+                    sub_btry.below = 0;
+
+                    assert!(expected == to_place(sub_btry.wgt_adj(), 2));
+                }
+            )*
+        }
+    }
+    test_wgt_adj! {
+        // name:      (wgt_adj, num_mounts)
+        wgt_adj_test: (10.0, 10),
+    }
+
+    // Test free {{{3
+    macro_rules! test_free {
+        ($($name:ident: $value:expr,)*) => {
+            $(
+                #[test]
+                fn $name() {
+                    let (expected, num_mounts) = $value;
+
+                    let mut sub_btry = SubBattery::default();
+                    sub_btry.distribution = GunDistributionType::CenterlineEven;
+                    sub_btry.above = num_mounts;
+                    sub_btry.on = 0;
+                    sub_btry.below = 0;
+
+                    let mut hull = Hull::default();
+                    hull.fc_len = 0.2;
+
+                    hull.fd_len = 0.3;
+                    hull.fd_fwd = 10.0;
+                    hull.fd_aft = 0.0;
+
+                    hull.ad_fwd = 20.0;
+                    hull.ad_aft = 0.0;
+
+                    hull.qd_len = 0.15;
+
+                    assert!(expected == to_place(sub_btry.free(hull), 2));
+                }
+            )*
+        }
+    }
+    test_free! {
+        // name:   (free, num_mounts)
+        free_test: (35.0, 5),
     }
 }
 
@@ -3140,6 +2260,886 @@ impl GunLayoutType { // {{{2
             Self::FiveGun  => 1.0,
             Self::Dec2Row  => 1.0,
         }
+    }
+}
+
+// Torpedoes {{{1
+/// A set of torpedo mounts or tubes.
+///
+#[derive(Serialize, Deserialize, Clone, Debug, Default)]
+pub struct Torpedoes {
+    /// Units
+    pub units: Units,
+    /// Year torpedo was designed.
+    pub year: u32,
+
+    /// Number of mounts.
+    pub mounts: u32,
+    /// Type of mount.
+    pub mount_kind: TorpedoMountType,
+
+    /// Number of torpedoes in the set
+    pub num: u32,
+
+    /// Torpedo diameter.
+    pub diam: f64,
+    /// Torpedo length.
+    pub len: f64,
+}
+
+impl Torpedoes { // {{{2
+    // wgt {{{3
+    /// Weight of all torpedoes and mounts in the set.
+    ///
+    pub fn wgt(&self) -> f64 {
+        self.wgt_weaps() + self.wgt_mounts()
+    }
+
+    // wgt_weaps {{{3
+    /// Weight of torpedoes in the set.
+    ///
+    pub fn wgt_weaps(&self) -> f64 {
+        (
+            PI * self.diam.powf(2.0) * self.len /
+            (
+                (f64::max(1907.0 - self.year as f64, 0.0) + 25.0) * 937.0
+            ) + (self.year as f64 - 1890.0) * 0.004
+        ) * self.num as f64
+    }
+
+    // wgt_mounts {{{3
+    /// Weight of mounts in the set.
+    ///
+    pub fn wgt_mounts(&self) -> f64 {
+        self.mount_kind.wgt_factor() * self.wgt_weaps()
+    }
+
+    // hull_space {{{3
+    /// Hull space taken up by the set.
+    ///
+    pub fn hull_space(&self) -> f64 {
+        self.mount_kind.hull_space(self.len, self.diam) * self.num as f64
+    }
+
+    // deck_space {{{3
+    /// Deck space taken up by the set.
+    ///
+    pub fn deck_space(&self, b: f64) -> f64 {
+        self.mount_kind.deck_space(b, self.num, self.len, self.diam, self.mounts)
+    }
+}
+
+// TorpedoMountType {{{1
+/// Type of torpedo mount.
+///
+#[derive(Serialize, Deserialize, Clone, Debug, Default)]
+pub enum TorpedoMountType {
+    #[default]
+    FixedTubes,
+    DeckSideTubes,
+    CenterTubes,
+    DeckReloads,
+    BowTubes,
+    SternTubes,
+    BowAndSternTubes,
+    SubmergedSideTubes,
+    SubmergedReloads,
+}
+
+impl From<String> for TorpedoMountType { // {{{2
+    fn from(index: String) -> Self {
+        index.as_str().into()
+    }
+}
+
+impl From<&str> for TorpedoMountType {
+    fn from(index: &str) -> Self {
+        match index {
+            "1" => Self::DeckSideTubes,
+            "2" => Self::CenterTubes,
+            "3" => Self::DeckReloads,
+            "4" => Self::BowTubes,
+            "5" => Self::SternTubes,
+            "6" => Self::BowAndSternTubes,
+            "7" => Self::SubmergedSideTubes,
+            "8" => Self::SubmergedReloads,
+            "0" | _ => Self::FixedTubes,
+        }
+    }
+}
+
+impl TorpedoMountType { // {{{2
+    // wgt_factor {{{3
+    /// Multiplier used to determine weight of torpedo mounts.
+    ///
+    pub fn wgt_factor(&self) -> f64 {
+        match self {
+            Self::FixedTubes         => 0.25,
+            Self::DeckSideTubes      => 1.0,
+            Self::CenterTubes        => 1.0,
+            Self::DeckReloads        => 0.25,
+            Self::BowTubes           => 1.0,
+            Self::SternTubes         => 1.0,
+            Self::BowAndSternTubes   => 1.0,
+            Self::SubmergedSideTubes => 1.0,
+            Self::SubmergedReloads   => 0.25,
+        }
+    }
+
+    // hull_space {{{3
+    /// Hull space taken up by torpedo mounts.
+    ///
+    pub fn hull_space(&self, len: f64, diam: f64) -> f64 {
+        match self {
+            Self::FixedTubes |
+            Self::DeckSideTubes |
+            Self::CenterTubes |
+            Self::DeckReloads => 0.0,
+
+            Self::BowTubes |
+            Self::SternTubes |
+            Self::BowAndSternTubes |
+            Self::SubmergedSideTubes => len * 2.5 * (diam * 2.75/12.0).powf(2.0),
+
+            Self::SubmergedReloads   => len * 1.5 * (diam * 1.5/12.0).powf(2.0),
+        }
+    }
+
+    // deck_space {{{3
+    /// Deck space taken up by torpedo mounts.
+    ///
+    pub fn deck_space(&self, b: f64, num: u32, len: f64, diam: f64, mounts: u32) -> f64 {
+        use std::f64::consts::PI;
+
+        let num = num as f64;
+        let mounts = mounts as f64;
+
+        match self {
+            Self::FixedTubes => len * diam / 12.0 * num,
+
+            Self::DeckSideTubes => {
+                f64::powf(
+                    f64::sqrt(
+                        f64::powf(len,2.0) + f64::powf(((num/mounts)*diam/12.0)+(num/mounts-1.0)*0.5,2.0)
+                    )*0.5,2.0
+                )*PI+(((num/mounts)*diam/12.0)+(num/mounts-1.0)*0.5)*0.5*len
+            },
+
+            Self::CenterTubes => {
+                let x = f64::powf(len,2.0);
+                let y = f64::powf((num/mounts)*diam/12.0 + (num/mounts-1.0)*0.5, 2.0);
+
+                f64::sqrt(x + y)*b * mounts
+            },
+
+            Self::DeckReloads => len * 1.5 * (diam + 6.0) / 12.0 * num,
+
+            Self::BowTubes |
+            Self::SternTubes |
+            Self::BowAndSternTubes |
+            Self::SubmergedSideTubes |
+            Self::SubmergedReloads   => 0.0,
+        }
+    }
+
+    // desc {{{3
+    /// Description of torpedo mounts.
+    ///
+    pub fn desc(&self, tubes: u32, mounts: u32) -> String {
+        let desc = match self {
+            Self::FixedTubes         => "deck mounted carriage/fixed tube",
+            Self::DeckSideTubes      => "deck mounted side rotating tube",
+            Self::CenterTubes        => "deck mounted centre rotating tube",
+            Self::DeckReloads        => "deck mounted reload",
+            Self::BowTubes           => "submerged bow tube",
+            Self::SternTubes         => "submerged stern tube",
+            Self::BowAndSternTubes   => &format!("submerged bow {} stern tube", if tubes > 1 { "&" } else { "OR" }).to_owned(),
+            Self::SubmergedSideTubes => "submerged side tube",
+            Self::SubmergedReloads   => "below water reload",
+        };
+
+        let prefix = match self {
+            Self::FixedTubes |
+            Self::DeckSideTubes |
+            Self::CenterTubes |
+            Self::DeckReloads =>
+                if tubes > 1 {
+                    format!("In {} sets of ", mounts)
+                } else {
+                    "In a ".into()
+                },
+
+            _ => "".into(),
+        };
+
+        prefix + desc + if tubes > 1 { "s" } else { "" }
+    }
+}
+
+// Testing Torpedo MountType {{{2
+#[cfg(test)]
+mod torpedo_mount_type {
+    use super::*;
+    use crate::test_support::*;
+
+    // Test wgt_factor {{{3
+    macro_rules! test_wgt_factor {
+        ($($name:ident: $value:expr,)*) => {
+            $(
+                #[test]
+                fn $name() {
+                    let (expected, torp) = $value;
+
+                    assert_eq!(expected, torp.wgt_factor());
+                }
+            )*
+        }
+    }
+
+    test_wgt_factor! {
+        // name:               (factor, torp)
+        wgt_factor_fixed:      (0.25, TorpedoMountType::FixedTubes),
+        wgt_factor_deck:       (1.0, TorpedoMountType::DeckSideTubes),
+        wgt_factor_center:     (1.0, TorpedoMountType::CenterTubes),
+        wgt_factor_reload:     (0.25, TorpedoMountType::DeckReloads),
+        wgt_factor_bow:        (1.0, TorpedoMountType::BowTubes),
+        wgt_factor_stern:      (1.0, TorpedoMountType::SternTubes),
+        wgt_factor_bow_stern:  (1.0, TorpedoMountType::BowAndSternTubes),
+        wgt_factor_sub_side:   (1.0, TorpedoMountType::SubmergedSideTubes),
+        wgt_factor_sub_reload: (0.25, TorpedoMountType::SubmergedReloads),
+    }
+
+    // Test hull_space {{{3
+    macro_rules! test_hull_space {
+        ($($name:ident: $value:expr,)*) => {
+            $(
+                #[test]
+                fn $name() {
+                    let (expected, torp) = $value;
+
+                    let len = 18.0; let diam = 21.0;
+                    assert_eq!(expected, to_place(torp.hull_space(len, diam), 2));
+                }
+            )*
+        }
+    }
+
+    test_hull_space! {
+        // name:               (factor, torp)
+        hull_space_fixed:      (0.0, TorpedoMountType::FixedTubes),
+        hull_space_deck:       (0.0, TorpedoMountType::DeckSideTubes),
+        hull_space_center:     (0.0, TorpedoMountType::CenterTubes),
+        hull_space_reload:     (0.0, TorpedoMountType::DeckReloads),
+        hull_space_bow:        (1042.21, TorpedoMountType::BowTubes),
+        hull_space_stern:      (1042.21, TorpedoMountType::SternTubes),
+        hull_space_bow_stern:  (1042.21, TorpedoMountType::BowAndSternTubes),
+        hull_space_sub_side:   (1042.21, TorpedoMountType::SubmergedSideTubes),
+        hull_space_sub_reload: (186.05, TorpedoMountType::SubmergedReloads),
+    }
+
+    // Test deck_space {{{3
+    macro_rules! test_deck_space {
+        ($($name:ident: $value:expr,)*) => {
+            $(
+                #[test]
+                fn $name() {
+                    let (expected, torp) = $value;
+
+                    let len = 18.0; let diam = 21.0; let num = 2; let mounts = 2;
+                    let b = 50.0; 
+                    assert_eq!(expected, to_place(torp.deck_space(b, num, len, diam, mounts), 2));
+                }
+            )*
+        }
+    }
+
+    test_deck_space! {
+        // name:               (factor, torp)
+        deck_space_fixed:      (63.0, TorpedoMountType::FixedTubes),
+        deck_space_deck:       (272.62, TorpedoMountType::DeckSideTubes),
+        deck_space_center:     (1808.49, TorpedoMountType::CenterTubes),
+        deck_space_reload:     (121.5, TorpedoMountType::DeckReloads),
+        deck_space_bow:        (0.0, TorpedoMountType::BowTubes),
+        deck_space_stern:      (0.0, TorpedoMountType::SternTubes),
+        deck_space_bow_stern:  (0.0, TorpedoMountType::BowAndSternTubes),
+        deck_space_sub_side:   (0.0, TorpedoMountType::SubmergedSideTubes),
+        deck_space_sub_reload: (0.0, TorpedoMountType::SubmergedReloads),
+    }
+}
+
+// Mines {{{1
+/// Mines and deployement gear.
+///
+#[derive(Serialize, Deserialize, Clone, Debug, Default)]
+pub struct Mines {
+    /// Units
+    pub units: Units,
+
+    /// Year mines were designed.
+    pub year: u32,
+
+    /// Number of mines.
+    pub num: u32,
+    /// Number of mine reloads.
+    pub reload: u32,
+
+    /// Weight of a single mine.
+    pub wgt: f64,
+
+    /// Type of mine deployment system.
+    pub mount_kind: MineType,
+}
+
+impl Mines { // {{{2
+    // wgt {{{3
+    /// Weight of mines, reloads and deployment gear.
+    ///
+    pub fn wgt(&self) -> f64 {
+        self.wgt_weaps() + self.wgt_mounts()
+    }
+
+    // wgt_weaps {{{3
+    /// Weight of mines and reloads.
+    ///
+    pub fn wgt_weaps(&self) -> f64 {
+        (self.num + self.reload) as f64 * self.wgt / Ship::POUND2TON
+    }
+
+    // wgt_mounts {{{3
+    /// Weight of deployment gear.
+    ///
+    pub fn wgt_mounts(&self) -> f64 {
+        self.wgt_weaps() * self.mount_kind.wgt_factor()
+    }
+}
+
+// MineType {{{1
+/// Types of mine deployment gear.
+///
+#[derive(Serialize, Deserialize, Clone, Debug, Default)]
+pub enum MineType {
+    #[default]
+    SternRails,
+    BowTubes,
+    SternTubes,
+    SideTubes,
+}
+
+impl From<String> for MineType { // {{{2
+    fn from(index: String) -> Self {
+        index.as_str().into()
+    }
+}
+
+impl From<&str> for MineType {
+    fn from(index: &str) -> Self {
+        match index {
+            "1" => Self::BowTubes,
+            "2" => Self::SternTubes,
+            "3" => Self::SideTubes,
+            "0" | _ => Self::SternRails,
+        }
+    }
+}
+
+impl MineType { // {{{2
+    // wgt_factor {{{3
+    /// Multiplier to determine weight of mine deployment gear.
+    ///
+    pub fn wgt_factor(&self) -> f64 {
+        match self {
+            Self::SternRails => 0.25,
+            Self::BowTubes   => 1.0,
+            Self::SternTubes => 1.0,
+            Self::SideTubes  => 1.0,
+        }
+    }
+
+    // desc {{{3
+    /// Description of mine deployment gear type.
+    ///
+    pub fn desc(&self) -> String {
+        match self {
+            Self::SternRails => "in Above water - Stern racks/rails",
+            Self::BowTubes   => "in Below water - bow tubes",
+            Self::SternTubes => "",
+            Self::SideTubes  => "",
+        }.into()
+    }
+}
+
+// Testing MineType {{{2
+#[cfg(test)]
+mod mine_type {
+    use super::*;
+
+    // Test wgt_factor {{{3
+    macro_rules! test_wgt_factor {
+        ($($name:ident: $value:expr,)*) => {
+            $(
+                #[test]
+                fn $name() {
+                    let (expected, mines) = $value;
+
+                    assert_eq!(expected, mines.wgt_factor());
+                }
+            )*
+        }
+    }
+
+    test_wgt_factor! {
+        // name: (factor, mines)
+        rails:   (0.25, MineType::SternRails),
+        bow:     (1.0, MineType::BowTubes),
+        stern:   (1.0, MineType::SternTubes),
+        side:    (1.0, MineType::SideTubes),
+    }
+}
+
+
+// ASW {{{1
+/// ASW weapons and deployment gear.
+///
+#[derive(Serialize, Deserialize, Clone, Debug, Default)]
+pub struct ASW {
+    /// Units.
+    pub units: Units,
+
+    /// Year ASW system was designed.
+    pub year: u32,
+
+    /// Number of weapons.
+    pub num: u32,
+    /// Number of reloads.
+    pub reload: u32,
+
+    /// Weight of a single weapon.
+    pub wgt: f64,
+
+    /// Type of weapon.
+    pub kind: ASWType,
+}
+
+impl ASW { // {{{2
+    // wgt {{{3
+    /// Weight of weapons, reloads and mounts.
+    ///
+    pub fn wgt(&self) -> f64 {
+        self.wgt_weaps() + self.wgt_mounts()
+    }
+
+    // wgt_weaps {{{3
+    /// Weight of weapons and reloads.
+    ///
+    pub fn wgt_weaps(&self) -> f64 {
+        (self.num + self.reload) as f64 * self.wgt / Ship::POUND2TON
+    }
+
+    // wgt_mounts {{{3
+    /// Weight of mounts.
+    ///
+    pub fn wgt_mounts(&self) -> f64 {
+        self.wgt_weaps() * self.kind.mount_wgt_factor()
+    }
+}
+
+// Testing Torpedoes, Mines and ASW {{{2
+#[cfg(test)]
+mod weapons {
+    use super::*;
+    use crate::test_support::*;
+
+    // Test mines_wgt_weaps {{{3
+    macro_rules! test_mines_wgt_weaps {
+        ($($name:ident: $value:expr,)*) => {
+            $(
+                #[test]
+                fn $name() {
+                    let (expected, kind, num, reload, wgt) = $value;
+
+                    let mut mines = Mines::default();
+                    mines.mount_kind = kind;
+                    mines.num = num;
+                    mines.reload = reload;
+                    mines.wgt = wgt;
+
+                    assert!(expected == to_place(mines.wgt_weaps(), 3));
+                }
+            )*
+        }
+    }
+    test_mines_wgt_weaps! {
+        // name:                    (expected, kind, num, reload, wgt)
+        wgt_weaps_mines_stern_rails: (0.893, MineType::SternRails, 100, 100, 10.0),
+        wgt_weaps_mines_bow_tubes:   (0.893, MineType::BowTubes, 100, 100, 10.0),
+        wgt_weaps_mines_stern_tubes: (0.893, MineType::SternTubes, 100, 100, 10.0),
+        wgt_weaps_mines_side_tubes:  (0.893, MineType::SideTubes, 100, 100, 10.0),
+    }
+
+    // Test mines_wgt_mounts {{{3
+    macro_rules! test_mines_wgt_mounts {
+        ($($name:ident: $value:expr,)*) => {
+            $(
+                #[test]
+                fn $name() {
+                    let (expected, kind, num, reload, wgt) = $value;
+
+                    let mut mines = Mines::default();
+                    mines.mount_kind = kind;
+                    mines.num = num;
+                    mines.reload = reload;
+                    mines.wgt = wgt;
+
+                    assert!(expected == to_place(mines.wgt_mounts(), 3));
+                }
+            )*
+        }
+    }
+    test_mines_wgt_mounts! {
+        // name:                    (expected, kind, num, reload, wgt)
+        wgt_mounts_mines_stern_rails: (0.223, MineType::SternRails, 100, 100, 10.0),
+        wgt_mounts_mines_bow_tubes:   (0.893, MineType::BowTubes, 100, 100, 10.0),
+        wgt_mounts_mines_stern_tubes: (0.893, MineType::SternTubes, 100, 100, 10.0),
+        wgt_mounts_mines_side_tubes:  (0.893, MineType::SideTubes, 100, 100, 10.0),
+    }
+
+    // Test mines_wgt {{{3
+    macro_rules! test_mines_wgt {
+        ($($name:ident: $value:expr,)*) => {
+            $(
+                #[test]
+                fn $name() {
+                    let (expected, kind, num, reload, wgt) = $value;
+
+                    let mut mines = Mines::default();
+                    mines.mount_kind = kind;
+                    mines.num = num;
+                    mines.reload = reload;
+                    mines.wgt = wgt;
+
+                    assert!(expected == to_place(mines.wgt(), 3));
+                }
+            )*
+        }
+    }
+    test_mines_wgt! {
+        // name:                    (expected, kind, num, reload, wgt)
+        wgt_mines_stern_rails: (1.116, MineType::SternRails, 100, 100, 10.0),
+        wgt_mines_bow_tubes:   (1.786, MineType::BowTubes, 100, 100, 10.0),
+        wgt_mines_stern_tubes: (1.786, MineType::SternTubes, 100, 100, 10.0),
+        wgt_mines_side_tubes:  (1.786, MineType::SideTubes, 100, 100, 10.0),
+    }
+
+    // Test asw_wgt_weaps {{{3
+    macro_rules! test_asw_wgt_weaps {
+        ($($name:ident: $value:expr,)*) => {
+            $(
+                #[test]
+                fn $name() {
+                    let (expected, kind, num, reload, wgt) = $value;
+
+                    let mut asw = ASW::default();
+                    asw.kind = kind; asw.num = num; asw.reload = reload; asw.wgt = wgt;
+
+                    assert!(expected == to_place(asw.wgt_weaps(), 3));
+                }
+            )*
+        }
+    }
+    test_asw_wgt_weaps! {
+        // name:                     (wgt, kind, num, reload, wgt)
+        wgt_weaps_asw_stern_racks:   (0.893, ASWType::SternRacks, 100, 100, 10.0),
+        wgt_weaps_asw_throwers:      (0.893, ASWType::Throwers, 100, 100, 10.0),
+        wgt_weaps_asw_hedgehogs:     (0.893, ASWType::Hedgehogs, 100, 100, 10.0),
+        wgt_weaps_asw_squid_mortars: (0.893, ASWType::SquidMortars, 100, 100, 10.0),
+    }
+
+    // Test asw_wgt_mounts {{{3
+    macro_rules! test_asw_wgt_mounts {
+        ($($name:ident: $value:expr,)*) => {
+            $(
+                #[test]
+                fn $name() {
+                    let (expected, kind, num, reload, wgt) = $value;
+
+                    let mut asw = ASW::default();
+                    asw.kind = kind; asw.num = num; asw.reload = reload; asw.wgt = wgt;
+
+                    assert!(expected == to_place(asw.wgt_mounts(), 3));
+                }
+            )*
+        }
+    }
+    test_asw_wgt_mounts! {
+        // name:                      (expected, kind, num, reload, wgt)
+        wgt_mounts_asw_stern_racks:   (0.223, ASWType::SternRacks, 100, 100, 10.0),
+        wgt_mounts_asw_throwers:      (0.446, ASWType::Throwers, 100, 100, 10.0),
+        wgt_mounts_asw_hedgehogs:     (0.446, ASWType::Hedgehogs, 100, 100, 10.0),
+        wgt_mounts_asw_squid_mortars: (8.929, ASWType::SquidMortars, 100, 100, 10.0),
+    }
+
+    // Test asw_wgt {{{3
+    macro_rules! test_asw_wgt {
+        ($($name:ident: $value:expr,)*) => {
+            $(
+                #[test]
+                fn $name() {
+                    let (expected, kind, num, reload, wgt) = $value;
+
+                    let mut asw = ASW::default();
+                    asw.kind = kind; asw.num = num; asw.reload = reload; asw.wgt = wgt;
+
+                    assert!(expected == to_place(asw.wgt(), 3));
+                }
+            )*
+        }
+    }
+    test_asw_wgt! {
+        // name:                      (expected, kind, num, reload, wgt)
+        wgt_asw_stern_racks:   (1.116, ASWType::SternRacks, 100, 100, 10.0),
+        wgt_asw_throwers:      (1.339, ASWType::Throwers, 100, 100, 10.0),
+        wgt_asw_hedgehogs:     (1.339, ASWType::Hedgehogs, 100, 100, 10.0),
+        wgt_asw_squid_mortars: (9.821, ASWType::SquidMortars, 100, 100, 10.0),
+    }
+
+    // Test torpedo_wgt_weaps {{{3
+    macro_rules! test_torpedo_wgt_weaps {
+        ($($name:ident: $value:expr,)*) => {
+            $(
+                #[test]
+                fn $name() {
+                    let (expected, kind, diam, len, num, year) = $value;
+
+                    let mut torp = Torpedoes::default();
+                    torp.mount_kind = kind; torp.diam = diam; torp.len = len; torp.num = num; torp.year = year;
+
+                    assert!(expected == to_place(torp.wgt_weaps(), 3));
+                }
+            )*
+        }
+    }
+    test_torpedo_wgt_weaps! {
+        // name:                       (wgt, kind, diam, len, num, year)
+        wgt_weaps_torps_fixed_tubes:         (4.450, TorpedoMountType::FixedTubes,         18.0, 21.0, 4, 1940),
+        wgt_weaps_torps_deck_side_tubes:     (4.450, TorpedoMountType::DeckSideTubes,      18.0, 21.0, 4, 1940),
+        wgt_weaps_torps_center_tubes:        (4.450, TorpedoMountType::CenterTubes,        18.0, 21.0, 4, 1940),
+        wgt_weaps_torps_deck_reloads:        (4.450, TorpedoMountType::DeckReloads,        18.0, 21.0, 4, 1940),
+        wgt_weaps_torps_bow_tubes:           (4.450, TorpedoMountType::BowTubes,           18.0, 21.0, 4, 1940),
+        wgt_weaps_torps_stern_tubes:         (4.450, TorpedoMountType::SternTubes,         18.0, 21.0, 4, 1940),
+        wgt_weaps_torps_bow_and_stern_tubes: (4.450, TorpedoMountType::BowAndSternTubes,   18.0, 21.0, 4, 1940),
+        wgt_weaps_torps_submerged_tubes:     (4.450, TorpedoMountType::SubmergedSideTubes, 18.0, 21.0, 4, 1940),
+        wgt_weaps_torps_submerged_reloads:   (4.450, TorpedoMountType::SubmergedReloads,   18.0, 21.0, 4, 1940),
+    }
+
+    // Test torpedo_wgt_mounts {{{3
+    macro_rules! test_torpedo_wgt_mounts {
+        ($($name:ident: $value:expr,)*) => {
+            $(
+                #[test]
+                fn $name() {
+                    let (expected, kind, diam, len, num, year) = $value;
+
+                    let mut torp = Torpedoes::default();
+                    torp.mount_kind = kind; torp.diam = diam; torp.len = len; torp.num = num; torp.year = year;
+
+                    assert!(expected == to_place(torp.wgt_mounts(), 3));
+                }
+            )*
+        }
+    }
+    test_torpedo_wgt_mounts! {
+        // name:                       (wgt, kind, diam, len, num, year)
+        wgt_mounts_torps_fixed_tubes:         (1.113, TorpedoMountType::FixedTubes,         18.0, 21.0, 4, 1940),
+        wgt_mounts_torps_deck_side_tubes:     (4.450, TorpedoMountType::DeckSideTubes,      18.0, 21.0, 4, 1940),
+        wgt_mounts_torps_center_tubes:        (4.450, TorpedoMountType::CenterTubes,        18.0, 21.0, 4, 1940),
+        wgt_mounts_torps_deck_reloads:        (1.113, TorpedoMountType::DeckReloads,        18.0, 21.0, 4, 1940),
+        wgt_mounts_torps_bow_tubes:           (4.450, TorpedoMountType::BowTubes,           18.0, 21.0, 4, 1940),
+        wgt_mounts_torps_stern_tubes:         (4.450, TorpedoMountType::SternTubes,         18.0, 21.0, 4, 1940),
+        wgt_mounts_torps_bow_and_stern_tubes: (4.450, TorpedoMountType::BowAndSternTubes,   18.0, 21.0, 4, 1940),
+        wgt_mounts_torps_submerged_tubes:     (4.450, TorpedoMountType::SubmergedSideTubes, 18.0, 21.0, 4, 1940),
+        wgt_mounts_torps_submerged_reloads:   (1.113, TorpedoMountType::SubmergedReloads,   18.0, 21.0, 4, 1940),
+    }
+
+    // Test torpedo_wgt {{{3
+    macro_rules! test_torpedo_wgt {
+        ($($name:ident: $value:expr,)*) => {
+            $(
+                #[test]
+                fn $name() {
+                    let (expected, kind, diam, len, num, year) = $value;
+
+                    let mut torp = Torpedoes::default();
+                    torp.mount_kind = kind; torp.diam = diam; torp.len = len; torp.num = num; torp.year = year;
+
+                    assert!(expected == to_place(torp.wgt(), 3));
+                }
+            )*
+        }
+    }
+    test_torpedo_wgt! {
+        // name:                       (wgt, kind, diam, len, num, year)
+        wgt_torps_fixed_tubes:         (5.563, TorpedoMountType::FixedTubes,         18.0, 21.0, 4, 1940),
+        wgt_torps_deck_side_tubes:     (8.900, TorpedoMountType::DeckSideTubes,      18.0, 21.0, 4, 1940),
+        wgt_torps_center_tubes:        (8.900, TorpedoMountType::CenterTubes,        18.0, 21.0, 4, 1940),
+        wgt_torps_deck_reloads:        (5.563, TorpedoMountType::DeckReloads,        18.0, 21.0, 4, 1940),
+        wgt_torps_bow_tubes:           (8.900, TorpedoMountType::BowTubes,           18.0, 21.0, 4, 1940),
+        wgt_torps_stern_tubes:         (8.900, TorpedoMountType::SternTubes,         18.0, 21.0, 4, 1940),
+        wgt_torps_bow_and_stern_tubes: (8.900, TorpedoMountType::BowAndSternTubes,   18.0, 21.0, 4, 1940),
+        wgt_torps_submerged_tubes:     (8.900, TorpedoMountType::SubmergedSideTubes, 18.0, 21.0, 4, 1940),
+        wgt_torps_submerged_reloads:   (5.563, TorpedoMountType::SubmergedReloads,   18.0, 21.0, 4, 1940),
+    }
+
+    // Test torpedo_hull_space {{{3
+    macro_rules! test_torpedo_hull_space {
+        ($($name:ident: $value:expr,)*) => {
+            $(
+                #[test]
+                fn $name() {
+                    let (expected, kind, diam, len, num) = $value;
+                    let mut torp = Torpedoes::default();
+                    torp.mount_kind = kind; torp.diam = diam; torp.len = len; torp.num = num;
+
+                    assert!(expected == to_place(torp.hull_space(), 3));
+                }
+            )*
+        }
+    }
+    test_torpedo_hull_space! {
+        // name:                             (space, kind, diam, len, num, year)
+        test_hull_space_fixed_tubes:         (0.0, TorpedoMountType::FixedTubes,         18.0, 21.0, 4),
+        test_hull_space_deck_side_tubes:     (0.0, TorpedoMountType::DeckSideTubes,      18.0, 21.0, 4),
+        test_hull_space_center_tubes:        (0.0, TorpedoMountType::CenterTubes,        18.0, 21.0, 4),
+        test_hull_space_deck_reloads:        (0.0, TorpedoMountType::DeckReloads,        18.0, 21.0, 4),
+        test_hull_space_bow_tubes:           (3573.281, TorpedoMountType::BowTubes,           18.0, 21.0, 4),
+        test_hull_space_stern_tubes:         (3573.281, TorpedoMountType::SternTubes,         18.0, 21.0, 4),
+        test_hull_space_bow_and_stern_tubes: (3573.281, TorpedoMountType::BowAndSternTubes,   18.0, 21.0, 4),
+        test_hull_space_submerged_tubes:     (3573.281, TorpedoMountType::SubmergedSideTubes, 18.0, 21.0, 4),
+        test_hull_space_submerged_reloads:   (637.875, TorpedoMountType::SubmergedReloads,   18.0, 21.0, 4),
+    }
+
+    // Test torpedo_deck_space {{{3
+    macro_rules! test_torpedo_deck_space {
+        ($($name:ident: $value:expr,)*) => {
+            $(
+                #[test]
+                fn $name() {
+                    let (expected,kind, diam, len, num, mounts) = $value;
+
+                    let mut torp = Torpedoes::default();
+                    torp.mount_kind = kind; torp.diam = diam; torp.len = len; torp.num = num; torp.mounts = mounts;
+
+                    let b = 10.0;
+                    assert!(expected == to_place(torp.deck_space(b), 3));
+                }
+            )*
+        }
+    }
+    test_torpedo_deck_space! {
+        // name:                             (space, kind, diam, len, num, mounts)
+        test_deck_space_fixed_tubes:         (126.0, TorpedoMountType::FixedTubes,         18.0, 21.0, 4, 2),
+        test_deck_space_deck_side_tubes:     (392.732, TorpedoMountType::DeckSideTubes,      18.0, 21.0, 4, 2),
+        test_deck_space_center_tubes:        (425.793, TorpedoMountType::CenterTubes,        18.0, 21.0, 4, 2),
+        test_deck_space_deck_reloads:        (252.0, TorpedoMountType::DeckReloads,        18.0, 21.0, 4, 2),
+        test_deck_space_bow_tubes:           (0.0, TorpedoMountType::BowTubes,           18.0, 21.0, 4, 2),
+        test_deck_space_stern_tubes:         (0.0, TorpedoMountType::SternTubes,         18.0, 21.0, 4, 2),
+        test_deck_space_bow_and_stern_tubes: (0.0, TorpedoMountType::BowAndSternTubes,   18.0, 21.0, 4, 2),
+        test_deck_space_submerged_tubes:     (0.0, TorpedoMountType::SubmergedSideTubes, 18.0, 21.0, 4, 2),
+        test_deck_space_submerged_reloads:   (0.0, TorpedoMountType::SubmergedReloads,   18.0, 21.0, 4, 2),
+    }
+}
+
+// ASWType {{{1
+/// Type of ASW deployment gear.
+///
+#[derive(Serialize, Deserialize, Clone, Debug, Default)]
+pub enum ASWType {
+    #[default]
+    SternRacks,
+    Throwers,
+    Hedgehogs,
+    SquidMortars,
+}
+
+impl From<String> for ASWType { // {{{2
+    fn from(index: String) -> Self {
+        index.as_str().into()
+    }
+}
+
+impl From<&str> for ASWType {
+    fn from(index: &str) -> Self {
+        match index {
+            "1" => Self::Throwers,
+            "2" => Self::Hedgehogs,
+            "3" => Self::SquidMortars,
+            "0" | _ => Self::SternRacks,
+        }
+    }
+}
+
+impl ASWType { // {{{2
+    // mount_wgt_factor {{{3
+    /// Multiplier used to calculate total mount weight.
+    ///
+    pub fn mount_wgt_factor(&self) -> f64 {
+        match self {
+            Self::SternRacks   => 0.25,
+            Self::Throwers     => 0.5,
+            Self::Hedgehogs    => 0.5,
+            Self::SquidMortars => 10.0,
+        }
+    }
+
+    // desc {{{3
+    /// Description of deployment gear.
+    ///
+    pub fn desc(&self) -> String {
+        match self {
+            Self::SternRacks   => "Depth Charges",
+            Self::Throwers     => "Depth Charges",
+            Self::Hedgehogs    => "ahead throwing AS Mortars",
+            Self::SquidMortars => "trainable AS Mortars",
+        }.into()
+    }
+
+    // dc_desc {{{3
+    /// Description used to differentiate DC types.
+    ///
+    pub fn dc_desc(&self) -> String {
+        match self {
+            Self::SternRacks   => "in Stern depth charge racks",
+            Self::Throwers     => "in Depth depth throwers",
+            Self::Hedgehogs    => "",
+            Self::SquidMortars => "",
+        }.into()
+    }
+}
+
+// Testing ASWType {{{2
+#[cfg(test)]
+mod asw_type {
+    use super::*;
+
+    // Test mount_wgt_factor {{{3
+    macro_rules! test_mount_wgt_factor {
+        ($($name:ident: $value:expr,)*) => {
+            $(
+                #[test]
+                fn $name() {
+                    let (expected, asw) = $value;
+
+                    assert_eq!(expected, asw.mount_wgt_factor());
+                }
+            )*
+        }
+    }
+
+    test_mount_wgt_factor! {
+        // name: (factor, asw)
+        racks:   (0.25, ASWType::SternRacks),
+        throw:   (0.5, ASWType::Throwers),
+        hedge:   (0.5, ASWType::Hedgehogs),
+        squid:   (10.0, ASWType::SquidMortars),
     }
 }
 
