@@ -372,13 +372,13 @@ impl Deck { // {{{2
                 ((wgt_engine * 3.0 + wgt_mag) / (d * 0.94) * 0.65 * lwl + 16.0) * (b + 16.0) - 256.0
             } else {
                 0.0
-            } * self.md;
+            };
 
-        let fc_deck = (fc_len * 2.0).powf(1.0 - cwp.powf(2.0)) * b * lwl * fc_len * 0.5 * self.fc;
+        let fc_deck = (fc_len * 2.0).powf(1.0 - cwp.powf(2.0)) * b * lwl * fc_len * 0.5;
 
-        let qd_deck = qd_len.powf(1.0 - cwp) * b * lwl * qd_len / 4.0 * (2.0 + 2.0_f64.powf(1.0 - cwp)) * self.qd;
+        let qd_deck = qd_len.powf(1.0 - cwp) * b * lwl * qd_len / 4.0 * (2.0 + 2.0_f64.powf(1.0 - cwp));
 
-        (main_deck + fc_deck + qd_deck) * Armor::INCH
+        (main_deck * self.md + fc_deck * self.fc + qd_deck * self.qd) * Armor::INCH
     }
 }
 
