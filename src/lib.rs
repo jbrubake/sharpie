@@ -770,15 +770,15 @@ impl Ship { // {{{2
                 asw.num,
                 asw.wgt,
                 metric(asw.wgt, Weight, asw.units),
-                asw.kind.inline_desc(),
+                asw.kind.desc(),
                 if asw.reload > 0 {
                     format!(" + {} reloads", self.mines.reload)
                 } else { "".into() },
                 asw.wgt_weaps()
             ));
-            if asw.kind.desc() != "" {
+            if asw.kind.dc_desc() != "" {
                 report.push(format!("    {}",
-                    asw.kind.desc()
+                    asw.kind.dc_desc()
                 ));
             }
         }

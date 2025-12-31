@@ -1649,10 +1649,10 @@ impl ASWType { // {{{2
         }
     }
 
-    // inline_desc {{{3
+    // desc {{{3
     /// Description of deployment gear.
     ///
-    pub fn inline_desc(&self) -> String {
+    pub fn desc(&self) -> String {
         match self {
             Self::SternRacks   => "Depth Charges",
             Self::Throwers     => "Depth Charges",
@@ -1661,10 +1661,10 @@ impl ASWType { // {{{2
         }.into()
     }
 
-    // desc {{{3
+    // dc_desc {{{3
     /// Description used to differentiate DC types.
     ///
-    pub fn desc(&self) -> String {
+    pub fn dc_desc(&self) -> String {
         match self {
             Self::SternRacks   => "in Stern depth charge racks",
             Self::Throwers     => "in Depth depth throwers",
