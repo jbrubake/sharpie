@@ -235,8 +235,15 @@ impl Hull { // {{{2
     pub fn d(&self) -> f64 {
         match self.d {
             Some(d) => d,
-            None    => self.cb() * self.lwl() * self.bb * self.t / Self::FT3_PER_TON_SEA
+            None    => self.d_calc(self.cb(),),
         }
+    }
+
+    // d_calc {{{3
+    /// Calculate the displacement for a given Block Coefficient.
+    ///
+    pub fn d_calc(&self, cb: f64) -> f64 {
+        cb * self.lwl() * self.bb * self.t / Self::FT3_PER_TON_SEA
     }
 
     // set_d {{{3
