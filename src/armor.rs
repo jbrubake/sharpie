@@ -64,7 +64,7 @@ impl Default for Armor { // {{{2
 }
 
 impl Armor { // {{{2
-    // XXX: I don't know what this is
+    // XXX: I do not know what this does.
     pub const INCH: f64 = 0.0185; 
 
     // wgt {{{3

@@ -56,7 +56,7 @@ pub struct Ship {
     pub country: String,
     /// Type of ship.
     ///
-    // XXX: Currently this is informative only and does not affect any calculations.
+    /// This is informative only and does not affect any calculations.
     pub kind: String,
     /// Year ship laid down
     pub year: u32,
@@ -1361,7 +1361,7 @@ impl Ship { // {{{2
             for (i, sb) in b.groups.iter().enumerate() {
                 let sb_super = match i {
                     0 => sb.above < (b.mount_num - b.groups[1].above),
-                    // XXX: SpringSharp BUG. Correct line is the below commented line:
+                    // TODO: SpringSharp BUG. Correct line is the below commented line:
                     // 1 => sb.above < (b.mount_num - b.groups[0].above),
                     _ => sb.above < (2 * sb.num_mounts() - sb.above),
                 };
@@ -1618,12 +1618,12 @@ impl Ship { // {{{2
             report.push(format!("- {}:",
                 self.armor.deck.kind
             ));
-            // TODO: Change spelling to Fore
+            // TODO: Change spelling to Fore (required to match Springsharp reports)
             report.push(format!("    For and Aft decks: {:.2}\" / {:.0} mm",
                 self.armor.deck.md,
                 metric(self.armor.deck.md, LengthSmall, self.armor.units)
             ));
-            // TODO: Change spelling to Quarterdeck
+            // TODO: Change spelling to Quarterdeck (required to match Springsharp reports)
             report.push(format!("    Forecastle: {:.2}\" / {:.0} mm    Quarter deck: {:.2}\" / {:.0} mm",
                 self.armor.deck.fc,
                 metric(self.armor.deck.fc, LengthSmall, self.armor.units),
@@ -1634,7 +1634,7 @@ impl Ship { // {{{2
         }
 
         if self.armor.ct_fwd.thick + self.armor.ct_aft.thick > 0.0 {
-            // TODO: Remove stray space before comma
+            // TODO: Remove stray space before comma (required to match Springsharp reports)
             report.push(format!("- Conning towers: Forward {:.2}\" / {:.0} mm, Aft {:.2}\" / {:.0} mm",
                 self.armor.ct_fwd.thick,
                 metric(self.armor.ct_fwd.thick, LengthSmall, self.armor.units),

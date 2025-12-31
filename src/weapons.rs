@@ -44,7 +44,7 @@ pub struct Battery {
     /// Armor thickness on mount face.
     pub armor_face: f64,
     /// Armor thickness elsewhere.
-    // XXX: top, side, rear?
+    // TODO: This should have a better name (other?)
     pub armor_back: f64,
     /// Armor thickness on barbette.
     pub armor_barb: f64,
@@ -1113,7 +1113,7 @@ impl MountType { // {{{2
     }
 
     // armor_back_wgt {{{3
-    /// XXX: This should be combined with the other one
+    /// TODO: This should be combined with the other one
     ///
     pub fn armor_back_wgt(&self) -> f64 {
         match self {
@@ -1128,7 +1128,7 @@ impl MountType { // {{{2
     }
 
     // armor_back_wgt_factor {{{3
-    /// XXX: This should be combined with the other one
+    /// TODO: This should be combined with the other one
     ///
     pub fn armor_back_wgt_factor(&self) -> f64 {
         match self {
@@ -1158,7 +1158,7 @@ impl MountType { // {{{2
     }
 
     // wgt {{{3
-    /// XXX: This should be combined with the other one
+    /// TODO: This should be combined with the other one
     ///
     pub fn wgt(&self) -> f64 {
         match self {
@@ -1172,7 +1172,7 @@ impl MountType { // {{{2
         }
     }
     // wgt_adj {{{3
-    /// XXX: This should be combined with the other one
+    /// TODO: This should be combined with the other one
     ///
     pub fn wgt_adj(&self) -> f64 {
         match self {
@@ -1430,7 +1430,7 @@ impl SubBattery { // {{{2
     }
 
     // diameter_calc {{{3
-    /// XXX: I do not know what this is doing.
+    /// XXX: I do not know what this does.
     ///
     pub fn diameter_calc(&self, cal: f64) -> f64 {
         if cal == 0.0 { return 0.0; } // Catch divide by zero
@@ -1446,14 +1446,14 @@ impl SubBattery { // {{{2
     }
 
     // wgt_adj {{{3
-    /// XXX: I do not know what this is doing.
+    /// XXX: I do not know what this does.
     ///
     pub fn wgt_adj(&self) -> f64 {
         self.layout.wgt_adj() * self.num_mounts() as f64
     }
 
     // free {{{3
-    /// XXX: I do not know what this is doing.
+    /// XXX: I do not know what this does.
     ///
     pub fn free(&self, hull: Hull) -> f64 {
         let free = self.distribution.free(self.num_mounts(), hull);

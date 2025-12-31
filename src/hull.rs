@@ -129,7 +129,7 @@ impl Hull { // {{{2
     pub fn freeboard_desc(&self) -> String {
         let mut s: Vec<String> = Vec::new();
 
-        // XXX: Non-flush decks could still match here
+        // TODO: This matches SpringSharp but some non-flush decks could match here
         if self.fc_aft == self.fd_fwd &&
            self.fd_aft == self.ad_fwd &&
            self.ad_aft == self.qd_fwd {
@@ -1168,7 +1168,7 @@ impl fmt::Display for SternType { // {{{2
 
 impl SternType { // {{{2
     // wp_calc {{{3
-    /// XXX: ???
+    /// XXX: I do not know what this does.
     ///
     pub fn wp_calc(&self) -> (f64, f64) {
         match self {
@@ -1180,7 +1180,7 @@ impl SternType { // {{{2
     }
 
     // leff {{{3
-    /// XXX: ???
+    /// XXX: I do not know what this does.
     ///
     pub fn leff(&self, lwl: f64, bb: f64, cs: f64) -> f64 {
         if cs == 0.0 { return 0.0 } // catch divide by zero
