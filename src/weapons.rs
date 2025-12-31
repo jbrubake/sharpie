@@ -396,6 +396,7 @@ impl Battery { // {{{2
     /// XXX: I do not know what this does.
     ///
     pub fn free(&self, hull: Hull) -> f64 {
+        if self.mount_num == 0 { return 0.0 } // Catch divide by zero
 
         let mut f = 0.0;
         let mut mounts = 0;
