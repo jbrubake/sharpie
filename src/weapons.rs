@@ -73,9 +73,9 @@ impl SubBattery { // {{{2
     pub fn diameter_calc(&self, cal: f64) -> f64 {
         if cal == 0.0 { return 0.0; } // Catch divide by zero
 
-        let (n1, n2) = self.layout.diameter_calc_nums();
+        let (factor, power) = self.layout.diameter_calc_nums();
 
-        let mut calc = n1 * cal * (1.0 + (1.0/cal).powf(n2));
+        let mut calc = factor * cal * (1.0 + (1.0/cal).powf(power));
 
         if cal < 12.0                               { calc += 12.0 / cal; }
         if cal > 1.0 && self.layout.wgt_adj() < 1.0 { calc *= 0.9; }
