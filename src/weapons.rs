@@ -1,29 +1,35 @@
 use crate::{Ship, GunType, MountType, GunDistributionType, GunLayoutType, MineType, ASWType, TorpedoMountType, Armor};
 use crate::Hull;
 use crate::unit_types::Units;
+
 use serde::{Serialize, Deserialize};
+
 use std::f64::consts::PI;
 
 // SubBattery {{{1
+/// Gun grouping within a battery.
+///
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
 pub struct SubBattery {
-    /// Gun layout.
+    /// Layout of guns within a turret.
     pub layout: GunLayoutType,
-    /// Distribution of guns on the ship.
+    /// Placement of guns on the ship.
     pub distribution: GunDistributionType,
+
     /// Number of mounts above the waterline.
     pub above: u32,
     /// Number of mounts on the waterline.
     pub on: u32,
     /// Number of mounts below the waterline.
     pub below: u32,
-    /// If mounts above the deck are two mounts up
+
+    /// If mounts above the deck are superfiring
     pub two_mounts_up: bool,
     /// If mounts below the waterline are on the lower deck
     pub lower_deck: bool,
 }
 
-impl SubBattery { // Internals Output {{{1
+impl SubBattery { // Internals Output {{{2
     pub fn internals(&self, hull: Hull, cal: f64) -> () {
         eprintln!("layout = {}", self.layout);
         eprintln!("distribution = {}", self.distribution);
@@ -41,9 +47,10 @@ impl SubBattery { // Internals Output {{{1
     }
 }
 
-impl SubBattery { // {{{1
-    // super_ {{{2
-    /// XXX: ???
+impl SubBattery { // {{{2
+    // super_ {{{3
+    /// Number of barrels above the waterline, reduced by the number of barrels
+    /// below the waterline. Superfiring and lower deck barrels count double.
     ///
     pub fn super_(&self) -> i32 {
         let above: i32 = (self.above * if self.two_mounts_up { 2 } else { 1 }) as i32;
@@ -52,18 +59,18 @@ impl SubBattery { // {{{1
         (above - below) * self.layout.guns_per() as i32
     }
 
-    // num_mounts {{{2
+    // num_mounts {{{3
     /// Total number of gun mounts.
     ///
     pub fn num_mounts(&self) -> u32 {
         self.above + self.on + self.below
     }
 
-    // diameter_calc {{{2
-    /// XXX: ???
+    // diameter_calc {{{3
+    /// XXX: I do not know what this is doing.
     ///
     pub fn diameter_calc(&self, cal: f64) -> f64 {
-        if cal == 0.0 { return 0.0; }
+        if cal == 0.0 { return 0.0; } // Catch divide by zero
 
         let (n1, n2) = self.layout.diameter_calc_nums();
 
@@ -75,15 +82,15 @@ impl SubBattery { // {{{1
         calc
     }
 
-    // wgt_adj {{{2
-    /// XXX: ???
+    // wgt_adj {{{3
+    /// XXX: I do not know what this is doing.
     ///
     pub fn wgt_adj(&self) -> f64 {
         self.layout.wgt_adj() * self.num_mounts() as f64
     }
 
-    // free {{{2
-    /// XXX: ???
+    // free {{{3
+    /// XXX: I do not know what this is doing.
     ///
     pub fn free(&self, hull: Hull) -> f64 {
         let free = self.distribution.free(self.num_mounts(), hull);
@@ -92,12 +99,13 @@ impl SubBattery { // {{{1
     }
 }
 
-#[cfg(test)] // {{{1
+// Testing SubBattery {{{2
+#[cfg(test)]
 mod sub_battery {
     use super::*;
     use crate::test_support::*;
 
-    // Test super_ {{{2
+    // Test super_ {{{3
     macro_rules! test_super_ {
         ($($name:ident: $value:expr,)*) => {
             $(
@@ -130,7 +138,7 @@ mod sub_battery {
         super_test_8: ( 1, 1, true, 1, false),
     }
 
-    // Test diameter_calc {{{2
+    // Test diameter_calc {{{3
     macro_rules! test_diameter_calc {
         ($($name:ident: $value:expr,)*) => {
             $(
@@ -154,7 +162,7 @@ mod sub_battery {
         diameter_calc_cal_sm:  (25.82, 0.5),
     }
 
-    // Test wgt_adj {{{2
+    // Test wgt_adj {{{3
     macro_rules! test_wgt_adj {
         ($($name:ident: $value:expr,)*) => {
             $(
@@ -178,7 +186,7 @@ mod sub_battery {
         wgt_adj_test: (10.0, 10),
     }
 
-    // Test free {{{2
+    // Test free {{{3
     macro_rules! test_free {
         ($($name:ident: $value:expr,)*) => {
             $(
@@ -216,24 +224,31 @@ mod sub_battery {
 }
 
 // Battery {{{1
+/// A battery of one type of gun.
+///
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Battery {
     /// Units
     pub units: Units,
+
     /// Number of guns in the battery.
     pub num: u32,
-    // XXX: The naming of 'cal' and 'len' is unfortunate and confusing
-    // XXX: I will change them to make more sense once all the formulas are verified
+
+    // TODO: The naming of 'cal' and 'len' is unfortunate and confusing
+    // TODO: I will change them to make more sense once all the formulas are verified
     /// Gun barrel diameter in inches.
     pub cal: f64,
     /// Gun barrel length in calibers.
     pub len: f64,
+
     /// Year gun was designed.
     pub year: u32,
+
     /// Number of shells in the magazine
     pub shells: u32,
     /// Weight of each shell.
         shell_wgt: Option<f64>,
+
     /// Type of gun.
     pub kind: GunType,
 
@@ -241,6 +256,7 @@ pub struct Battery {
     pub mount_num: u32,
     /// Kind of mounts.
     pub mount_kind: MountType,
+
     /// Armor thickness on mount face.
     pub armor_face: f64,
     /// Armor thickness elsewhere.
@@ -249,11 +265,11 @@ pub struct Battery {
     /// Armor thickness on barbette.
     pub armor_barb: f64,
 
-    /// Sub-batteries to position the battery mounts.
+    /// Separate groups of guns within the Battery
     pub groups: Vec<SubBattery>,
 }
 
-impl Default for Battery { // {{{1
+impl Default for Battery { // {{{2
     fn default() -> Self {
         Self {
             units: Units::Imperial, 
@@ -280,7 +296,7 @@ impl Default for Battery { // {{{1
     }
 }
 
-impl Battery { // Internals Output {{{1
+impl Battery { // Internals Output {{{2
     pub fn internals(&self, hull: Hull, wgt_broad: f64) -> () {
         eprintln!("units = {}", self.units);
         eprintln!("num = {}", self.num);
@@ -322,13 +338,15 @@ impl Battery { // Internals Output {{{1
     }
 }
 
-impl Battery { // {{{1
-    /// XXX: ???
+impl Battery { // {{{2
+    /// Factor to account for powder, etc. when calculating the magazine weight.
     ///
     const CORDITE_FACTOR: f64 = 0.2444444;
 
-    // broad_and_below {{{2
-    /// XXX: ???
+    // broad_and_below {{{3
+    /// Returns true if the battery has Broadside mounts
+    /// and any guns are mounted below the waterline.
+    ///
     pub fn broad_and_below(&self) -> bool {
         if self.mount_kind == MountType::Broadside {
             for g in self.groups.iter() {
@@ -338,8 +356,11 @@ impl Battery { // {{{1
         false
     }
 
-    // concentration {{{2
+    // concentration {{{3
+    /// XXX: I do not know what this does.
+    ///
     pub fn concentration(&self, wgt_broad: f64) -> f64 {
+        // Catch divide by zero
         if self.num as f64 * self.shell_wgt() == 0.0 ||
             self.mount_num == 0
             { return 0.0; }
@@ -352,11 +373,10 @@ impl Battery { // {{{1
             }
     }
 
-    // super_ {{{2
-    /// XXX: ???
+    // super_ {{{3
+    /// XXX: I do not know what this does.
     ///
     pub fn super_(&self, hull: Hull) -> f64 {
-
         if self.num == 0 { return 0.0 } // catch divide by zero
 
         let mut super_ = 0;
@@ -371,8 +391,8 @@ impl Battery { // {{{1
         ((super_ as f64 / self.num as f64) * (self.cal * 0.6).max(7.5) + free) / free
     }
 
-    // free {{{2
-    /// XXX: ???
+    // free {{{3
+    /// XXX: I do not know what this does.
     ///
     pub fn free(&self, hull: Hull) -> f64 {
 
@@ -386,8 +406,8 @@ impl Battery { // {{{1
         f / mounts as f64
     }
 
-    // armor_face_wgt {{{2
-    /// Weight of face armor
+    // armor_face_wgt {{{3
+    /// Weight of battery face armor.
     ///
     pub fn armor_face_wgt(&self) -> f64 {
         // TODO: Combine this logic into a single table
@@ -410,7 +430,9 @@ impl Battery { // {{{1
             } else { 1.0 }
     }
 
-    // house_hgt {{{2
+    // house_hgt {{{3
+    /// XXX: I do not know what this does.
+    ///
     fn house_hgt(&self) -> f64 {
         f64::max(
             7.5,
@@ -418,8 +440,8 @@ impl Battery { // {{{1
         )
     }
 
-    // armor_back_wgt {{{2
-    /// Weight of back armor
+    // armor_back_wgt {{{3
+    /// Weight of battery back armor.
     ///
     pub fn armor_back_wgt(&self) -> f64 {
         let mut a = 0.0;
@@ -439,8 +461,8 @@ impl Battery { // {{{1
 
         d * self.armor_back * Armor::INCH
     }
-    // armor_barb_wgt {{{2
-    /// Weight of barbette armor
+    // armor_barb_wgt {{{3
+    /// Weight of battery barbette armor
     ///
     pub fn armor_barb_wgt(&self, hull: Hull) -> f64 {
         let mut guns = 0;
@@ -475,15 +497,15 @@ impl Battery { // {{{1
                  
         }
     }
-    // armor_wgt {{{2
-    /// Weight of the battery's armor
+    // armor_wgt {{{3
+    /// Total weight of the battery's armor.
     ///
     pub fn armor_wgt(&self, hull: Hull) -> f64 {
         self.armor_face_wgt() + self.armor_back_wgt() + self.armor_barb_wgt(hull)
     }
 
-    // wgt_adj {{{2
-    /// XXX: ???
+    // wgt_adj {{{3
+    /// XXX: I do not know what this does.
     ///
     pub fn wgt_adj(&self) -> f64 {
         let mut v = 0.0;
@@ -498,15 +520,15 @@ impl Battery { // {{{1
         v / mounts as f64
     }
 
-    // date_factor {{{2
-    /// Factor to adjust shell weight by year.
+    // date_factor {{{3
+    /// Factor used to adjust shell weight based on year.
     ///
     fn date_factor(&self) -> f64 {
         Ship::year_adj(self.year).sqrt()
     }
 
-    // set_shell_wgt {{{2
-    /// Override the default shell weight calculation.
+    // set_shell_wgt {{{3
+    /// Set the shell weight.
     ///
     pub fn set_shell_wgt(&mut self, wgt: f64) -> f64 {
         self.shell_wgt = Some(wgt);
@@ -514,11 +536,11 @@ impl Battery { // {{{1
         wgt
     }
 
-    // shell_wgt {{{2
+    // shell_wgt {{{3
     /// Get the shell weight.
     ///
-    /// Return the value set previously be set_shell_wgt() or the default if
-    /// unset.
+    /// Return the value previously set by set_shell_wgt()
+    /// or the estimated shell weight if unset.
     ///
     pub fn shell_wgt(&self) -> f64 {
         match self.shell_wgt {
@@ -527,7 +549,7 @@ impl Battery { // {{{1
         }
     }
 
-    // shell_wgt_est {{{2
+    // shell_wgt_est {{{3
     /// Estimated shell weight.
     ///
     pub fn shell_wgt_est(&self) -> f64 {
@@ -535,8 +557,8 @@ impl Battery { // {{{1
             ( 1.0 + if self.len < 45.0 { -1.0 } else { 1.0 } * (45.0 - self.len).abs().sqrt() / 45.0 )
     }
 
-    // gun_wgt {{{2
-    /// XXX: Weight of something related to estimated shell weight, length and number of guns
+    // gun_wgt {{{3
+    /// Weight of the barrels in the battery.
     ///
     pub fn gun_wgt(&self) -> f64 {
         if self.cal == 0.0 { return 0.0; }
@@ -546,11 +568,11 @@ impl Battery { // {{{1
             ) * self.num as f64
     }
 
-    // mount_wgt {{{2
+    // mount_wgt {{{3
     /// Weight of a single gun mount.
     ///
     pub fn mount_wgt(&self) -> f64 {
-        if self.cal == 0.0 { return 0.0; }
+        if self.cal == 0.0 { return 0.0; } // Catch divide by zero
 
         let wgt = self.mount_kind.wgt() *
             if self.mount_kind.wgt_adj() < 0.6 {
@@ -573,15 +595,15 @@ impl Battery { // {{{1
         wgt * self.wgt_adj()
     }
 
-    // broadside_wgt {{{2
-    /// Weight of shells fired by the battery.
+    // broadside_wgt {{{3
+    /// Weight of shells if each barrel fires a single shell.
     ///
     pub fn broadside_wgt(&self) -> f64 {
         self.num as f64 * self.shell_wgt()
     }
 
-    // mag_wgt {{{2
-    /// Weight of the battery magazine
+    // mag_wgt {{{3
+    /// Weight of the battery magazine.
     ///
     pub fn mag_wgt(&self) -> f64 {
         (self.num * self.shells) as f64 * self.shell_wgt() / Ship::POUND2TON * (1.0 + Self::CORDITE_FACTOR)
@@ -593,12 +615,13 @@ impl Battery { // {{{1
     }
 }
 
-#[cfg(test)] // {{{1
+// Testing Battery {{{2
+#[cfg(test)]
 mod battery {
     use super::*;
     use crate::test_support::*;
 
-    // Test broad_and_below {{{2
+    // Test broad_and_below {{{3
     macro_rules! test_broad_and_below {
         ($($name:ident: $value:expr,)*) => {
             $(
@@ -622,7 +645,7 @@ mod battery {
         broad_and_below_broadside_below:     (true, MountType::Broadside, 1),
     }
 
-    // Test concentration {{{2
+    // Test concentration {{{3
     macro_rules! test_concentration {
         ($($name:ident: $value:expr,)*) => {
             $(
@@ -651,7 +674,7 @@ mod battery {
         concentration_lg_mount:     (0.04142, 10.0, MountType::ColesTurret, 1),
     }
 
-    // Test super_ {{{2
+    // Test super_ {{{3
     macro_rules! test_super_ {
         ($($name:ident: $value:expr,)*) => {
             $(
@@ -687,12 +710,12 @@ mod battery {
         }
     }
     test_super_! {
-        // name: (super_, shell_wgt, mount_kind, mount_num)
+        // name: (super_, group_1_mounts, group_2_mounts)
         super_test_1: (1.3, 2, 5),
         super_test_2: (1.75, 5, 2),
     }
 
-    // Test free {{{2
+    // Test free {{{3
     macro_rules! test_free {
         ($($name:ident: $value:expr,)*) => {
             $(
@@ -732,7 +755,7 @@ mod battery {
         free_test_3: (7.0, 0, 5), 
     }
 
-    // Test armor_face_wgt {{{2
+    // Test armor_face_wgt {{{3
     macro_rules! test_armor_face_wgt {
         ($($name:ident: $value:expr,)*) => {
             $(
@@ -764,7 +787,7 @@ mod battery {
         armor_face_wgt_back: (2.66, GunType::BreechLoading, MountType::DeckAndHoist, 1.0, 1.0),
     }
 
-    // Test house_hgt {{{2
+    // Test house_hgt {{{3
     macro_rules! test_house_hgt {
         ($($name:ident: $value:expr,)*) => {
             $(
@@ -787,7 +810,7 @@ mod battery {
         house_hgt_2: (7.5, 10.0),
     }
 
-    // Test armor_back_wgt {{{2
+    // Test armor_back_wgt {{{3
     macro_rules! test_armor_back_wgt {
         ($($name:ident: $value:expr,)*) => {
             $(
@@ -817,7 +840,7 @@ mod battery {
         armor_back_wgt_1: (21.26, GunType::BreechLoading, MountType::DeckAndHoist, 1.0),
     }
 
-    // Test armor_barb_wgt {{{2
+    // Test armor_barb_wgt {{{3
     macro_rules! test_armor_barb_wgt {
         ($($name:ident: $value:expr,)*) => {
             $(
@@ -861,7 +884,7 @@ mod battery {
         armor_barb_wgt_1: (0.35, GunType::BreechLoading, MountType::DeckAndHoist, 1.0),
     }
 
-    // Test wgt_adj {{{2
+    // Test wgt_adj {{{3
     macro_rules! test_wgt_adj {
         ($($name:ident: $value:expr,)*) => {
             $(
@@ -886,7 +909,7 @@ mod battery {
         wgt_adj_test: (0.75, 1, 2),
     }
 
-    // Test date_factor {{{2
+    // Test date_factor {{{3
     macro_rules! test_date_factor {
         ($($name:ident: $value:expr,)*) => {
             $(
@@ -907,7 +930,7 @@ mod battery {
         date_factor_sm: (0.99247, 1889),
     }
 
-    // Test shell_wgt_est {{{2
+    // Test shell_wgt_est {{{3
     macro_rules! test_shell_wgt_est {
         ($($name:ident: $value:expr,)*) => {
             $(
@@ -932,7 +955,7 @@ mod battery {
         shell_wgt_est_lg: (515.47, 46.0),
     }
 
-    // Test gun_wgt {{{2
+    // Test gun_wgt {{{3
     macro_rules! test_gun_wgt {
         ($($name:ident: $value:expr,)*) => {
             $(
@@ -957,7 +980,7 @@ mod battery {
         gun_wgt_test: (28.07, 10.0, 45.0),
     }
 
-    // Test mount_wgt {{{2
+    // Test mount_wgt {{{3
     macro_rules! test_mount_wgt {
         ($($name:ident: $value:expr,)*) => {
             $(
@@ -993,7 +1016,7 @@ mod battery {
         mount_wgt_sm_cal: (0.06, MountType::ColesTurret, 1.0),
     }
 
-    // Test broadside_wgt {{{2
+    // Test broadside_wgt {{{3
     macro_rules! test_broadside_wgt {
         ($($name:ident: $value:expr,)*) => {
             $(
@@ -1015,7 +1038,7 @@ mod battery {
         broadside_wgt_test: (100.0, 10),
     }
 
-    // Test mag_wgt {{{2
+    // Test mag_wgt {{{3
     macro_rules! test_mag_wgt {
         ($($name:ident: $value:expr,)*) => {
             $(
@@ -1041,38 +1064,43 @@ mod battery {
 }
 
 // Torpedoes {{{1
+/// A set of torpedo mounts or tubes.
+///
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
 pub struct Torpedoes {
     /// Units
     pub units: Units,
     /// Year torpedo was designed.
     pub year: u32,
-    /// Number of torpedoes in a mount.
-    pub num: u32,
+
     /// Number of mounts.
     pub mounts: u32,
+    /// Type of mount.
+    pub mount_kind: TorpedoMountType,
+
+    /// Number of torpedoes in the set
+    pub num: u32,
+
     /// Torpedo diameter.
     pub diam: f64,
     /// Torpedo length.
     pub len: f64,
-    /// Type of mount.
-    pub mount_kind: TorpedoMountType,
 }
 
-impl Torpedoes {
+impl Torpedoes { // {{{2
     // new {{{2
     pub fn new() -> Torpedoes {
         Default::default()
     }
 
-    // wgt {{{2
-    /// Weight of torpedoes and mounts in the set.
+    // wgt {{{3
+    /// Weight of all torpedoes and mounts in the set.
     ///
     pub fn wgt(&self) -> f64 {
         self.wgt_weaps() + self.wgt_mounts()
     }
 
-    // wgt_weaps {{{2
+    // wgt_weaps {{{3
     /// Weight of torpedoes in the set.
     ///
     pub fn wgt_weaps(&self) -> f64 {
@@ -1084,22 +1112,22 @@ impl Torpedoes {
         ) * self.num as f64
     }
 
-    // wgt_mounts {{{2
+    // wgt_mounts {{{3
     /// Weight of mounts in the set.
     ///
     pub fn wgt_mounts(&self) -> f64 {
         self.mount_kind.wgt_factor() * self.wgt_weaps()
     }
 
-    // hull_space {{{2
-    /// Hull space taken up by the torpedo set.
+    // hull_space {{{3
+    /// Hull space taken up by the set.
     ///
     pub fn hull_space(&self) -> f64 {
         self.mount_kind.hull_space(self.len, self.diam) * self.num as f64
     }
 
-    // deck_space {{{2
-    /// Deck space taken up by the torpedo set.
+    // deck_space {{{3
+    /// Deck space taken up by the set.
     ///
     pub fn deck_space(&self, b: f64) -> f64 {
         self.mount_kind.deck_space(b, self.num, self.len, self.diam, self.mounts)
@@ -1107,82 +1135,100 @@ impl Torpedoes {
 }
 
 // Mines {{{1
+/// Mines and deployement gear.
+///
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
 pub struct Mines {
     /// Units
     pub units: Units,
+
     /// Year mines were designed.
     pub year: u32,
+
     /// Number of mines.
     pub num: u32,
     /// Number of mine reloads.
     pub reload: u32,
+
     /// Weight of a single mine.
     pub wgt: f64,
+
     /// Type of mine deployment system.
     pub mount_kind: MineType,
 }
 
-impl Mines {
+impl Mines { // {{{2
     // new {{{2
     pub fn new() -> Mines {
         Default::default()
     }
 
-    // wgt {{{2
-    /// Weight of mines, reloads and deployment system.
+    // wgt {{{3
+    /// Weight of mines, reloads and deployment gear.
     ///
     pub fn wgt(&self) -> f64 {
         self.wgt_weaps() + self.wgt_mounts()
     }
 
+    // wgt_weaps {{{3
+    /// Weight of mines and reloads.
+    ///
     pub fn wgt_weaps(&self) -> f64 {
         (self.num + self.reload) as f64 * self.wgt / Ship::POUND2TON
     }
 
+    // wgt_mounts {{{3
+    /// Weight of deployment gear.
+    ///
     pub fn wgt_mounts(&self) -> f64 {
         self.wgt_weaps() * self.mount_kind.wgt_factor()
     }
 }
 
 // ASW {{{1
+/// ASW weapons and deployment gear.
+///
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
 pub struct ASW {
     /// Units.
     pub units: Units,
+
     /// Year ASW system was designed.
     pub year: u32,
+
     /// Number of weapons.
     pub num: u32,
     /// Number of reloads.
     pub reload: u32,
+
     /// Weight of a single weapon.
     pub wgt: f64,
+
     /// Type of weapon.
     pub kind: ASWType,
 }
 
-impl ASW {
+impl ASW { // {{{2
     // new {{{2
     pub fn new() -> ASW {
         Default::default()
     }
 
-    // wgt {{{2
+    // wgt {{{3
     /// Weight of weapons, reloads and mounts.
     ///
     pub fn wgt(&self) -> f64 {
         self.wgt_weaps() + self.wgt_mounts()
     }
 
-    // wgt_weaps {{{2
+    // wgt_weaps {{{3
     /// Weight of weapons and reloads.
     ///
     pub fn wgt_weaps(&self) -> f64 {
         (self.num + self.reload) as f64 * self.wgt / Ship::POUND2TON
     }
 
-    // wgt_mounts {{{2
+    // wgt_mounts {{{3
     /// Weight of mounts.
     ///
     pub fn wgt_mounts(&self) -> f64 {
@@ -1190,12 +1236,13 @@ impl ASW {
     }
 }
 
-#[cfg(test)] // {{{1
+// Testing Torpedoes, Mines and ASW {{{2
+#[cfg(test)]
 mod weapons {
     use super::*;
     use crate::test_support::*;
 
-    // Test mines_wgt_weaps {{{2
+    // Test mines_wgt_weaps {{{3
     macro_rules! test_mines_wgt_weaps {
         ($($name:ident: $value:expr,)*) => {
             $(
@@ -1222,7 +1269,7 @@ mod weapons {
         wgt_weaps_mines_side_tubes:  (0.893, MineType::SideTubes, 100, 100, 10.0),
     }
 
-    // Test mines_wgt_mounts {{{2
+    // Test mines_wgt_mounts {{{3
     macro_rules! test_mines_wgt_mounts {
         ($($name:ident: $value:expr,)*) => {
             $(
@@ -1249,7 +1296,7 @@ mod weapons {
         wgt_mounts_mines_side_tubes:  (0.893, MineType::SideTubes, 100, 100, 10.0),
     }
 
-    // Test mines_wgt {{{2
+    // Test mines_wgt {{{3
     macro_rules! test_mines_wgt {
         ($($name:ident: $value:expr,)*) => {
             $(
@@ -1276,7 +1323,7 @@ mod weapons {
         wgt_mines_side_tubes:  (1.786, MineType::SideTubes, 100, 100, 10.0),
     }
 
-    // Test asw_wgt_weaps {{{2
+    // Test asw_wgt_weaps {{{3
     macro_rules! test_asw_wgt_weaps {
         ($($name:ident: $value:expr,)*) => {
             $(
@@ -1300,7 +1347,7 @@ mod weapons {
         wgt_weaps_asw_squid_mortars: (0.893, ASWType::SquidMortars, 100, 100, 10.0),
     }
 
-    // Test asw_wgt_mounts {{{2
+    // Test asw_wgt_mounts {{{3
     macro_rules! test_asw_wgt_mounts {
         ($($name:ident: $value:expr,)*) => {
             $(
@@ -1324,7 +1371,7 @@ mod weapons {
         wgt_mounts_asw_squid_mortars: (8.929, ASWType::SquidMortars, 100, 100, 10.0),
     }
 
-    // Test asw_wgt {{{2
+    // Test asw_wgt {{{3
     macro_rules! test_asw_wgt {
         ($($name:ident: $value:expr,)*) => {
             $(
@@ -1348,7 +1395,7 @@ mod weapons {
         wgt_asw_squid_mortars: (9.821, ASWType::SquidMortars, 100, 100, 10.0),
     }
 
-    // Test torpedo_wgt_weaps {{{2
+    // Test torpedo_wgt_weaps {{{3
     macro_rules! test_torpedo_wgt_weaps {
         ($($name:ident: $value:expr,)*) => {
             $(
@@ -1377,7 +1424,7 @@ mod weapons {
         wgt_weaps_torps_submerged_reloads:   (4.450, TorpedoMountType::SubmergedReloads,   18.0, 21.0, 4, 1940),
     }
 
-    // Test torpedo_wgt_mounts {{{2
+    // Test torpedo_wgt_mounts {{{3
     macro_rules! test_torpedo_wgt_mounts {
         ($($name:ident: $value:expr,)*) => {
             $(
@@ -1406,7 +1453,7 @@ mod weapons {
         wgt_mounts_torps_submerged_reloads:   (1.113, TorpedoMountType::SubmergedReloads,   18.0, 21.0, 4, 1940),
     }
 
-    // Test torpedo_wgt {{{2
+    // Test torpedo_wgt {{{3
     macro_rules! test_torpedo_wgt {
         ($($name:ident: $value:expr,)*) => {
             $(
@@ -1435,7 +1482,7 @@ mod weapons {
         wgt_torps_submerged_reloads:   (5.563, TorpedoMountType::SubmergedReloads,   18.0, 21.0, 4, 1940),
     }
 
-    // Test torpedo_hull_space {{{2
+    // Test torpedo_hull_space {{{3
     macro_rules! test_torpedo_hull_space {
         ($($name:ident: $value:expr,)*) => {
             $(
@@ -1463,7 +1510,7 @@ mod weapons {
         test_hull_space_submerged_reloads:   (637.875, TorpedoMountType::SubmergedReloads,   18.0, 21.0, 4),
     }
 
-    // Test torpedo_deck_space {{{2
+    // Test torpedo_deck_space {{{3
     macro_rules! test_torpedo_deck_space {
         ($($name:ident: $value:expr,)*) => {
             $(

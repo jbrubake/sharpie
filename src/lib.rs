@@ -30,28 +30,34 @@ use std::io::BufRead;
 
 #[cfg(test)] // Testing support {{{1
 mod test_support {
+    // Round a float to a given number of digits
+    //
+    // This makes it much easier to test results that
+    // are floats.
     pub fn to_place(n: f64, digits: u32) -> f64 {
         let mult = 10_u32.pow(digits) as f64;
+
         (n * mult).round() / mult
     }
 }
 
-
 // Ship {{{1
+/// All the parts of a ship.
+///
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Ship {
     /// Name of ship.
     pub name: String,
     /// Country of ship.
     pub country: String,
-    /// Type of ship. (This is informative only and does not affect any
-    /// calculations.)
+    /// Type of ship.
+    ///
+    // XXX: Currently this is informative only and does not affect any calculations.
     pub kind: String,
-    /// Year ship laid down: The general technology level is determined by the
-    /// date the ship is laid down. This affects weaponry, armor, engines,
-    /// speed, fuel consumption, strength, cost, roominess.
+    /// Year ship laid down
     pub year: u32,
 
+    /// Balance between stability and seakeeping.
     pub trim: u8,
 
     /// Hull configuration.
@@ -116,7 +122,7 @@ impl Ship {
     }
 }
 
-impl Default for Ship { // {{{1
+impl Default for Ship { // {{{2
     fn default() -> Ship {
         Ship {
             name: "".into(),
@@ -146,12 +152,11 @@ impl Default for Ship { // {{{1
     }
 }
 
-// Ship Implementation {{{1
-impl Ship {
+impl Ship { // {{{2
     /// Pounds in a long ton.
     const POUND2TON: f64 = 2240.0;
 
-    // year_adj {{{2
+    // year_adj {{{3
     /// Year adjustment factor for various calculations.
     ///
     pub fn year_adj(year: u32) -> f64 {
@@ -160,7 +165,7 @@ impl Ship {
         else                 { 0.0 }
     }
 
-    // deck_space {{{2
+    // deck_space {{{3
     /// Relative measure of hull space based on waterplane area, freeboard and
     /// displacement adjusted for above water torpedoes.
     ///
@@ -173,7 +178,7 @@ impl Ship {
         space / self.hull.wp()
     }
 
-    // hull_space {{{2
+    // hull_space {{{3
     /// Proportional measure of weights of engines, guns, magazines,
     /// miscellaneous weights, ships stores, torpedo bulkheads and hull mounted
     /// torpedoes to displacement to estimate the minimum length of the
@@ -188,7 +193,7 @@ impl Ship {
         space / (self.hull.d() * Hull::FT3_PER_TON_SEA)
     }
 
-    // wgt_bunker {{{2
+    // wgt_bunker {{{3
     /// Convenience function to get bunkerage weight from the engine.
     ///
     fn wgt_bunker(&self) -> f64 {
@@ -201,14 +206,14 @@ impl Ship {
         )
     }
 
-    // wgt_load {{{2
+    // wgt_load {{{3
     /// Weight of bunkerage, magazine and stores.
     ///
     fn wgt_load(&self) -> f64 {
         self.hull.d() * 0.02 + self.wgt_bunker() + self.wgt_mag()
     }
 
-    // d_lite {{{2
+    // d_lite {{{3
     /// Light Displacement (t): Displacement without bunkerage, magazine or
     /// stores.
     ///
@@ -216,7 +221,7 @@ impl Ship {
         self.hull.d() - self.wgt_load()
     }
 
-    // d_std {{{2
+    // d_std {{{3
     /// Standard Displacement (t): Standardized displacement per the Washington
     /// and London Naval Treaties. Does not include bunkerage or reserve
     /// feedwater.
@@ -225,7 +230,7 @@ impl Ship {
         self.hull.d() - self.wgt_bunker()
     }
 
-    // d_max {{{2
+    // d_max {{{3
     /// Maximum Displacement (t): Displacement including full bunker, magazines,
     /// feedwater and stores.
     ///
@@ -233,35 +238,35 @@ impl Ship {
         self.hull.d() + 0.8 * self.wgt_bunker()
     }
 
-    // t_max {{{2
+    // t_max {{{3
     /// Draft at maximum displacement.
     ///
     pub fn t_max(&self) -> f64 {
         self.hull.t_calc(self.d_max())
     }
 
-    // cb_max {{{2
+    // cb_max {{{3
     /// Block coeficcient at maximum displacement.
     ///
     pub fn cb_max(&self) -> f64 {
         self.hull.cb_calc(self.d_max(), self.t_max())
     }
 
-    // crew_max {{{2
+    // crew_max {{{3
     /// Estimated maximum crew size based on displacement.
     ///
     pub fn crew_max(&self) -> u32 {
         (self.hull.d().powf(0.75) * 0.65) as u32
     }
 
-    // crew_min {{{2
+    // crew_min {{{3
     /// Estimated minimum crew size based on displacement.
     ///
     pub fn crew_min(&self) -> u32 {
         (self.crew_max() as f64 * 0.7692) as u32
     }
 
-    // convert {{{2
+    // convert {{{3
     /// Load a ship from a SpringSharp 3 file and output a sharpie ship
     ///
     pub fn convert(p: String) -> Result<Ship, Box<dyn Error>> {
@@ -503,7 +508,7 @@ impl Ship {
         Ok(ship)
     }
 
-    // load {{{2
+    // load {{{3
     /// Load ship from a file.
     ///
     pub fn load(p: String) -> Result<Ship, Box<dyn Error>> {
@@ -513,7 +518,7 @@ impl Ship {
         Ok(ship)
     }
 
-    // save {{{2
+    // save {{{3
     /// Save ship to a file.
     ///
     pub fn save(&self, p: String) -> Result<(), Box<dyn Error>> {
@@ -524,7 +529,10 @@ impl Ship {
         Ok(())
     }
 
-    // ship_type {{{2
+    // ship_type {{{3
+    /// Get a string describing the type of ship based 
+    /// on gun distribution, mounts and armor.
+    ///
     fn ship_type(&self) -> String {
         let mut s: Vec<String> = Vec::new();
 
@@ -590,14 +598,13 @@ impl Ship {
 
         s.join("\n")
     }
-
-    // report {{{2
+    // report {{{3
     /// Print report.
     ///
     pub fn report(&self) -> String {
         let mut report: Vec<String> = Vec::new();
 
-        // Header {{{3
+        // Header {{{4
         report.push(format!("{}, {} {} laid down {}{}",
             self.name,
             self.country,
@@ -611,7 +618,7 @@ impl Ship {
             report.push(format!("{}", self.ship_type()));
         }
 
-        // Warnings {{{3
+        // Warnings {{{4
         if self.hull.cb() <= 0.0 || self.hull.cb() > 1.0
             { report.push("DESIGN FAILURE: Displacement impossible with given dimensions".to_string()); }
         if self.hull.d() < (self.wgt_broad() / 4.0)
@@ -626,7 +633,7 @@ impl Ship {
         report.push("".to_string());
 
     use format_num::format_num;
-        report.push("Displacement:".to_string()); // {{{3
+        report.push("Displacement:".to_string()); // {{{4
         report.push(format!("    {} t light; {} t standard; {} t normal; {} t full load",
             format_num!(",.0", self.d_lite()),
             format_num!(",.0", self.d_std()),
@@ -635,7 +642,7 @@ impl Ship {
         ));
         report.push("".to_string());
 
-        report.push("Dimensions: Length (overall / waterline) x beam x draught (normal/deep)".to_string()); // {{{3
+        report.push("Dimensions: Length (overall / waterline) x beam x draught (normal/deep)".to_string()); // {{{4
         report.push(format!("    ({:.2} ft / {:.2} ft) x {:.2} ft {}x ({:.2} / {:.2} ft)",
             self.hull.loa(),
             self.hull.lwl(),
@@ -654,7 +661,7 @@ impl Ship {
         ));
         report.push("".to_string());
 
-        report.push("Armament:".to_string()); // {{{3
+        report.push("Armament:".to_string()); // {{{4
         for (i, b) in self.batteries.iter().enumerate() {
             let main_gun = i == 0;
 
@@ -751,7 +758,7 @@ impl Ship {
             metric(self.wgt_broad(), Weight, Imperial)
         ));
 
-        // Weapons {{{3
+        // Weapons {{{4
         for (i, torp) in self.torps.iter().enumerate() {
             if torp.num == 0 { continue; }
 
@@ -814,7 +821,7 @@ impl Ship {
             }
         }
 
-        // Armor {{{3
+        // Armor {{{4
         report.push("".to_string());
         report.push("Armour:".to_string());
 
@@ -963,7 +970,7 @@ impl Ship {
             report.push("".to_string());
         }
 
-        report.push("Machinery:".to_string()); // {{{3
+        report.push("Machinery:".to_string()); // {{{4
         if self.engine.vmax != 0.0 {
             report.push(format!("    {}, {},",
                 self.engine.fuel,
@@ -991,21 +998,21 @@ impl Ship {
         }
         report.push("".to_string());
 
-        report.push("Complement:".to_string()); // {{{3
+        report.push("Complement:".to_string()); // {{{4
         report.push(format!("    {} - {}",
             self.crew_min(),
             self.crew_max()
         ));
         report.push("".to_string());
 
-        report.push("Cost:".to_string()); // {{{3
+        report.push("Cost:".to_string()); // {{{4
         report.push(format!("    £{:.3} million / ${:.3} million",
             self.cost_lb(),
             self.cost_dollar()
         ));
         report.push("".to_string());
 
-        report.push("Distribution of weights at normal displacement:".to_string()); // {{{3
+        report.push("Distribution of weights at normal displacement:".to_string()); // {{{4
         report.push(format!("    Armament: {:.0} tons, {:.1} %",
             (self.wgt_guns() + self.wgt_gun_mounts() + self.wgt_weaps()),
             Ship::percent_calc(self.hull.d(), self.wgt_guns() + self.wgt_gun_mounts()) +
@@ -1122,7 +1129,7 @@ impl Ship {
 
         report.push("".to_string());
 
-        report.push("Overall survivability and seakeeping ability:".to_string()); // {{{3
+        report.push("Overall survivability and seakeeping ability:".to_string()); // {{{4
         report.push("    Survivability (Non-critical penetrating hits needed to sink ship):".to_string());
         report.push(format!("    {:.0} lbs / {:.0} Kg = {:.1} x {:.1} \" / {:.0} mm shells or {:.1} torpedoes",
             self.flotation(),
@@ -1153,7 +1160,7 @@ impl Ship {
         ));
         report.push("".to_string());
 
-        report.push("Hull form characteristics:".to_string()); // {{{3
+        report.push("Hull form characteristics:".to_string()); // {{{4
         report.push(format!("    Hull has {},",
             self.hull.freeboard_desc()
         ));
@@ -1208,7 +1215,7 @@ impl Ship {
         }
         report.push("".to_string());
 
-        report.push("Ship space, strength and comments:".to_string()); // {{{3
+        report.push("Ship space, strength and comments:".to_string()); // {{{4
         report.push(format!("    Space    - Hull below water (magazines/engines, low = better): {:.1} %",
             self.hull_room() * 100.0
         ));
@@ -1250,7 +1257,7 @@ impl Ship {
         }
         report.push("".to_string());
 
-        // Custom Notes {{{3
+        // Custom Notes {{{4
         for s in self.notes.iter() {
             report.push(format!("{}", s));
         }
@@ -1258,7 +1265,7 @@ impl Ship {
         report.join("\n")
     }
 
-    // Print internal values {{{2
+    // Print internal values {{{3
     pub fn internals(&self) -> String {
         let mut s: Vec<String> = Vec::new();
 
@@ -1348,9 +1355,11 @@ impl Ship {
     }
 }
 
-// Ship Performance {{{1
+// Ship Performance {{{2
 impl Ship {
-    // room {{{2
+    // room {{{3
+    /// XXX: I do not know what this does.
+    ///
     fn room(&self) -> f64 {
         (
             self.wgt_mag() +
@@ -1362,14 +1371,19 @@ impl Ship {
         ) / (self.hull.d() * 0.94) / (1.0 - self.hull_space())
     }
 
-    // hull_room {{{2
+    // hull_room {{{3
+    /// Ratio of the sum of weights of the engine, magazines, ship's stores, torpedo
+    /// bulkheads, hull mounted torpedoes and miscellaneous weights to displacement.
+    ///
     pub fn hull_room(&self) -> f64 {
         self.room() * if self.armor.bulkhead.wgt(self.hull.lwl(), self.hull.cwp(), self.hull.b) > 0.1 {
             self.hull.b / self.armor.beam_between
         } else { 1.0 }
     }
 
-    // deck_room {{{2
+    // deck_room {{{3
+    /// XXX: Deck analog of hull_room()
+    ///
     pub fn deck_room(&self) -> f64 {
         self.hull.wp() /
             Hull::FT3_PER_TON_SEA /
@@ -1377,8 +1391,8 @@ impl Ship {
             self.crew_min() as f64 * self.hull.freeboard_dist()
     }
 
-    // deck_room_quality {{{2
-    /// Return a string describing the deck space
+    // deck_room_quality {{{3
+    /// Return a string describing the deck space.
     ///
     pub fn deck_room_quality(&self) -> String {
         let sp = self.deck_room();
@@ -1394,8 +1408,8 @@ impl Ship {
         }
     }
 
-    // hull_room_quality {{{2
-    /// Return a string describing the hull space
+    // hull_room_quality {{{3
+    /// Return a string describing the hull space.
     ///
     pub fn hull_room_quality(&self) -> String {
         let sp = self.hull_room();
@@ -1411,8 +1425,8 @@ impl Ship {
         }
     }
 
-    // cost_dollar {{{2
-    /// Cost in $ million
+    // cost_dollar {{{3
+    /// Cost in millions of US dollars.
     ///
     pub fn cost_dollar(&self) -> f64 {
         ((self.hull.d()-self.wgt_load())*0.00014+self.wgt_engine()*0.00056+(self.wgt_borne()*8.0)*0.00042)*
@@ -1421,14 +1435,16 @@ impl Ship {
             } else { 1.0 }
     }
 
-    // cost_lb {{{2
-    /// Cost in £ million
+    // cost_lb {{{3
+    /// Cost in millions of British pounds
     ///
     pub fn cost_lb(&self) -> f64 {
         self.cost_dollar() / 4.0
     }
 
-    // recoil {{{2
+    // recoil {{{3
+    /// A relative calculation of the ability of the ship to handle her weight of gunfire.
+    ///
     pub fn recoil(&self) -> f64 {
         (
             (self.wgt_broad()/self.hull.d() * self.hull.freeboard_dist() * self.gun_super_factor() / self.hull.bb) *
@@ -1440,12 +1456,16 @@ impl Ship {
             } else { 1.0 }
     }
 
-    // metacenter {{{2
+    // metacenter {{{3
+    /// A measure of vertical equilibrium.
+    ///
     pub fn metacenter(&self) -> f64 {
         self.hull.b.powf(1.5) * (self.stability_adj() - 0.5) / 0.5 / 200.0
     }
 
-    // seaboat {{{2
+    // seaboat {{{3
+    /// Intermediate calculations for seakeeping() and steadiness().
+    ///
     fn seaboat(&self) -> f64 {
         let a = (self.hull.free_cap(self.cap_calc_broadside()) / (2.4 * self.hull.d().powf(0.2))).sqrt() *
             (
@@ -1483,12 +1503,16 @@ impl Ship {
         f64::min(c, 2.0)
     }
 
-    // seakeeping {{{2
+    // seakeeping {{{3
+    /// The sea keeping ability of the ship.
+    ///
     pub fn seakeeping(&self) -> f64 {
         self.seaboat() * f64::min(self.steadiness(), 50.0) / 50.0
     }
 
-    // tender_warn {{{2
+    // tender_warn {{{3
+    /// If ship has an excessive risk of capsizing.
+    ///
     fn tender_warn(&self) -> bool {
         if self.metacenter() <= 0.995 {
             true
@@ -1497,7 +1521,9 @@ impl Ship {
         }
     }
 
-    // capsize_warn {{{2
+    // capsize_warn {{{3
+    /// If ship will capsize.
+    ///
     fn capsize_warn(&self) -> bool {
         if self.stability_adj() <= 0.0 {
             true
@@ -1506,7 +1532,9 @@ impl Ship {
         }
     }
 
-    // hull_strained {{{2
+    // hull_strained {{{3
+    /// If hull will be subject to strain in the open sea.
+    ///
     fn hull_strained(&self) -> bool {
         if self.str_comp() >= 0.5 && self.str_comp() < 0.885 && (
             self.engine.vmax < 24.0 || self.hull.d() > 4000.0)
@@ -1517,7 +1545,9 @@ impl Ship {
         }
     }
 
-    // is_steady {{{2
+    // is_steady {{{3
+    /// If ship is a steady gun platform.
+    ///
     fn is_steady(&self) -> bool {
         if self.steadiness() >= 69.5 {
             true
@@ -1526,7 +1556,9 @@ impl Ship {
         }
     }
 
-    // is_unsteady {{{2
+    // is_unsteady {{{3
+    /// If ship is not a steady gun platform.
+    ///
     fn is_unsteady(&self) -> bool {
         if self.steadiness() < 30.0 {
             true
@@ -1535,7 +1567,9 @@ impl Ship {
         }
     }
 
-    // type_sea {{{2
+    // type_sea {{{3
+    /// Convert seakeeping() value into SeaType.
+    ///
     fn type_sea(&self) -> SeaType {
                if self.seakeeping() < 0.7 {
             SeaType::BadSea
@@ -1550,7 +1584,10 @@ impl Ship {
         }
     }
 
-    // seakeeping desc {{{2
+    // seakeeping desc {{{3
+    /// Return a string describing risk of capsizing,
+    /// hull strain, steadiness and seaworthiness.
+    ///
     pub fn seakeeping_desc(&self) -> Vec<String> {
         let mut s: Vec<String> = Vec::new();
         
@@ -1586,18 +1623,25 @@ impl Ship {
         s
     }
 
-    // roll_period {{{2
+    // roll_period {{{3
+    /// Roll period of the ship.
+    ///
     pub fn roll_period(&self) -> f64 {
         0.42 * self.hull.bb / self.metacenter().sqrt()
     }
 
-    // steadiness {{{2
+    // steadiness {{{3
+    /// Dynamic hull steadiness in open sea based
+    /// on trim adjustment and seakeeping value.
+    ///
     pub fn steadiness(&self) -> f64 {
         f64::min(self.trim as f64 * self.seaboat(), 100.0)
     }
 
-
-    // stability {{{2
+    // stability {{{3
+    /// Inherent stability of the ship before applying
+    /// the trim adjustment.
+    ///
     fn stability(&self) -> f64 {
         let a =
             (self.armor.ct_fwd.wgt(self.hull.d()) + self.armor.ct_aft.wgt(self.hull.d())) * 5.0 +
@@ -1625,12 +1669,18 @@ impl Ship {
         }
     }
 
-    // stability_adj {{{2
+    // stability_adj {{{3
+    /// A measure of the effect of vertical weights
+    /// on the stability of the ship.
+    ///
     pub fn stability_adj(&self) -> f64 {
         self.stability() * ((50.0 - self.trim as f64) / 150.0 + 1.0)
     }
 
-    // d_factor {{{2
+    // d_factor {{{3
+    /// Adjustment factor to reduce engine weight in a highly
+    /// stressed ship of less than 5,000 tons.
+    ///
     pub fn d_factor(&self) -> f64 {
         f64::min(
             self.hull.d() /
@@ -1642,7 +1692,9 @@ impl Ship {
         )
     }
 
-    // cap_calc_broadside {{{2
+    // cap_calc_broadside {{{3
+    /// XXX: I do not know what this does.
+    ///
     pub fn cap_calc_broadside(&self) -> bool {
         for b in self.batteries.iter() {
             if ! b.broad_and_below() { return false; }
@@ -1651,7 +1703,10 @@ impl Ship {
         true
     }
 
-    // flotation {{{2
+    // flotation {{{3
+    /// Estimate of the pounds of non-critical shell
+    /// hits required to sink or destroy the ship.
+    ///
     pub fn flotation(&self) -> f64 {
         let a = if self.cap_calc_broadside() {
                 self.hull.free_cap(self.cap_calc_broadside())
@@ -1672,7 +1727,9 @@ impl Ship {
         f64::max(e * Self::year_adj(self.year), 0.0)
     }
 
-    // str_cross {{{2
+    // str_cross {{{3
+    /// Cross-sectional strength.
+    ///
     pub fn str_cross(&self) -> f64 {
         let mut concentration: f64 = 1.0;
 
@@ -1690,7 +1747,9 @@ impl Ship {
         str_cross
     }
 
-    // str_long {{{2
+    // str_long {{{3
+    /// Longitudinal strength.
+    ///
     pub fn str_long(&self) -> f64 {
         (
             self.wgt_hull_plus() + if self.armor.strengthened_bulkhead {
@@ -1711,7 +1770,9 @@ impl Ship {
             850.0 * if self.year < 1900 { 1 - (1900 - self.year) / 100 } else { 1 } as f64
     }
 
-    // str_comp {{{2
+    // str_comp {{{3
+    /// Composite strength.
+    ///
     pub fn str_comp(&self) -> f64 {
         if self.str_cross() > self.str_long() {
             self.str_long() * (self.str_cross() / self.str_long()).powf(0.25)
@@ -1720,7 +1781,9 @@ impl Ship {
         }
     }
 
-    // gun_concentration {{{2
+    // gun_concentration {{{3
+    /// XXX: I do not know what this does.
+    ///
     fn gun_concentration(&self) -> f64 {
         let mut concentration = 0.0;
         for b in self.batteries.iter() {
@@ -1729,7 +1792,9 @@ impl Ship {
         concentration
     }
 
-    // damage_shell_size {{{2
+    // damage_shell_size {{{3
+    /// Size of shells used to calculate flotation().
+    ///
     pub fn damage_shell_size(&self) -> f64 {
         if self.batteries[0].cal > 0.0 {
             self.batteries[0].cal
@@ -1738,7 +1803,10 @@ impl Ship {
         }
     }
 
-    // damage_shell_num {{{2
+    // damage_shell_num {{{3
+    /// Number of non-critical shell hits of the same caliber as the
+    /// main battery or 6" shells if the ship has no main battery.
+    ///
     pub fn damage_shell_num(&self) -> f64 {
         self.flotation() / (
             self.damage_shell_size().powf(3.0) /
@@ -1746,7 +1814,9 @@ impl Ship {
             )
     }
 
-    // damage_shell_torp_num {{{2
+    // damage_shell_torp_num {{{3
+    /// Number of non-critical 20" torpedo hits required to sink the ship.
+    ///
     pub fn damage_torp_num(&self) -> f64 {
         (
             (
@@ -1771,7 +1841,9 @@ impl Ship {
             }
     }
 
-    // wgt_engine {{{2
+    // wgt_engine {{{3
+    /// Weight of the engine, adjusted by the displacement factor (d_factor()).
+    ///
     fn wgt_engine(&self) -> f64 {
 
         let p =
@@ -1788,7 +1860,9 @@ impl Ship {
             self.d_factor().powf(p)
     }
 
-    // wgt_struct {{{2
+    // wgt_struct {{{3
+    /// Weight per square feet of hull.
+    ///
     pub fn wgt_struct(&self) -> f64 {
         (
             self.wgt_hull_plus() +
@@ -1804,7 +1878,9 @@ impl Ship {
             )
     }
 
-    // wgt_hull {{{2
+    // wgt_hull {{{3
+    /// Weight of the hull.
+    ///
     fn wgt_hull(&self) -> f64 {
         self.hull.d() -
             self.wgt_guns() -
@@ -1816,7 +1892,10 @@ impl Ship {
             self.wgts.wgt() as f64
     }
 
-    // wgt_hull_plus {{{2
+    // wgt_hull_plus {{{3
+    /// Weight of the hull plus weight of guns and mounts
+    /// (excluding wgt_borne()).
+    ///
     fn wgt_hull_plus(&self) -> f64 {
         self.wgt_hull() +
         self.wgt_guns() +
@@ -1824,7 +1903,9 @@ impl Ship {
         self.wgt_borne()
     }
 
-    // wgt_borne {{{2
+    // wgt_borne {{{3
+    /// XXX: I do not know what this does
+    ///
     fn wgt_borne(&self) -> f64 {
         let mut wgt = 0.0;
         for b in self.batteries.iter() {
@@ -1833,7 +1914,9 @@ impl Ship {
         wgt * 2.0
     }
 
-    // wgt_weaps {{{2
+    // wgt_weaps {{{3
+    /// Weight of torpedos, mines and ASW weapons
+    ///
     fn wgt_weaps(&self) -> f64 {
         let mut wgt = 0.0;
         for w in self.torps.iter() { wgt += w.wgt(); }
@@ -1843,7 +1926,9 @@ impl Ship {
         wgt
     }
 
-    // wgt_guns {{{2
+    // wgt_guns {{{3
+    /// Weight of guns (excluding mounts).
+    ///
     fn wgt_guns(&self) -> f64 {
         let mut wgt = 0.0;
         for b in self.batteries.iter() {
@@ -1852,7 +1937,9 @@ impl Ship {
         wgt
     }
 
-    // wgt_gun_mounts {{{2
+    // wgt_gun_mounts {{{3
+    /// Weight of gun mounts.
+    ///
     fn wgt_gun_mounts(&self) -> f64 {
         let mut wgt = 0.0;
         for b in self.batteries.iter() {
@@ -1861,7 +1948,9 @@ impl Ship {
         wgt
     }
 
-    // wgt_gun_armor {{{2
+    // wgt_gun_armor {{{3
+    /// Weight of gun mount armor.
+    ///
     fn wgt_gun_armor(&self) -> f64 {
         let mut wgt = 0.0;
         for b in self.batteries.iter() {
@@ -1870,7 +1959,9 @@ impl Ship {
         wgt
     }
 
-    // wgt_mag {{{2
+    // wgt_mag {{{3
+    /// Weight of the ship's magazines.
+    ///
     fn wgt_mag(&self) -> f64 {
         let mut wgt = 0.0;
         for b in self.batteries.iter() {
@@ -1879,7 +1970,9 @@ impl Ship {
         wgt
     }
 
-    // wgt_broad {{{2
+    // wgt_broad {{{3
+    /// Sum of the broadside weights of all batteries.
+    ///
     fn wgt_broad(&self) -> f64 {
         let mut broad = 0.0;
         for b in self.batteries.iter() {
@@ -1888,14 +1981,17 @@ impl Ship {
         broad
     }
 
-    // wgt_armor {{{2
+    // wgt_armor {{{3
+    /// Weight of ship and battery armor.
+    ///
     fn wgt_armor(&self) -> f64 {
         self.armor.wgt(self.hull.clone(), self.wgt_mag(), 0.0) + self.wgt_gun_armor()
         // TODO: self.armor.wgt(self.hull.clone(), self.wgt_mag(), self.wgt_engine()) + self.wgt_gun_armor()
     }
 
-    // gun_wtf {{{2
-    /// XXX: I have no idea wtf this is
+    // gun_wtf {{{3
+    /// XXX: I do not know what this does.
+    ///
     fn gun_wtf(&self) -> f64 {
         let mut wtf = 0.0;
         for b in self.batteries.iter() {
@@ -1911,12 +2007,16 @@ impl Ship {
         wtf
     }
 
-    // gun_super_factor {{{2
+    // gun_super_factor {{{3
+    /// XXX: I do not know what this does.
+    ///
     fn gun_super_factor(&self) -> f64 {
         self.gun_wtf() / (self.wgt_gun_armor() + self.wgt_guns() + self.wgt_gun_mounts())
     }
 
-    // super_factor_long {{{2
+    // super_factor_long {{{3
+    /// XXX: I do not know what this does.
+    ///
     pub fn super_factor_long(&self) -> f64 {
         let a = self.hull_room() *
             if (
@@ -1954,7 +2054,9 @@ impl Ship {
                 2.0 * self.gun_super_factor() - 1.0
             }
     }
-    // percent_calc {{{2
+    // percent_calc {{{3
+    /// Return the ratio of portion to total as a percentage.
+    ///
     fn percent_calc(total: f64, portion: f64) -> f64 {
         if total > 0.0 {
             (portion / total) * 100.0
@@ -1964,7 +2066,7 @@ impl Ship {
     }
 }
 
-#[cfg(test)] // Ship {{{1
+#[cfg(test)] // Ship {{{2
 mod ship {
     use super::*;
     use crate::test_support::*;
@@ -2002,7 +2104,7 @@ mod ship {
         hull
     }
 
-    // Test year_adj {{{2
+    // Test year_adj {{{3
     macro_rules! test_year_adj {
         ($($name:ident: $value:expr,)*) => {
             $(
@@ -2025,7 +2127,7 @@ mod ship {
         year_adj_5: (0.0, 1951),
     }
 
-    // Test deck_space {{{2
+    // Test deck_space {{{3
     macro_rules! test_deck_space {
         ($($name:ident: $value:expr,)*) => {
             $(
@@ -2064,7 +2166,7 @@ mod ship {
         deck_space_9: (0.0, TorpedoMountType::SubmergedReloads),
     }
 
-    // Test hull_space {{{2
+    // Test hull_space {{{3
     macro_rules! test_hull_space {
         ($($name:ident: $value:expr,)*) => {
             $(
@@ -2104,7 +2206,7 @@ mod ship {
     }
 
 
-    // Test crew_max {{{2
+    // Test crew_max {{{3
     macro_rules! test_crew_max {
         ($($name:ident: $value:expr,)*) => {
             $(
@@ -2127,7 +2229,7 @@ mod ship {
         crew_max_d_eq_1000: (115, 1000.0),
     }
 
-    // Test crew_min {{{2
+    // Test crew_min {{{3
     macro_rules! test_crew_min {
         ($($name:ident: $value:expr,)*) => {
             $(
@@ -2152,6 +2254,8 @@ mod ship {
 }
 
 // SeaType {{{1
+/// Levels of seakeeping ability.
+///
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
 pub enum SeaType {
     #[default]

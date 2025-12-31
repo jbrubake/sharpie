@@ -3,6 +3,8 @@ use serde::{Serialize, Deserialize};
 use crate::{FuelType, BoilerType, DriveType};
 
 // Engine {{{1
+/// The ship's engine and speed and range characteristics.
+///
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
 pub struct Engine {
     /// Year engine built.
@@ -14,7 +16,8 @@ pub struct Engine {
     pub boiler: BoilerType,
     /// Type of engine drive.
     pub drive: DriveType,
-    /// XXX: Engine facter?
+
+    /// TODO: Unimplemented
     pub factor: u32,
 
     /// Maximum speed (not maximum trial speed).
@@ -26,20 +29,18 @@ pub struct Engine {
 
     /// Number of properllor shafts.
     ///
-    /// If this is < 2, the 'boxy' field in the corresponding Hull should be set
-    /// to true.
+    // TODO: If this is < 2, the 'boxy' field in the corresponding Hull should be set to true.
     pub shafts: u32,
 
     /// Percentage of bunker weight devoted to coal.
     pub pct_coal: f64,
 }
 
-// Engine Implementation {{{1
-impl Engine {
-    /// XXX: ???
+impl Engine { // {{{2
+    /// XXX: self.range is divided by this in bunker()
     const RANGE: f64 = 7000.0;
 
-    // hp {{{2
+    // hp {{{3
     /// Horsepower required to achieve a given speed.
     ///
     fn hp(&self, v: f64, d: f64, lwl: f64, leff: f64, cs: f64, ws: f64) -> f64 {
@@ -64,14 +65,14 @@ impl Engine {
             }
     }
 
-    // hp_max {{{2
+    // hp_max {{{3
     /// Horsepower required to achieve maximum speed.
     ///
     pub fn hp_max(&self, d: f64, lwl: f64, leff: f64, cs: f64, ws: f64) -> f64 {
         self.hp(self.vmax, d, lwl, leff, cs, ws)
     }
 
-    // hp_cruise {{{2
+    // hp_cruise {{{3
     /// Horsepower required to achieve crusing speed.
     ///
     // XXX: Should vcruise be set to a minimum somewhere else?
@@ -79,28 +80,28 @@ impl Engine {
         self.hp(self.vcruise.min(self.vmax), d, lwl, leff, cs, ws)
     }
 
-    // rf {{{2
+    // rf {{{3
     /// Friction resistance at a given speed.
     ///
     fn rf(v: f64, ws: f64) -> f64 {
         0.01 * ws * v.powf(1.83) 
     }
 
-    // rf_max {{{2
+    // rf_max {{{3
     /// Friction resistance at maximum speed.
     ///
     pub fn rf_max(&self, ws: f64) -> f64 {
         Self::rf(self.vmax, ws)
     }
 
-    // rf_cruise {{{2
+    // rf_cruise {{{3
     /// Friction resistance at crusing speed.
     ///
     pub fn rf_cruise(&self, ws: f64) -> f64 {
         Self::rf(self.vcruise, ws)
     }
 
-    // rw {{{2
+    // rw {{{3
     /// Wave resistance at a given speed.
     ///
     fn rw(v: f64, d: f64, lwl: f64, cs: f64) -> f64 {
@@ -108,21 +109,21 @@ impl Engine {
         d.powf(2.0/3.0) / lwl * cs * v.powf(4.0) 
     }
 
-    // rw_max {{{2
+    // rw_max {{{3
     /// Wave resistance at maximum speed.
     ///
     pub fn rw_max(&self, d: f64, lwl: f64, cs: f64) -> f64 {
         Self::rw(self.vmax, d, lwl, cs)
     }
 
-    // rw_cruise {{{2
+    // rw_cruise {{{3
     /// Wave resistance at crusing speed.
     ///
     pub fn rw_cruise(&self, d: f64, lwl: f64, cs: f64) -> f64 {
         Self::rw(self.vcruise, d, lwl, cs)
     }
 
-    // pw {{{2
+    // pw {{{3
     /// Power to wave ratio.
     ///
     fn pw(rw: f64, rf: f64) -> f64 {
@@ -132,21 +133,21 @@ impl Engine {
         }
     }
 
-    // pw_max {{{2
+    // pw_max {{{3
     /// Power to wave ratio at maximum speed.
     ///
     pub fn pw_max(&self, d: f64, lwl: f64, cs: f64, ws: f64) -> f64 {
         Self::pw(self.rw_max(d, lwl, cs), self.rf_max(ws))
     }
 
-    // pw_cruise {{{2
+    // pw_cruise {{{3
     /// Power to wave ratio at cruising speed.
     ///
     pub fn pw_cruise(&self, d: f64, lwl: f64, cs: f64, ws: f64) -> f64 {
         Self::pw(self.rw_cruise(d, lwl, cs), self.rf_cruise(ws))
     }
 
-    // bunker {{{2
+    // bunker {{{3
     /// Bunkerage weight.
     ///
     pub fn bunker(&self, d: f64, lwl: f64, leff: f64, cs: f64, ws: f64) -> f64 {
@@ -160,8 +161,7 @@ impl Engine {
             d * 0.005
     }
 
-    // bunker_max {{{2
-    // XXX: Is this a correct description?
+    // bunker_max {{{3
     /// Bunkerage weight at maximum displacement.
     ///
     pub fn bunker_max(&self, d: f64, lwl: f64, leff: f64, cs: f64, ws: f64) -> f64 {
@@ -169,15 +169,15 @@ impl Engine {
     }
 
 
-    // num_engines {{{2
+    // num_engines {{{3
     /// Number of steam engines.
     ///
     pub fn num_engines(&self) -> u32 {
         self.boiler.num_engines()
     }
 
-    // d_engine {{{2
-    /// XXX: Engine displacement.
+    // d_engine {{{3
+    /// Displacement of the engine.
     ///
     pub fn d_engine(&self, d: f64, lwl: f64, leff: f64, cs: f64, ws: f64) -> f64 {
         let factor = self.boiler.d_engine_factor(self.year, self.fuel.clone());
@@ -200,12 +200,13 @@ impl Engine {
     }
 }
 
-#[cfg(test)] // Engine {{{1
+// Testing Engine {{{2
+#[cfg(test)]
 mod engine {
     use super::*;
     use crate::test_support::*;
 
-    // Test hp {{{2
+    // Test hp {{{3
     macro_rules! test_hp {
         ($($name:ident: $value:expr,)*) => {
             $(
@@ -231,7 +232,7 @@ mod engine {
         hp_v_other_hi_year_boundary: (19655.91, 24.0, 1890),
     }
 
-    // Test hp_max {{{2
+    // Test hp_max {{{3
     macro_rules! test_hp_max {
         ($($name:ident: $value:expr,)*) => {
             $(
@@ -253,7 +254,7 @@ mod engine {
         hp_max_test: (10462.36, 20.0),
     }
 
-    // Test hp_cruise {{{2
+    // Test hp_cruise {{{3
     macro_rules! test_hp_cruise {
         ($($name:ident: $value:expr,)*) => {
             $(
@@ -276,7 +277,7 @@ mod engine {
         hp_cruise_max_is_less:    (1184.96, 10.0, 20.0),
     }
 
-    // Test rf {{{2
+    // Test rf {{{3
     macro_rules! test_rf {
         ($($name:ident: $value:expr,)*) => {
             $(
@@ -294,7 +295,7 @@ mod engine {
         rf_test:    (2028.25, 10.0, 3000.0),
     }
 
-    // Test rf_max {{{2
+    // Test rf_max {{{3
     macro_rules! test_rf_max {
         ($($name:ident: $value:expr,)*) => {
             $(
@@ -315,7 +316,7 @@ mod engine {
         rf_max_test: (7211.18, 20.0),
     }
 
-    // Test rf_cruise {{{2
+    // Test rf_cruise {{{3
     macro_rules! test_rf_cruise {
         ($($name:ident: $value:expr,)*) => {
             $(
@@ -336,7 +337,7 @@ mod engine {
         rf_cruise_test: (2028.25, 10.0),
     }
 
-    // Test rw {{{2
+    // Test rw {{{3
     macro_rules! test_rw {
         ($($name:ident: $value:expr,)*) => {
             $(
@@ -356,7 +357,7 @@ mod engine {
         rw_test:     (1234.0, 100.0),
     }
 
-    // Test rw_max {{{2
+    // Test rw_max {{{3
     macro_rules! test_rw_max {
         ($($name:ident: $value:expr,)*) => {
             $(
@@ -377,7 +378,7 @@ mod engine {
         rw_max_test: (37427.43, 20.0),
     }
 
-    // Test rw_cruise {{{2
+    // Test rw_cruise {{{3
     macro_rules! test_rw_cruise {
         ($($name:ident: $value:expr,)*) => {
             $(
@@ -399,7 +400,7 @@ mod engine {
     }
 
 
-    // Test pw {{{2
+    // Test pw {{{3
     macro_rules! test_pw {
         ($($name:ident: $value:expr,)*) => {
             $(
@@ -418,7 +419,7 @@ mod engine {
         pw_test:    (0.29, 800.0, 2000.0),
     }
 
-    // Test pw_max {{{2
+    // Test pw_max {{{3
     macro_rules! test_pw_max {
         ($($name:ident: $value:expr,)*) => {
             $(
@@ -439,7 +440,7 @@ mod engine {
         pw_max_test: (0.84, 20.0),
     }
 
-    // Test pw_cruise {{{2
+    // Test pw_cruise {{{3
     macro_rules! test_pw_cruise {
         ($($name:ident: $value:expr,)*) => {
             $(
@@ -460,7 +461,7 @@ mod engine {
         pw_cruise_test: (0.54, 10.0),
     }
 
-    // Test bunker {{{2
+    // Test bunker {{{3
     macro_rules! test_bunker {
         ($($name:ident: $value:expr,)*) => {
             $(
@@ -491,7 +492,7 @@ mod engine {
         bunker_vcruise_0:  (0.0, 1000, 0.5, 0.0),
     }
 
-    // Test bunker_max {{{2
+    // Test bunker_max {{{3
     macro_rules! test_bunker_max {
         ($($name:ident: $value:expr,)*) => {
             $(
@@ -520,7 +521,7 @@ mod engine {
         bunker_max: (40.86, 1000, 0.0, 10.0),
     }
 
-    // Test d_engine {{{2
+    // Test d_engine {{{3
     macro_rules! test_d_engine {
         ($($name:ident: $value:expr,)*) => {
             $(

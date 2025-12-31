@@ -6,10 +6,13 @@ use serde::{Serialize, Deserialize};
 use std::f64::consts::PI;
 
 // Armor {{{1
+/// The ship's armor, excluding gun armor.
+///
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Armor {
     /// Units
     pub units: Units,
+
     /// Main belt armor.
     pub main: Belt,
     /// End belt armor.
@@ -18,71 +21,82 @@ pub struct Armor {
     pub upper: Belt,
     /// Incline of belt armor.
     pub incline: f64,
+
     /// Torpedo bulge armor.
     pub bulge: Belt,
     /// Bulkhead armor.
     pub bulkhead: Belt,
-    /// true: strengthened bulkhead, false: additional bulkhead
+    /// True is 'strengthened bulkheads' and false is 'additional bulkheads'
     pub strengthened_bulkhead: bool,
     /// Beam between outer and inner bulkheads.
     pub beam_between: f64,
+
     /// Deck armor.
     pub deck: Deck,
+
     /// Forward conning tower armor.
     pub ct_fwd: CT,
     /// Aft conning tower armor.
     pub ct_aft: CT,
 }
 
-impl Default for Armor { // {{{1
+impl Default for Armor { // {{{2
     fn default() -> Self {
         Armor {
             units: Units::Imperial,
 
-            main: Belt::new(BeltType::Main),
-            end: Belt::new(BeltType::End),
-            upper: Belt::new(BeltType::Upper),
-            incline: 0.0,
-            bulge: Belt::new(BeltType::Bulge),
+            main:     Belt::new(BeltType::Main),
+            end:      Belt::new(BeltType::End),
+            upper:    Belt::new(BeltType::Upper),
+            bulge:    Belt::new(BeltType::Bulge),
             bulkhead: Belt::new(BeltType::Bulkhead),
+
             strengthened_bulkhead: false,
+            incline: 0.0,
             beam_between: 0.0,
+
             deck: Deck::default(),
+
             ct_fwd: CT::default(),
             ct_aft: CT::default(),
         }
     }
 }
 
-impl Armor { // {{{1
-    // XXX: I don't know what this is supposed to be
+impl Armor { // {{{2
+    // XXX: I don't know what this is
     pub const INCH: f64 = 0.0185; 
 
-    // wgt {{{2
-    /// Total weight of armor
+    // wgt {{{3
+    /// Total weight of armor.
     ///
     pub fn wgt(&self, hull: Hull, wgt_mag: f64, wgt_engine: f64) -> f64 {
-        self.main.wgt(hull.lwl(), hull.cwp(), hull.b) +
-        self.end.wgt(hull.lwl(), hull.cwp(), hull.b) +
-        self.upper.wgt(hull.lwl(), hull.cwp(), hull.b) +
-        self.bulge.wgt(hull.lwl(), hull.cwp(), hull.b) +
-        self.bulkhead.wgt(hull.lwl(), hull.cwp(), hull.b) +
-        self.deck.wgt(hull.clone(), wgt_mag, wgt_engine) +
-        self.ct_fwd.wgt(hull.d()) +
-        self.ct_aft.wgt(hull.d())
+        let lwl = hull.lwl();
+        let cwp = hull.cwp();
+        let b   = hull.b;
+        let d   = hull.d();
+
+        self.main    .wgt(lwl, cwp, b) +
+        self.end     .wgt(lwl, cwp, b) +
+        self.upper   .wgt(lwl, cwp, b) +
+        self.bulge   .wgt(lwl, cwp, b) +
+        self.bulkhead.wgt(lwl, cwp, b) +
+
+        self.deck    .wgt(hull.clone(), wgt_mag, wgt_engine) +
+
+        self.ct_fwd  .wgt(d) +
+        self.ct_aft  .wgt(d)
     }
 
-    // belt_coverage {{{2
-    // XXX: Is this description accurate?
+    // belt_coverage {{{3
     /// Percentage of the "vital areas" covered by the main belt.
     ///
     pub fn belt_coverage(&self, lwl: f64) -> f64 {
         self.main.len / (lwl * 0.65)
     }
 
-    // max_hgt {{{2
-    // XXX: ???
-    /// Maximum belt height.
+    // max_hgt {{{3
+    /// Maximum allowable belt height.
     ///
     pub fn max_belt_hgt(&self, t: f64, dist: f64) -> f64 {
         // incline * PI / 180 => convert to radians
@@ -95,13 +109,14 @@ impl Armor { // {{{1
     }
 }
 
-#[cfg(test)] // Belt {{{1
+// Testing Armor {{{2
+#[cfg(test)]
 mod armor {
     use super::*;
     use crate::test_support::*;
     use crate::Hull;
 
-    // Test belt_coverage {{{2
+    // Test belt_coverage {{{3
     macro_rules! test_belt_coverage {
         ($($name:ident: $value:expr,)*) => {
             $(
@@ -123,7 +138,7 @@ mod armor {
         belt_coverage_2: (1.54, 1.0, 1.0),
     }
 
-    // Test max_hgt {{{2
+    // Test max_hgt {{{3
     macro_rules! test_max_hgt {
         ($($name:ident: $value:expr,)*) => {
             $(
@@ -161,6 +176,8 @@ mod armor {
 }
 
 // Belt {{{1
+/// Belt, bulkhead and torpedo bulge armor.
+///
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Belt {
     /// Belt thickness.
@@ -169,14 +186,16 @@ pub struct Belt {
     pub len: f64,
     /// Belt height.
     pub hgt: f64,
+
     /// Type of belt.
-    /// Using this "set once" field allows Belt to represent the multiple types
-    /// that differ only in how their weight is calculated.
-        kind: BeltType, // Belt kind cannot be changed after creation
+    ///
+    /// Using this private "set once" field allows Belt to represent the
+    /// multiple types that differ only in how their weight is calculated.
+        kind: BeltType, // kind should not be changed after creation
 }
 
-impl Belt { // {{{1
-    // wgt {{{2
+impl Belt { // {{{2
+    // wgt {{{3
     /// Belt weight.
     ///
     pub fn wgt(&self, lwl: f64, cwp: f64, b: f64) -> f64 {
@@ -191,7 +210,7 @@ impl Belt { // {{{1
         (self.len + adj * ((lwl - self.len)/lwl).powf(1.0 - cwp) * b) * self.hgt * self.thick * Armor::INCH * 2.0
     }
 
-    // new {{{2
+    // new {{{3
     /// Create a Belt of type "kind".
     ///
     pub fn new(kind: BeltType) -> Belt {
@@ -204,12 +223,13 @@ impl Belt { // {{{1
     }
 }
 
-#[cfg(test)] // Belt {{{1
+// Testing Belt {{{2
+#[cfg(test)]
 mod belt {
     use super::*;
     use crate::test_support::*;
 
-    // Test wgt {{{2
+    // Test wgt {{{3
     macro_rules! test_wgt {
         ($($name:ident: $value:expr,)*) => {
             $(
@@ -240,6 +260,8 @@ mod belt {
 }
 
 // BeltType {{{1
+/// Values for Belt::kind
+///
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum BeltType {
     /// Main belt.
@@ -248,21 +270,23 @@ pub enum BeltType {
     End,
     /// Upper belt.
     Upper,
-    /// Torpedo bulge belt.
+    /// Torpedo bulges.
     Bulge,
-    /// Bulkhead belt.
+    /// Bulkhead.
     Bulkhead,
 }
 
 // CT {{{1
+/// Conning tower armor.
+///
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
 pub struct CT {
     /// Armor thickness.
     pub thick: f64,
 }
 
-impl CT {
-    // wgt {{{2
+impl CT { // {{{2
+    // wgt {{{3
     /// Weight of armor.
     ///
     pub fn wgt(&self, d: f64) -> f64 {
@@ -274,12 +298,13 @@ impl CT {
     }
 }
 
-#[cfg(test)] // CT {{{1
+// Testing CT {{{2
+#[cfg(test)]
 mod ct {
     use super::*;
     use crate::test_support::*;
 
-    // Test wgt {{{2
+    // Test wgt {{{3
     macro_rules! test_wgt {
         ($($name:ident: $value:expr,)*) => {
             $(
@@ -303,23 +328,25 @@ mod ct {
 }
 
 // Deck {{{1
+/// Deck armor.
+///
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
 pub struct Deck {
-    /// Deck armor configuration.
-    pub kind: DeckType,
     /// Forecastle deck thickness.
     pub fc: f64,
     /// Main deck thickness.
     pub md: f64,
     /// Quarterdeck deck thickness.
     pub qd: f64,
+
+    /// Deck armor configuration.
+    pub kind: DeckType,
 }
 
-impl Deck {
-    // wgt {{{2
+impl Deck { // {{{2
+    // wgt {{{3
     /// Weight of deck armor.
     ///
-    // XXX: pass wgt_engine once I figure out the circular reference
     pub fn wgt(&self, hull: Hull, wgt_mag: f64, wgt_engine: f64) -> f64 {
         let d      = hull.d();
         let lwl    = hull.lwl();
@@ -367,14 +394,16 @@ impl Deck {
         Default::default()
     }
 }
-#[cfg(test)] // Deck {{{1
+
+// Testing Deck {{{2
+#[cfg(test)]
 mod deck {
     use super::*;
     use crate::test_support::*;
     use crate::Hull;
     use crate::SternType;
 
-    // Test wgt {{{2
+    // Test wgt {{{3
     macro_rules! test_wgt {
         ($($name:ident: $value:expr,)*) => {
             $(

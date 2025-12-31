@@ -7,18 +7,29 @@ use crate::BowType;
 use crate::unit_types::Units;
 
 // Hull {{{1
+/// Hull characteristics.
+///
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Hull {
     /// Units
     pub units: Units,
 
     /// Block Coefficient at normal displacement.
+    ///
+    /// This is None if d is set.
         cb: Option<f64>,
     /// Normal Displacement (t)
+    ///
+    /// This is None if cb is set.
         d: Option<f64>,
+
     /// Overall length including ram and any overhangs
+    ///
+    /// This is None if lwl is set.
         loa: Option<f64>,
-    /// Length (waterline): Maximum length in water, including any ram.
+    /// Maximum length in the water, including any ram.
+    ///
+    /// This is None if loa is set.
         lwl: Option<f64>,
 
     /// Beam (hull): Maximum width in the water, excluding torpedo bulges and
@@ -26,6 +37,7 @@ pub struct Hull {
     pub b: f64,
     /// Beam (bulges): Maximum width in the water including torpedo bulges but
     /// excluding above water overhangs.
+    // TODO: This should be ignored if it is less than b but how does Springsharp do it?
     pub bb: f64,
     /// Draft: Maximum hull draft at normal displacement.
     pub t: f64,
@@ -35,51 +47,50 @@ pub struct Hull {
     /// shafts but set to false otherwise.
     /// Set to true if the engine has less than two shafts. Otherwise set to false.
     ///
-    // TODO: Maybe add the shaft number to the constructor? Or have a set_boxy()
-    // method?
+    // TODO: replace this with simply passing the number of shafts to the functions that currently use boxy
     pub boxy: bool,
 
+    /// Type of bow.
     pub bow_type: BowType,
+    /// Type of stern.
     pub stern_type: SternType,
 
     /// Length of stern overhang
     pub stern_overhang: f64,
 
-    /// Forecastle length.
+    /// Forecastle length as a fraction of the total deck.
     pub fc_len: f64,
     /// Height of forecastle forward.
     pub fc_fwd: f64,
     /// Height of forecastle aft.
     pub fc_aft: f64,
 
-    /// Foredeck length.
+    /// Foredeck length as a fraction of the total deck.
     pub fd_len: f64,
     /// Height of foredeck forward.
     pub fd_fwd: f64,
     /// Height of foredeck aft.
     pub fd_aft: f64,
-    /// Height of aftdeck forward.
 
-    // NOTE: ad_len() is a method
+    // NOTE: ad_len() is calculated from fc_len and fd_len
+    /// Height of aftdeck forward.
     pub ad_fwd: f64,
     /// Height of aftdeck aft.
     pub ad_aft: f64,
 
-    /// Quarterdeck length.
+    /// Quarterdeck length as a fraction of the total deck.
     pub qd_len: f64,
     /// Height of quarterdeck forward.
     pub qd_fwd: f64,
     /// Height of quarterdeck aft.
     pub qd_aft: f64,
 
-    /// Average rake of stem from waterline to staff. Positive angles indicate
-    /// an overhang.
-    ///
-    /// Range: (-90, 90)
+    /// Average rake of stem from waterline to staff.
+    /// Positive angles indicate an overhang.
     pub bow_angle: f64,
 }
 
-impl Default for Hull { // {{{1
+impl Default for Hull { // {{{2
     fn default() -> Hull {
         Hull {
             units: Units::Imperial,
@@ -145,15 +156,17 @@ impl Hull {
     }
 }
 
-// Hull Implementation {{{1
-impl Hull {
-    /// Volume of one long ton of seawater in ft³
+impl Hull { // {{{2
+    /// Volume of one long ton of seawater in cubic feet.
     pub const FT3_PER_TON_SEA: f64 = 35.0;
 
-    // freeboard_desc {{{2
+    // freeboard_desc {{{3
+    /// Get a description of the freeboard.
+    ///
     pub fn freeboard_desc(&self) -> String {
         let mut s: Vec<String> = Vec::new();
 
+        // XXX: Non-flush decks could still match here
         if self.fc_aft == self.fd_fwd &&
            self.fd_aft == self.ad_fwd &&
            self.ad_aft == self.qd_fwd {
@@ -188,35 +201,50 @@ impl Hull {
         s.join(", ")
     }
 
-    // cs {{{2
+    // cs {{{3
     /// Coefficient of Sharpness.
     ///
     pub fn cs(&self) -> f64 {
-        if self.lwl() == 0.0 { return 0.0; }
+        if self.lwl() == 0.0 { return 0.0; } // Catch divide by zero
+
         0.4 * (self.bb / self.lwl() * 6.0).powf(1.0/3.0) * f64::sqrt(self.cb() / 0.52)
     }
 
-    // cm {{{2
+    // cm {{{3
     /// Misdhip section area Coefficient (Keslen).
     ///
+    // XXX: Should this be a method?
     pub fn cm(block: f64) -> f64 {
         match block {
+            // XXX: Does this matter? cb should never by less than 0.3
             0.0 => 1.006, // The float math doesn't work out if block == 0.0
             _   => 1.006 - 0.0056 * block.powf(-3.56),
         }
     }
 
-    // cp {{{2
+    // cp {{{3
     /// Prismatic Coefficient.
     ///
+    // XXX: Should this be a method?
     pub fn cp(block: f64) -> f64 {
         block / Hull::cm(block)
     }
 
-    // cb_calc {{{2
+    // cb {{{3
+    /// Block Coefficient at normal displacement.
+    ///
+    /// Return a perviously set value or cb_calc() if unset.
+    pub fn cb(&self) -> f64 {
+        match self.cb {
+            Some(cb) => cb,
+            None     => self.cb_calc(self.d(), self.t),
+        }
+    }
+
+    // cb_calc {{{3
     /// Calculate the Block Coefficient for a given displacment.
     ///
-    // XXX: Should the minimum be clamped to 0.3?
+    // XXX: Should this only return values between 0.3 and 1.0 (inclusive)?
     pub fn cb_calc(&self, d: f64, t: f64) -> f64 {
         let volume = self.lwl() * self.bb * t;
 
@@ -227,28 +255,7 @@ impl Hull {
         }
     }
 
-    // cb {{{2
-    /// Block Coefficient at normal displacement.
-    ///
-    /// Range: [0.0, 1.0]
-    pub fn cb(&self) -> f64 {
-        match self.cb {
-            Some(cb) => cb,
-            None     => self.cb_calc(self.d(), self.t),
-        }
-    }
-
-    // set_d {{{2
-    /// Set the Displacement and unset the Block Coefficient.
-    ///
-    pub fn set_d(&mut self, d: f64) -> f64 {
-        self.d = Some(d);
-        self.cb = None;
-
-        d
-    }
-
-    // set_cb {{{2
+    // set_cb {{{3
     /// Set the Block Coefficient and unset the Displacement.
     ///
     pub fn set_cb(&mut self, cb: f64) -> f64 {
@@ -258,9 +265,10 @@ impl Hull {
         cb
     }
 
-    // d {{{2
+    // d {{{3
     /// Normal Displacement (t).
     ///
+    /// Return a perviously set value or caluculate from cb if unset.
     pub fn d(&self) -> f64 {
         match self.d {
             Some(d) => d,
@@ -268,7 +276,17 @@ impl Hull {
         }
     }
 
-    // cwp {{{2
+    // set_d {{{3
+    /// Set the Displacement and unset the Block Coefficient.
+    ///
+    pub fn set_d(&mut self, d: f64) -> f64 {
+        self.d = Some(d);
+        self.cb = None;
+
+        d
+    }
+
+    // cwp {{{3
     /// Waterplane Area Coefficient (Parsons).
     ///
     pub fn cwp(&self) -> f64 {
@@ -291,22 +309,23 @@ impl Hull {
             }
     }
 
-    // wp {{{2
+    // wp {{{3
     /// Waterplane Area.
     ///
     pub fn wp(&self) -> f64 {
         self.cwp() * self.lwl() * self.b
     }
 
-    // ws {{{2
+    // ws {{{3
     /// Wetted Surface Area (Mumford).
     ///
     pub fn ws(&self) -> f64 {
         if self.t == 0.0 { return 0.0; } // catch divide by zero
+                                         //
         self.lwl() * self.t * 1.7 + (self.d() * Self::FT3_PER_TON_SEA / self.t)
     }
 
-    // set_lwl {{{2
+    // set_lwl {{{3
     /// Set the waterline length and unset the overall length.
     ///
     pub fn set_lwl(&mut self, len: f64) -> f64 {
@@ -316,7 +335,7 @@ impl Hull {
         len
     }
 
-    // set_loa {{{2
+    // set_loa {{{3
     /// Set the overall length and unset the waterline length.
     ///
     pub fn set_loa(&mut self, len: f64) -> f64 {
@@ -326,12 +345,11 @@ impl Hull {
         len
     }
 
-    // lwl {{{2
+    // lwl {{{3
     /// Length at the waterline.
     ///
     /// lwl = loa - max(ram_length, length_from_bow_angle, 0) - max(stern_overhang, 0)
     ///
-    /// Range: (0, ∞)
     pub fn lwl(&self) -> f64 {
         match (self.lwl, self.loa) {
             (None, None)      => 0.0,
@@ -346,12 +364,11 @@ impl Hull {
         }
     }
 
-    // loa {{{2
+    // loa {{{3
     /// Overall length.
     ///
     /// loa = lwl + max(ram_length, length_from_bow_angle, 0) + max(stern_overhang, 0)
     ///
-    /// Range: [lwl, ∞)
     pub fn loa(&self) -> f64 {
         match (self.loa, self.lwl) {
             (None, None)      => 0.0,
@@ -366,7 +383,7 @@ impl Hull {
         }
     }
 
-    // leff {{{2
+    // leff {{{3
     /// Effective length based on waterline length, bulge width, sharpness
     /// coefficient and stern type.
     ///
@@ -374,31 +391,31 @@ impl Hull {
         self.stern_type.leff(self.lwl(), self.bb, self.cs())
     }
 
-    // t_calc {{{2
+    // t_calc {{{3
     /// Draft at given displacment.
     ///
     pub fn t_calc(&self, d: f64) -> f64 {
         self.t + (d - self.d()) / (self.wp() / Hull::FT3_PER_TON_SEA)
     }
 
-    // ts {{{2
+    // ts {{{3
     /// Draft at side.
     ///
     pub fn ts(&self) -> f64 {
         (Hull::cm(self.cb()) * 2.0 - 1.0) * self.t
     }
 
-    // ad_len {{{2
-    /// Length of the after deck based on other deck lengths.
+    // ad_len {{{3
+    /// Length of the after deck as a fraction of the total
+    /// deck based on forecastle, fore and aft decks.
     ///
     pub fn ad_len(&self) -> f64 {
         1.0 - self.fc_len - self.fd_len - self.qd_len
     }
 
-    // stem_len {{{2
-    /// Ship stem adjustment from bow angle.
+    // stem_len {{{3
+    /// Increase or decrease to length due to the angle of the bow.
     ///
-    /// Range: (-∞, +∞)
     pub fn stem_len(&self) -> f64 {
         if self.bow_angle.abs() >= 90.0 { // Avoid returning infity
             0.0
@@ -407,7 +424,7 @@ impl Hull {
         }
     }
 
-    // freeboard {{{2
+    // freeboard {{{3
     /// Average freeboard.
     ///
     pub fn freeboard(&self) -> f64 {
@@ -417,41 +434,42 @@ impl Hull {
         self.qd() * self.qd_len
     }
 
-    // freeboard_dist {{{2
-    /// Freeboard dist (I have no idea what this is).
+    // freeboard_dist {{{3
+    /// XXX: I do not know what this does.
     ///
-    /// Range: [0, ∞)
     pub fn freeboard_dist(&self) -> f64 {
        (self.fd() * self.fd_len + self.ad() * self.ad_len()) / (self.fd_len + self.ad_len()) 
     }
 
-    // is_wet_fwd {{{2
+    // is_wet_fwd {{{3
+    /// Does the ship tend to be wet forward?
+    ///
     pub fn is_wet_fwd(&self) -> bool {
         self.fc_fwd < (1.1 * self.lwl().sqrt())
     }
 
-    // fc {{{2
+    // fc {{{3
     /// Average forecastle height (weighted to slope up toward the bow).
     ///
     pub fn fc(&self) -> f64 {
         self.fc_aft + (self.fc_fwd - self.fc_aft) * 0.4
     }
 
-    // fd {{{2
+    // fd {{{3
     /// Average foredeck height.
     ///
     pub fn fd(&self) -> f64 {
         self.fd_fwd + (self.fd_aft - self.fd_fwd) * 0.5
     }
 
-    // ad {{{2
+    // ad {{{3
     /// Average afterdeck height.
     ///
     pub fn ad(&self) -> f64 {
         self.ad_fwd + (self.ad_aft - self.ad_fwd) * 0.5
     }
 
-    // qd {{{2
+    // qd {{{3
     /// Average quarterdeck height.
     ///
     pub fn qd(&self) -> f64 {
@@ -459,8 +477,8 @@ impl Hull {
     }
 
 
-    // free_cap {{{2
-    /// I have no idea what this is.
+    // free_cap {{{3
+    /// XXX: I do not know what this does.
     ///
     pub fn free_cap(&self, cap_calc_broadside: bool) -> f64 {
         if self.freeboard() > (self.b / 3.0) {
@@ -473,28 +491,31 @@ impl Hull {
     }
 
 
-    // vn {{{2
-    /// Natural speed.
+    // vn {{{3
+    /// Natural speed of the hull.
     ///
     pub fn vn(&self) -> f64 {
         self.leff().sqrt()
     }
 
-    // len2beam {{{2
+    // len2beam {{{3
     /// Length to beam ratio.
     ///
     pub fn len2beam(&self) -> f64 {
-        if self.bb == 0.0 { return 0.0; }
+        if self.bb == 0.0 { return 0.0; } // Catch divide by zero.
+
         self.lwl() / self.bb
     }
 
 }
-#[cfg(test)] // Hull {{{1
+
+// Testing Hull {{{2
+#[cfg(test)]
 mod hull {
     use super::*;
     use crate::test_support::*;
 
-    // Cs {{{2
+    // Cs {{{3
     macro_rules! test_cs {
         ($($name:ident: $value:expr,)*) => {
             $(
@@ -518,7 +539,7 @@ mod hull {
         cs_test:        (0.34697, 100.0),
     }
 
-    // Cm {{{2
+    // Cm {{{3
     macro_rules! test_cm {
         ($($name:ident: $value:expr,)*) => {
             $(
@@ -539,7 +560,7 @@ mod hull {
         cm_eq_half: (0.93995, 0.5),
     }
 
-    // Cp {{{2
+    // Cp {{{3
     macro_rules! test_cp {
         ($($name:ident: $value:expr,)*) => {
             $(
@@ -560,7 +581,7 @@ mod hull {
         cp_cb_eq_half: (0.53194, 0.5),
     }
 
-    // Cb {{{2
+    // Cb {{{3
     macro_rules! test_cb_calc {
         ($($name:ident: $value:expr,)*) => {
             $(
@@ -597,7 +618,7 @@ mod hull {
         cb_solid_block:   (1.0, 100.0, Hull::FT3_PER_TON_SEA, 1.0, 1.0),
     }
 
-    // d {{{2
+    // d {{{3
     macro_rules! test_d {
         ($($name:ident: $value:expr,)*) => {
             $(
@@ -628,7 +649,7 @@ mod hull {
         d_eq_cb_2: (1.0, 1.0, Hull::FT3_PER_TON_SEA, 1.0, 1.0),
     }
 
-    // cwp {{{2
+    // cwp {{{3
     macro_rules! test_cwp {
         ($($name:ident: $value:expr,)*) => {
             $(
@@ -654,7 +675,7 @@ mod hull {
         cwp_test_4: (0.59708, false, 0.35),
     }
 
-    // ws {{{2
+    // ws {{{3
     macro_rules! test_ws {
         ($($name:ident: $value:expr,)*) => {
             $(
@@ -679,7 +700,7 @@ mod hull {
         ws_test:   (5200.0, 10.0),
     }
 
-    // lwl {{{2
+    // lwl {{{3
     macro_rules! test_lwl {
         ($($name:ident: $value:expr,)*) => {
             $(
@@ -715,7 +736,7 @@ mod hull {
         lwl_ram_stern:   (80.0, 0.0, 10.0, 10.0),
     }
 
-    // loa {{{2
+    // loa {{{3
     macro_rules! test_loa {
         ($($name:ident: $value:expr,)*) => {
             $(
@@ -751,7 +772,7 @@ mod hull {
         loa_ram_stern:   (120.0, 0.0, 10.0, 10.0),
     }
 
-    // t {{{2
+    // t {{{3
     macro_rules! test_t {
         ($($name:ident: $value:expr,)*) => {
             $(
@@ -776,7 +797,7 @@ mod hull {
         t_test_1: (10.87, 500.0),
     }
 
-    // ts {{{2
+    // ts {{{3
     macro_rules! test_ts {
         ($($name:ident: $value:expr,)*) => {
             $(
@@ -803,7 +824,7 @@ mod hull {
         ts_t:         (9.72, 10.0),
     }
 
-    // ad_len {{{2
+    // ad_len {{{3
     macro_rules! test_ad_len {
         ($($name:ident: $value:expr,)*) => {
             $(
@@ -827,7 +848,7 @@ mod hull {
         ad_len_test: (0.25, 0.25),
     }
 
-    // stem_len {{{2
+    // stem_len {{{3
     macro_rules! test_stem_len {
         ($($name:ident: $value:expr,)*) => {
             $(
@@ -852,7 +873,7 @@ mod hull {
         stem_len_90:        (0.0, 90.0),
     }
 
-    // freeboard {{{2
+    // freeboard {{{3
     macro_rules! test_freeboard {
         ($($name:ident: $value:expr,)*) => {
             $(
@@ -887,7 +908,7 @@ mod hull {
         freeboard_test: (10.75, 0.25),
     }
 
-    // freeboard_dist {{{2
+    // freeboard_dist {{{3
     macro_rules! test_freeboard_dist {
         ($($name:ident: $value:expr,)*) => {
             $(
@@ -921,7 +942,7 @@ mod hull {
         // name:             (dist, fc_len)
         freeboard_dist_test: (13.33, 10.0),
     }
-    // is_wet_fwd {{{2
+    // is_wet_fwd {{{3
     macro_rules! test_is_wet_fwd {
         ($($name:ident: $value:expr,)*) => {
             $(
@@ -945,7 +966,7 @@ mod hull {
         is_wet_fwd_false: (false, 20.0),
     }
 
-    // fc {{{2
+    // fc {{{3
     macro_rules! test_fc {
         ($($name:ident: $value:expr,)*) => {
             $(
@@ -971,7 +992,7 @@ mod hull {
         fc_test_slope_aft: (6.0, 0.0, 10.0),
     }
 
-    // fd {{{2
+    // fd {{{3
     macro_rules! test_fd {
         ($($name:ident: $value:expr,)*) => {
             $(
@@ -997,7 +1018,7 @@ mod hull {
         fd_test_slope_aft: (5.0, 0.0, 10.0),
     }
 
-    // ad {{{2
+    // ad {{{3
     macro_rules! test_ad {
         ($($name:ident: $value:expr,)*) => {
             $(
@@ -1022,7 +1043,7 @@ mod hull {
         ad_test_slope_aft: (5.0, 0.0, 10.0),
     }
 
-    // qd {{{2
+    // qd {{{3
     macro_rules! test_qd {
         ($($name:ident: $value:expr,)*) => {
             $(
@@ -1048,7 +1069,7 @@ mod hull {
         qd_test_slope_aft: (5.0, 0.0, 10.0),
     }
 
-    // free_cap {{{2
+    // free_cap {{{3
     macro_rules! test_free_cap {
         ($($name:ident: $value:expr,)*) => {
             $(
@@ -1088,7 +1109,7 @@ mod hull {
         free_cap_case_3: (10.0, 70.0, false),
     }
 
-    // vn {{{2
+    // vn {{{3
     macro_rules! test_vn {
         ($($name:ident: $value:expr,)*) => {
             $(
@@ -1114,7 +1135,7 @@ mod hull {
         vn_test_2: (14.14, 200.0),
     }
 
-    // len2beam {{{2
+    // len2beam {{{3
     macro_rules! test_len2beam {
         ($($name:ident: $value:expr,)*) => {
             $(

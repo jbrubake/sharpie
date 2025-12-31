@@ -1,6 +1,8 @@
 use serde::{Serialize, Deserialize};
 
 // MiscWgts {{{1
+/// Miscellaneous weights throughout the ship.
+///
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
 pub struct MiscWgts {
     /// Extra weight in the vital spaces.
@@ -15,13 +17,13 @@ pub struct MiscWgts {
     pub void: u32,
 }
 
-impl MiscWgts {
+impl MiscWgts { // {{{2
     // new {{{2
     pub fn new() -> MiscWgts {
         Default::default()
     }
 
-    // wgt {{{2
+    // wgt {{{3
     /// Total of miscellaneous weights.
     ///
     pub fn wgt(&self) -> u32 {
@@ -29,11 +31,13 @@ impl MiscWgts {
     }
 }
 
-#[cfg(test)] // MiscWgts {{{1
+// Testing {{{2
+//
+#[cfg(test)]
 mod misc_wgts {
     use super::*;
 
-    // wgt {{{2
+    // wgt {{{3
     macro_rules! test_wgt {
         ($($name:ident: $value:expr,)*) => {
             $(
