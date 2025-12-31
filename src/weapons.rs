@@ -1,6 +1,6 @@
 use crate::{Ship, GunType, MountType, GunDistributionType, GunLayoutType, MineType, ASWType, TorpedoMountType, Armor};
 use crate::Hull;
-use crate::unit_types::Units;
+use crate::units::Units;
 
 use serde::{Serialize, Deserialize};
 

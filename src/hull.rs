@@ -1,10 +1,11 @@
+use crate::units::Units;
+
 use serde::{Serialize, Deserialize};
 
 use std::f64::consts::PI;
 
 use crate::SternType;
 use crate::BowType;
-use crate::unit_types::Units;
 
 // Hull {{{1
 /// Hull characteristics.
