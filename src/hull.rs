@@ -254,12 +254,12 @@ impl Hull { // {{{2
     /// Waterplane Area Coefficient (Parsons).
     ///
     pub fn cwp(&self) -> f64 {
-        let (mut a, mut f) = self.stern_type.wp_calc();
-
-        if self.boxy || self.cb() >= 0.75 {
-            a = 0.175;
-            f = 0.875;
-        }
+        let (a, f) = 
+            if self.boxy || self.cb() >= 0.75 {
+                (0.175, 0.875)
+            } else {
+                self.stern_type.wp_calc()
+            };
         
         let cwp = f64::min(
             a + f * Hull::cp( f64::max(self.cb(), 0.4) ),
