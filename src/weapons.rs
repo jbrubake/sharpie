@@ -362,9 +362,7 @@ impl Battery { // {{{2
     ///
     pub fn concentration(&self, wgt_broad: f64) -> f64 {
         // Catch divide by zero
-        if self.num as f64 * self.shell_wgt() == 0.0 ||
-            self.mount_num == 0
-            { return 0.0; }
+        if self.mount_num == 0 || wgt_broad == 0.0 { return 0.0; }
 
         (self.shell_wgt() * self.num as f64 / wgt_broad) *
             if self.mount_kind.wgt_adj() > 0.6 {
@@ -399,13 +397,11 @@ impl Battery { // {{{2
         if self.mount_num == 0 { return 0.0 } // Catch divide by zero
 
         let mut f = 0.0;
-        let mut mounts = 0;
         for b in self.groups.iter() {
             f += b.free(hull.clone());
-            mounts += b.num_mounts();
         }
 
-        f / mounts as f64
+        f / self.mount_num as f64
     }
 
     // armor_face_wgt {{{3
@@ -468,17 +464,15 @@ impl Battery { // {{{2
     ///
     pub fn armor_barb_wgt(&self, hull: Hull) -> f64 {
         let mut guns = 0;
-        let mut mounts = 0;
         for g in self.groups.iter() {
             guns += g.layout.guns_per() * g.num_mounts();
-            mounts += g.num_mounts();
         }
 
-        if mounts == 0 { return 0.0; } // catch divide by zero
+        if self.mount_num == 0 { return 0.0; } // catch divide by zero
 
         let a = u32::min(
             if self.mount_kind.wgt_adj() > 0.5 { 4 } else { 5 },
-            guns / mounts,
+            guns / self.mount_num,
         );
 
         let b = self.mount_kind.armor_barb_wgt();
@@ -510,16 +504,14 @@ impl Battery { // {{{2
     /// XXX: I do not know what this does.
     ///
     pub fn wgt_adj(&self) -> f64 {
+        if self.mount_num == 0 { return 0.0; } // Catch divide by zero
+
         let mut v = 0.0;
-        let mut mounts = 0;
         for b in self.groups.iter() {
             v += b.wgt_adj();
-            mounts += b.num_mounts();
         }
 
-        if mounts == 0 { return 0.0; }
-
-        v / mounts as f64
+        v / self.mount_num as f64
     }
 
     // date_factor {{{3
@@ -681,7 +673,9 @@ mod battery {
 
                     let mut btry = Battery::default();
 
+                    // Assume they are all single mounts
                     btry.num = group_1_mounts + group_2_mounts;
+                    btry.mount_num = group_1_mounts + group_2_mounts;
 
                     btry.groups[0].above = group_1_mounts;
                     btry.groups[1].on = group_2_mounts;
@@ -721,6 +715,8 @@ mod battery {
                     let (expected, group_1_mounts, group_2_mounts) = $value;
 
                     let mut btry = Battery::default();
+
+                    btry.mount_num = group_1_mounts + group_2_mounts;
 
                     btry.groups[0].on = group_1_mounts;
                     btry.groups[1].on = group_2_mounts;
@@ -854,6 +850,8 @@ mod battery {
                     btry.year = 1920;
                     btry.num = 2;
 
+                    // Assume they are all single mounts
+                    btry.mount_num = btry.num;
                     btry.groups[0].on = btry.num;
                     btry.groups[1].on = 0;
 
@@ -890,6 +888,8 @@ mod battery {
                     let (expected, g0_mounts, g1_mounts) = $value;
 
                     let mut btry = Battery::default();
+                    btry.mount_num = g0_mounts + g1_mounts;
+
                     btry.groups[0].on = g0_mounts;
                     btry.groups[1].on = g1_mounts;
                     btry.groups[0].layout = GunLayoutType::Twin;
@@ -997,6 +997,9 @@ mod battery {
                     btry.groups[1].on = 0;
                     btry.groups[0].layout = GunLayoutType::Single;
                     btry.groups[1].layout = GunLayoutType::Single;
+
+                    btry.mount_num = btry.groups[0].num_mounts() +
+                        btry.groups[1].num_mounts();
 
                     println!("{}", btry.mount_wgt());
                     assert!(expected == to_place(btry.mount_wgt(), 2));
