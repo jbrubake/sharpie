@@ -1553,7 +1553,7 @@ impl Ship {
     pub fn seakeeping_desc(&self) -> Vec<String> {
         let mut s: Vec<String> = Vec::new();
         
-        if self.tender_warn() && self.capsize_warn() {
+        if self.tender_warn() && !self.capsize_warn() {
             s.push("Caution: Poor stability - excessive risk of capsizing".into());
         }
 
