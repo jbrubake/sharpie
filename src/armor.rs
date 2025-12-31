@@ -348,35 +348,15 @@ impl Deck { // {{{2
         let cwp    = hull.cwp();
         let wp     = hull.wp();
 
-        let main_deck =
-            if self.kind == DeckType::MultipleArmored ||
-                self.kind == DeckType::SingleArmored ||
-                self.kind == DeckType::MultipleProtected ||
-                self.kind == DeckType::SingleProtected
-            {
-                (
-                    wp - (fc_len * 2.0).powf(1.0 - cwp.powf(2.0)) * b * lwl * fc_len / 2.0 -
-                    (
-                        qd_len.powf(1.0 - cwp) * b * lwl * qd_len * 0.25 +
-                        (
-                            qd_len.powf(1.0 - cwp) +
-                            (qd_len * 2.0).powf(1.0 - cwp)
-                         ) * b * lwl * qd_len * 0.25
-                     )
-                 ) * 1.01
-            } else if self.kind == DeckType::BoxOverMachinery {
-                (wgt_engine * 3.0 / (d * 0.94) * 0.65 * lwl + 16.0) * (b + 16.0) - 256.0
-            } else if self.kind == DeckType::BoxOverMagazine {
-                (wgt_mag / (d * 0.94) * 0.65 * lwl + 16.0) * (b + 16.0) - 256.0
-            } else if self.kind == DeckType::BoxOverBoth {
-                ((wgt_engine * 3.0 + wgt_mag) / (d * 0.94) * 0.65 * lwl + 16.0) * (b + 16.0) - 256.0
-            } else {
-                0.0
-            };
+        let main_deck = self.kind.wgt_factor(
+            d, lwl, b, fc_len, qd_len, wp, cwp, wgt_engine, wgt_mag
+        );
 
-        let fc_deck = (fc_len * 2.0).powf(1.0 - cwp.powf(2.0)) * b * lwl * fc_len * 0.5;
+        let fc_deck = (fc_len * 2.0).powf(1.0 - cwp.powf(2.0)) *
+            b * lwl * fc_len * 0.5;
 
-        let qd_deck = qd_len.powf(1.0 - cwp) * b * lwl * qd_len / 4.0 * (2.0 + 2.0_f64.powf(1.0 - cwp));
+        let qd_deck = qd_len.powf(1.0 - cwp) * b * lwl * qd_len / 4.0 *
+            (2.0 + 2.0_f64.powf(1.0 - cwp));
 
         (main_deck * self.md + fc_deck * self.fc + qd_deck * self.qd) * Armor::INCH
     }
@@ -465,6 +445,46 @@ pub enum DeckType {
     BoxOverMachinery,
     BoxOverMagazine,
     BoxOverBoth,
+}
+
+impl DeckType { // {{{2
+    // wgt_factor {{{3
+    /// Main deck weight factor for each deck type.
+    ///
+    pub fn wgt_factor(&self,
+        d: f64, lwl: f64, b: f64, 
+        fc_len: f64, qd_len:f64,
+        wp: f64, cwp: f64,
+        wgt_engine: f64, wgt_mag: f64) -> f64 {
+
+        match self {
+            Self::MultipleArmored |
+            Self::SingleArmored |
+            Self::MultipleProtected |
+            Self::SingleProtected => {
+                (
+                    wp - (fc_len * 2.0).powf(1.0 - cwp.powf(2.0)) * b * lwl * fc_len / 2.0 -
+                    (
+                        qd_len.powf(1.0 - cwp) * b * lwl * qd_len * 0.25 +
+                        (
+                            qd_len.powf(1.0 - cwp) +
+                            (qd_len * 2.0).powf(1.0 - cwp)
+                        ) * b * lwl * qd_len * 0.25
+                    )
+                ) * 1.01
+            },
+
+            Self::BoxOverMachinery =>
+                (wgt_engine * 3.0 / (d * 0.94) * 0.65 * lwl + 16.0) * (b + 16.0) - 256.0,
+
+            Self::BoxOverMagazine =>
+                (wgt_mag / (d * 0.94) * 0.65 * lwl + 16.0) * (b + 16.0) - 256.0,
+
+            Self::BoxOverBoth =>
+                ((wgt_engine * 3.0 + wgt_mag) / (d * 0.94) * 0.65 * lwl + 16.0) * (b + 16.0) - 256.0,
+
+        }
+    }
 }
 
 impl fmt::Display for DeckType { // {{{2
