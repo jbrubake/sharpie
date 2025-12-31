@@ -1,4 +1,5 @@
 pub const SHIP_FILE_EXT: &str = "ship";
+pub const SS_SHIP_FILE_EXT: &str = "sship";
 
 mod hull;
 mod armor;

@@ -2,6 +2,7 @@ use clap::{Parser, Subcommand};
 use rfd::FileDialog;
 use sharpie::Ship;
 use sharpie::SHIP_FILE_EXT;
+use sharpie::SS_SHIP_FILE_EXT;
 
 use std::error::Error;
 
@@ -36,7 +37,7 @@ enum Commands {
 fn convert_ship(binding: MainWindow) {
     let file = FileDialog::new()
         .set_title("Springsharp file to convert")
-        .add_filter("sship", &["sship",])
+        .add_filter(SS_SHIP_FILE_EXT, &[SS_SHIP_FILE_EXT,])
         .add_filter("all", &["*",])
         .pick_file()
         .unwrap_or_default()
