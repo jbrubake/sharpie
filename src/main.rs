@@ -1,11 +1,13 @@
 use clap::{Parser, Subcommand};
 use rfd::FileDialog;
-use sharpie::Ship;
-use sharpie::SHIP_FILE_EXT;
-use sharpie::SS_SHIP_FILE_EXT;
+use sharpie::{Ship, SHIP_FILE_EXT, SS_SHIP_FILE_EXT};
 
 use std::error::Error;
 
+slint::include_modules!();
+
+// Command line parsing {{{1
+//
 #[derive(Parser)]
 #[command(version)]
 #[command(about = "SpringSharp 3b3 clone", long_about = None)]
@@ -21,19 +23,28 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
-    Load { file: String },
+    Load {
+        file: String
+    },
+
     Convert {
         #[arg(help = "SpringSharp 3 file to convert")]
         from: String,
+
         #[arg(short, long)]
         #[arg(help = "Filename to save conversion to")]
         to: Option<String>,
+
         #[arg(short, long)]
         #[arg(help = "Show ship report after conversion")]
         report: bool,
     },
 }
 
+// Load and Convert {{{1
+//
+/// Convert a Springsharp 3b3 file to sharpie format and show the ship report.
+///
 fn convert_ship(binding: MainWindow) {
     let file = FileDialog::new()
         .set_title("Springsharp file to convert")
@@ -52,10 +63,14 @@ fn convert_ship(binding: MainWindow) {
             binding.set_report_str(ship.report().into());
             save_ship(ship);
         },
+
+        // TODO: Show errors in the GUI
         Err(error) => eprintln!("{}", error),
     };
 }
 
+/// Load a sharpie ship file and show the ship report.
+///
 fn load_ship(binding: MainWindow) {
     let file = FileDialog::new()
         .set_title("Sharpie file to load")
@@ -71,10 +86,13 @@ fn load_ship(binding: MainWindow) {
 
     match ship {
         Ok(ship) => binding.set_report_str(ship.report().into()),
+        // TODO: Show errors in the GUI
         Err(error) => eprintln!("{}", error),
     };
 }
 
+/// Save a ship to a file.
+///
 fn save_ship(ship: Ship) {
     let file = FileDialog::new()
         .set_title("Sharpie file to save")
@@ -92,6 +110,8 @@ fn save_ship(ship: Ship) {
 
 slint::include_modules!();
 
+// Main {{{1
+//
 fn main() -> Result<(), Box<dyn Error>> {
     let cli = Cli::parse();
 
@@ -162,9 +182,12 @@ fn main() -> Result<(), Box<dyn Error>> {
     }
 }
 
+// Testing {{{1
+//
 #[test]
 fn verify_cli() {
     use clap::CommandFactory;
+
     Cli::command().debug_assert();
 }
 
