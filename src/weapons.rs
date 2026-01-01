@@ -1178,7 +1178,7 @@ impl MountType { // {{{2
     }
 
     // wgt {{{3
-    /// TODO: This should be combined with the other one
+    /// Multiplier for weight calculations.
     ///
     pub fn wgt(&self) -> f64 {
         match self {
@@ -1192,7 +1192,7 @@ impl MountType { // {{{2
         }
     }
     // wgt_adj {{{3
-    /// TODO: This should be combined with the other one
+    /// Multiplier for weight calculations.
     ///
     pub fn wgt_adj(&self) -> f64 {
         match self {
