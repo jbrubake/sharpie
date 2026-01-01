@@ -1573,7 +1573,6 @@ impl From<&str> for GunDistributionType {
 }
 
 impl fmt::Display for GunDistributionType { // {{{2
-// TODO: look at source (line 10809) for how to adjust this based on number of mounts
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}",
             match self {
