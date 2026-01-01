@@ -669,8 +669,8 @@ impl Ship { // {{{2
     /// Size of shells used to calculate flotation().
     ///
     pub fn damage_shell_size(&self) -> f64 {
-        if self.batteries[0].cal > 0.0 {
-            self.batteries[0].cal
+        if self.batteries[0].diam > 0.0 {
+            self.batteries[0].diam
         } else {
             6.0
         }
@@ -869,7 +869,7 @@ impl Ship { // {{{2
     fn gun_wtf(&self) -> f64 {
         let mut wtf = 0.0;
         for b in self.batteries.iter() {
-            if b.cal == 0.0 { continue; }
+            if b.diam == 0.0 { continue; }
             wtf += (
                 b.gun_wgt() +
                 b.mount_wgt() +
@@ -997,7 +997,7 @@ impl Ship { // {{{2
 
         for b in ship.batteries.iter_mut() {
             b.num             = lines.next().unwrap().parse()?;
-            b.cal             = lines.next().unwrap().parse()?;
+            b.diam             = lines.next().unwrap().parse()?;
             b.kind            = lines.next().unwrap().into();
             b.groups[0].above = lines.next().unwrap().parse()?;
             b.groups[0].below = lines.next().unwrap().parse()?;
@@ -1342,8 +1342,8 @@ impl Ship { // {{{2
             if b.num == 0 { continue; }
             report.push(format!("    {} - {:.2}\" / {:.1} mm {:.1} cal gun{} - {:.2}lbs / {:.2}kg shells, {:.0} per gun",
                 b.num,
-                b.cal,
-                metric(b.cal, LengthSmall, b.units),
+                b.diam,
+                metric(b.diam, LengthSmall, b.units),
                 b.len,
                 match b.num { 1 => "", _ => "s", },
                 b.shell_wgt(),
