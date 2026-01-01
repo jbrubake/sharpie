@@ -1207,7 +1207,8 @@ impl MountType { // {{{2
     }
 }
 
-#[cfg(test)] // MountType {{{2
+// Testing MountType {{{2
+#[cfg(test)]
 mod mount_type {
     use super::*;
 
