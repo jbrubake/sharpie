@@ -148,11 +148,7 @@ impl Battery { // {{{2
     /// Weight of battery face armor.
     ///
     pub fn armor_face_wgt(&self) -> f64 {
-        // TODO: Combine this logic into a single table
-        let wgt = self.mount_kind.armor_face_wgt() +
-            if self.armor_back == 0.0 {
-                self.mount_kind.armor_face_wgt_if_no_back()
-            } else { 0.0 };
+        let wgt = self.mount_kind.armor_face_wgt(self.armor_back);
 
         let mut diameter_calc = 0.0;
         for g in self.groups.iter() {
@@ -161,11 +157,7 @@ impl Battery { // {{{2
 
         let wgt = wgt * diameter_calc * self.house_hgt() * self.armor_face * Armor::INCH;
 
-        // TODO: Combine this logic into a single table
-        wgt * self.kind.armor_face_wgt() * 
-            if self.armor_back == 0.0 {
-                self.kind.armor_face_wgt_if_no_back()
-            } else { 1.0 }
+        wgt * self.kind.armor_face_wgt(self.armor_back)
     }
 
     // house_hgt {{{3
@@ -898,34 +890,34 @@ impl fmt::Display for GunType { // {{{2
 
 impl GunType { // {{{2
     // armor_face_wgt {{{3
-    /// Multiplier for calculating weight of face armor.
+    /// Multiplier for determing the weight of a mount's face armor.
     ///
-    pub fn armor_face_wgt(&self) -> f64 {
-        match self {
-            Self::MuzzleLoading => 1.0,
-            Self::BreechLoading => 1.0,
-            Self::QuickFiring   => 1.0,
-            Self::AntiAir       => 0.333,
-            Self::DualPurpose   => 1.0,
-            Self::RapidFire     => 1.0,
-            Self::MachineGun    => 1.0,
-        }
-    }
+    pub fn armor_face_wgt(&self, armor_back: f64) -> f64 {
+        let mut wgt =
+            match self {
+                Self::MuzzleLoading => 1.0,
+                Self::BreechLoading => 1.0,
+                Self::QuickFiring   => 1.0,
+                Self::AntiAir       => 0.333,
+                Self::DualPurpose   => 1.0,
+                Self::RapidFire     => 1.0,
+                Self::MachineGun    => 1.0,
+            };
 
-    // armor_face_wgt_if_no_back {{{3
-    /// Multiplier for calculating weight of
-    /// face armor if there is no back armor.
-    ///
-    pub fn armor_face_wgt_if_no_back(&self) -> f64 {
-        match self {
-            Self::MuzzleLoading => 1.0,
-            Self::BreechLoading => 1.0,
-            Self::QuickFiring   => 1.0,
-            Self::AntiAir       => 1.0,
-            Self::DualPurpose   => 1.0,
-            Self::RapidFire     => 1.0,
-            Self::MachineGun    => 0.333,
+        if armor_back == 0.0 {
+            wgt *=
+                match self {
+                    Self::MuzzleLoading => 1.0,
+                    Self::BreechLoading => 1.0,
+                    Self::QuickFiring   => 1.0,
+                    Self::AntiAir       => 1.0,
+                    Self::DualPurpose   => 1.0,
+                    Self::RapidFire     => 1.0,
+                    Self::MachineGun    => 0.333,
+                };
         }
+
+        wgt
     }
 
     // wgt_sm {{{3
@@ -964,6 +956,39 @@ impl GunType { // {{{2
 mod gun_type {
     use super::*;
 
+    // Test armor_face_wgt {{{3
+    macro_rules! test_armor_face_wgt {
+        ($($name:ident: $value:expr,)*) => {
+            $(
+                #[test]
+                fn $name() {
+                    let (expected, gun, back_armor) = $value;
+
+                    assert_eq!(expected, gun.armor_face_wgt(back_armor));
+                }
+            )*
+        }
+    }
+
+    test_armor_face_wgt! {
+        // name:         (factor, mount, back_armor)
+        face_wgt_muzzle: (1.0, GunType::MuzzleLoading, 1.0),
+        face_wgt_breech: (1.0, GunType::BreechLoading, 1.0),
+        face_wgt_qf:     (1.0, GunType::QuickFiring, 1.0),
+        face_wgt_aa:     (0.333, GunType::AntiAir, 1.0),
+        face_wgt_dp:     (1.0, GunType::DualPurpose, 1.0),
+        face_wgt_rapdi:  (1.0, GunType::RapidFire, 1.0),
+        face_wgt_mg:     (1.0, GunType::MachineGun, 1.0),
+
+        // name:                 (factor, mount, back_armor)
+        face_wgt_muzzle_no_back: (1.0, GunType::MuzzleLoading, 0.0),
+        face_wgt_breech_no_back: (1.0, GunType::BreechLoading, 0.0),
+        face_wgt_qf_no_back:     (1.0, GunType::QuickFiring, 0.0),
+        face_wgt_aa_no_back:     (0.333, GunType::AntiAir, 0.0),
+        face_wgt_dp_no_back:     (1.0, GunType::DualPurpose, 0.0),
+        face_wgt_rapdi_no_back:  (1.0, GunType::RapidFire, 0.0),
+        face_wgt_mg_no_back:     (0.333, GunType::MachineGun, 0.0),
+    }
     // Test wgt_sm {{{3
     macro_rules! test_wgt_sm {
         ($($name:ident: $value:expr,)*) => {
@@ -1081,35 +1106,36 @@ impl MountType { // {{{2
     }
 
     // armor_face_wgt {{{3
-    /// Multiplier to determine face armor weight.
+    /// Multiplier for determing the weight of a mount's face armor.
     ///
-    pub fn armor_face_wgt(&self) -> f64 {
+    pub fn armor_face_wgt(&self, armor_back: f64 ) -> f64 {
         use std::f64::consts::PI;
-        match self {
-            Self::Broadside      => 1.0,
-            Self::ColesTurret    => PI / 2.0,
-            Self::OpenBarbette   => 0.0,
-            Self::ClosedBarbette => 0.5,
-            Self::DeckAndHoist   => 0.5,
-            Self::Deck           => 0.5,
-            Self::Casemate       => 1.0,
-        }
-    }
 
-    // armor_face_wgt_if_no_back {{{3
-    /// Multiplier to determine face armor weight
-    /// if the mount has no back armor.
-    ///
-    pub fn armor_face_wgt_if_no_back(&self) -> f64 {
-        match self {
-            Self::Broadside      => 0.0,
-            Self::ColesTurret    => 0.0,
-            Self::OpenBarbette   => 0.0,
-            Self::ClosedBarbette => 1.0,
-            Self::DeckAndHoist   => 1.0,
-            Self::Deck           => 1.0,
-            Self::Casemate       => 0.0,
+        let mut wgt = 
+            match self {
+                Self::Broadside      => 1.0,
+                Self::ColesTurret    => PI / 2.0,
+                Self::OpenBarbette   => 0.0,
+                Self::ClosedBarbette => 0.5,
+                Self::DeckAndHoist   => 0.5,
+                Self::Deck           => 0.5,
+                Self::Casemate       => 1.0,
+            };
+
+        if armor_back == 0.0 {
+            wgt +=
+                match self {
+                    Self::Broadside      => 0.0,
+                    Self::ColesTurret    => 0.0,
+                    Self::OpenBarbette   => 0.0,
+                    Self::ClosedBarbette => 1.0,
+                    Self::DeckAndHoist   => 1.0,
+                    Self::Deck           => 1.0,
+                    Self::Casemate       => 0.0,
+                }
         }
+
+        wgt
     }
 
     // armor_back_wgt {{{3
@@ -1324,49 +1350,34 @@ mod mount_type {
             $(
                 #[test]
                 fn $name() {
-                    let (expected, mount) = $value;
+                    let (expected, mount, back_armor) = $value;
 
-                    assert_eq!(expected, mount.armor_face_wgt());
+                    assert_eq!(expected, mount.armor_face_wgt(back_armor));
                 }
             )*
         }
     }
 
     test_armor_face_wgt! {
-        // name:                    (factor, mount)
-        face_wgt_broad:       (1.0, MountType::Broadside),
-        face_wgt_coles:       (PI / 2.0, MountType::ColesTurret),
-        face_wgt_open_barb:   (0.0, MountType::OpenBarbette),
-        face_wgt_closed_barb: (0.5, MountType::ClosedBarbette),
-        face_wgt_deckhoist:   (0.5, MountType::DeckAndHoist),
-        face_wgt_deck:        (0.5, MountType::Deck),
-        face_wgt_casemate:    (1.0, MountType::Casemate),
+        // name:              (factor, mount, back_armor)
+        face_wgt_broad:       (1.0, MountType::Broadside, 1.0),
+        face_wgt_coles:       (PI / 2.0, MountType::ColesTurret, 1.0),
+        face_wgt_open_barb:   (0.0, MountType::OpenBarbette, 1.0),
+        face_wgt_closed_barb: (0.5, MountType::ClosedBarbette, 1.0),
+        face_wgt_deckhoist:   (0.5, MountType::DeckAndHoist, 1.0),
+        face_wgt_deck:        (0.5, MountType::Deck, 1.0),
+        face_wgt_casemate:    (1.0, MountType::Casemate, 1.0),
+
+        // name:                      (factor, mount, back_armor)
+        face_wgt_broad_no_back:       (1.0, MountType::Broadside, 0.0),
+        face_wgt_coles_no_back:       (PI / 2.0, MountType::ColesTurret, 0.0),
+        face_wgt_open_barb_no_back:   (0.0, MountType::OpenBarbette, 0.0),
+        face_wgt_closed_barb_no_back: (1.5, MountType::ClosedBarbette, 0.0),
+        face_wgt_deckhoist_no_back:   (1.5, MountType::DeckAndHoist, 0.0),
+        face_wgt_deck_no_back:        (1.5, MountType::Deck, 0.0),
+        face_wgt_casemate_no_back:    (1.0, MountType::Casemate, 0.0),
     }
 
-    // Test armor_face_wgt_if_no_back {{{3
-    macro_rules! test_armor_face_wgt_if_no_back {
-        ($($name:ident: $value:expr,)*) => {
-            $(
-                #[test]
-                fn $name() {
-                    let (expected, mount) = $value;
-
-                    assert_eq!(expected, mount.armor_face_wgt_if_no_back());
-                }
-            )*
-        }
-    }
-
-    test_armor_face_wgt_if_no_back! {
-        // name:                    (factor, mount)
-        face_wgt_if_no_back_broad:       (0.0, MountType::Broadside),
-        face_wgt_if_no_back_coles:       (0.0, MountType::ColesTurret),
-        face_wgt_if_no_back_open_barb:   (0.0, MountType::OpenBarbette),
-        face_wgt_if_no_back_closed_barb: (1.0, MountType::ClosedBarbette),
-        face_wgt_if_no_back_deckhoist:   (1.0, MountType::DeckAndHoist),
-        face_wgt_if_no_back_deck:        (1.0, MountType::Deck),
-        face_wgt_if_no_back_casemate:    (0.0, MountType::Casemate),
-    }
 }
 
 // SubBattery {{{1
