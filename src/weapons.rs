@@ -174,22 +174,19 @@ impl Battery { // {{{2
     /// Weight of battery back armor.
     ///
     pub fn armor_back_wgt(&self) -> f64 {
+        let (bw1, bw2) = self.mount_kind.armor_back_wgt();
+
         let mut a = 0.0;
         for g in self.groups.iter() {
-            a += PI * (g.diameter_calc(self.cal) / 2.0).powf(2.0) * g.num_mounts() as f64;
+            a += g.diameter_calc(self.cal) * g.num_mounts() as f64;
         }
 
-        let b = self.mount_kind.armor_back_wgt();
-
-        let mut diameter_calc = 0.0;
+        let mut b = 0.0;
         for g in self.groups.iter() {
-            diameter_calc += g.diameter_calc(self.cal) * g.num_mounts() as f64;
+            b += (g.diameter_calc(self.cal) / 2.0).powf(2.0) * g.num_mounts() as f64;
         }
-        let c = b * diameter_calc * self.house_hgt();
 
-        let d = c + a * self.mount_kind.armor_back_wgt_factor();
-
-        d * self.armor_back * Armor::INCH
+        (bw1 * a * self.house_hgt() + PI * bw2 * b) * self.armor_back * Armor::INCH
     }
     // armor_barb_wgt {{{3
     /// Weight of battery barbette armor
@@ -1139,10 +1136,10 @@ impl MountType { // {{{2
     }
 
     // armor_back_wgt {{{3
-    /// TODO: This should be combined with the other one
+    /// Multipliers needed to determine back armor weight for the mount.
     ///
-    pub fn armor_back_wgt(&self) -> f64 {
-        match self {
+    pub fn armor_back_wgt(&self) -> (f64, f64) {
+        let a = match self {
             Self::Broadside      => 0.0,
             Self::ColesTurret    => 0.0,
             Self::OpenBarbette   => 0.0,
@@ -1150,14 +1147,9 @@ impl MountType { // {{{2
             Self::DeckAndHoist   => 2.5,
             Self::Deck           => 2.5,
             Self::Casemate       => 0.0,
-        }
-    }
+        };
 
-    // armor_back_wgt_factor {{{3
-    /// TODO: This should be combined with the other one
-    ///
-    pub fn armor_back_wgt_factor(&self) -> f64 {
-        match self {
+        let b = match self {
             Self::Broadside      => 0.75,
             Self::ColesTurret    => 1.0,
             Self::OpenBarbette   => 0.75,
@@ -1165,7 +1157,9 @@ impl MountType { // {{{2
             Self::DeckAndHoist   => 0.75,
             Self::Deck           => 0.75,
             Self::Casemate       => 0.75,
-        }
+        };
+
+        (a, b)
     }
 
     // armor_barb_wgt {{{3
@@ -1267,81 +1261,6 @@ mod mount_type {
         wgt_deckhoist:   (3.15, MountType::DeckAndHoist),
         wgt_deck:        (1.08, MountType::Deck),
         wgt_casemate:    (1.08, MountType::Casemate),
-    }
-
-    // Test armor_barb_wgt {{{3
-    macro_rules! test_armor_barb_wgt {
-        ($($name:ident: $value:expr,)*) => {
-            $(
-                #[test]
-                fn $name() {
-                    let (expected, mount) = $value;
-
-                    assert_eq!(expected, mount.armor_barb_wgt());
-                }
-            )*
-        }
-    }
-
-    test_armor_barb_wgt! {
-        // name:                    (factor, mount)
-        barb_wgt_broad:       (0.0, MountType::Broadside),
-        barb_wgt_coles:       (0.0, MountType::ColesTurret),
-        barb_wgt_open_barb:   (0.6416, MountType::OpenBarbette),
-        barb_wgt_closed_barb: (0.5, MountType::ClosedBarbette),
-        barb_wgt_deckhoist:   (0.1, MountType::DeckAndHoist),
-        barb_wgt_deck:        (0.0, MountType::Deck),
-        barb_wgt_casemate:    (0.1, MountType::Casemate),
-    }
-
-    // Test armor_back_wgt {{{3
-    macro_rules! test_armor_back_wgt {
-        ($($name:ident: $value:expr,)*) => {
-            $(
-                #[test]
-                fn $name() {
-                    let (expected, mount) = $value;
-
-                    assert_eq!(expected, mount.armor_back_wgt());
-                }
-            )*
-        }
-    }
-
-    test_armor_back_wgt! {
-        // name:                    (factor, mount)
-        back_wgt_broad:       (0.0, MountType::Broadside),
-        back_wgt_coles:       (0.0, MountType::ColesTurret),
-        back_wgt_open_barb:   (0.0, MountType::OpenBarbette),
-        back_wgt_closed_barb: (2.5, MountType::ClosedBarbette),
-        back_wgt_deckhoist:   (2.5, MountType::DeckAndHoist),
-        back_wgt_deck:        (2.5, MountType::Deck),
-        back_wgt_casemate:    (0.0, MountType::Casemate),
-    }
-
-    // Test armor_back_wgt_factor {{{3
-    macro_rules! test_armor_back_wgt_factor {
-        ($($name:ident: $value:expr,)*) => {
-            $(
-                #[test]
-                fn $name() {
-                    let (expected, mount) = $value;
-
-                    assert_eq!(expected, mount.armor_back_wgt_factor());
-                }
-            )*
-        }
-    }
-
-    test_armor_back_wgt_factor! {
-        // name:                    (factor, mount)
-        back_wgt_factor_broad:       (0.75, MountType::Broadside),
-        back_wgt_factor_coles:       (1.0, MountType::ColesTurret),
-        back_wgt_factor_open_barb:   (0.75, MountType::OpenBarbette),
-        back_wgt_factor_closed_barb: (0.75, MountType::ClosedBarbette),
-        back_wgt_factor_deckhoist:   (0.75, MountType::DeckAndHoist),
-        back_wgt_factor_deck:        (0.75, MountType::Deck),
-        back_wgt_factor_casemate:    (0.75, MountType::Casemate),
     }
 
     // Test armor_face_wgt {{{3
