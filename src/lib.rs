@@ -1384,10 +1384,14 @@ impl Ship { // {{{2
             let main_gun = i == 0;
 
             if b.num == 0 { continue; }
-            report.push(format!("    {} - {:.2}\" / {:.1} mm {:.1} cal gun{} - {:.2}lbs / {:.2}kg shells, {:.0} per gun",
+            report.push(format!("    {} - {:.2}\" / {} mm {:.1} cal gun{} - {:.2}lbs / {:.2}kg shells, {:.0} per gun",
                 b.num,
                 b.diam,
-                metric(b.diam, LengthSmall, b.units),
+                if b.diam * 25.4 < 100.0 {
+                    format!("{:.1}", metric(b.diam, LengthSmall, b.units))
+                } else {
+                    format!("{:.0}", metric(b.diam, LengthSmall, b.units))
+                },
                 b.len,
                 match b.num { 1 => "", _ => "s", },
                 b.shell_wgt(),
@@ -1546,8 +1550,12 @@ impl Ship { // {{{2
         if self.armor.main.thick + self.armor.end.thick + self.armor.upper.thick + self.armor.bulkhead.thick > 0.0 {
             report.push(" - Belts:    Width (max)    Length (avg)    Height (avg)".to_string());
             if self.armor.main.thick > 0.0 {
-                report.push(format!("    Main:    {:.2}\" / {:.0} mm    {:.2} ft / {:.2} m    {:.2} ft / {:.2} m",
-                    self.armor.main.thick,
+                report.push(format!("    Main:    {}\" / {:.0} mm    {:.2} ft / {:.2} m    {:.2} ft / {:.2} m",
+                    if self.armor.main.thick < 10.0 {
+                        format!("{:.2}", self.armor.main.thick)
+                    } else {
+                        format!("{:.1}", self.armor.main.thick)
+                    },
                     metric(self.armor.main.thick, LengthSmall, self.armor.units),
                     self.armor.main.len,
                     metric(self.armor.main.len, LengthLong, self.armor.units),
@@ -1557,8 +1565,12 @@ impl Ship { // {{{2
             }
 
             if self.armor.end.thick > 0.0 {
-                report.push(format!("    Ends:    {:.2}\" / {:.0} mm    {:.2} ft / {:.2} m    {:.2} ft / {:.2} m",
-                    self.armor.end.thick,
+                report.push(format!("    Ends:    {}\" / {:.0} mm    {:.2} ft / {:.2} m    {:.2} ft / {:.2} m",
+                    if self.armor.end.thick < 10.0 {
+                        format!("{:.2}", self.armor.end.thick)
+                    } else {
+                        format!("{:.1}", self.armor.end.thick)
+                    },
                     metric(self.armor.end.thick, LengthSmall, self.armor.units),
                     self.armor.end.len,
                     metric(self.armor.end.len, LengthLong, self.armor.units),
@@ -1576,8 +1588,12 @@ impl Ship { // {{{2
             }
 
             if self.armor.upper.thick > 0.0 {
-                report.push(format!("    Upper:    {:.2}\" / {:.0} mm    {:.2} ft / {:.2} m    {:.2} ft / {:.2} m",
-                    self.armor.upper.thick,
+                report.push(format!("    Upper:    {}\" / {:.0} mm    {:.2} ft / {:.2} m    {:.2} ft / {:.2} m",
+                    if self.armor.upper.thick < 10.0 {
+                        format!("{:.2}", self.armor.upper.thick)
+                    } else {
+                        format!("{:.1}", self.armor.upper.thick)
+                    },
                     metric(self.armor.upper.thick, LengthSmall, self.armor.units),
                     self.armor.upper.len,
                     metric(self.armor.upper.len, LengthLong, self.armor.units),
@@ -1609,8 +1625,12 @@ impl Ship { // {{{2
                         BulkheadType::Additional   => "Additional damage containing",
                     }
                 ));
-                report.push(format!("        {:.2}\" / {:.0} mm    {:.2} ft / {:.2} m    {:.2} ft / {:.2} m",
-                    self.armor.bulkhead.thick,
+                report.push(format!("        {}\" / {:.0} mm    {:.2} ft / {:.2} m    {:.2} ft / {:.2} m",
+                    if self.armor.bulkhead.thick < 10.0 {
+                        format!("{:.2}", self.armor.bulkhead.thick)
+                    } else {
+                        format!("{:.1}", self.armor.bulkhead.thick)
+                    },
                     metric(self.armor.bulkhead.thick, LengthSmall, self.armor.units),
                     self.armor.bulkhead.len,
                     metric(self.armor.bulkhead.len, LengthLong, self.armor.units),
@@ -1629,8 +1649,12 @@ impl Ship { // {{{2
                     if self.hull.b == self.hull.bb { "void" }
                     else { "Bulges" }
                 ));
-                report.push(format!("        {:.2}\" / {:.0} mm    {:.2} ft / {:.2} m    {:.2} ft / {:.2} m",
-                    self.armor.bulge.thick,
+                report.push(format!("        {}\" / {:.0} mm    {:.2} ft / {:.2} m    {:.2} ft / {:.2} m",
+                    if self.armor.bulge.thick < 10.0 {
+                        format!("{:.2}", self.armor.bulge.thick)
+                    } else {
+                        format!("{:.1}", self.armor.bulge.thick)
+                    },
                     metric(self.armor.bulge.thick, LengthSmall, self.armor.units),
                     self.armor.bulge.len,
                     metric(self.armor.bulge.len, LengthLong, self.armor.units),
