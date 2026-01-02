@@ -475,14 +475,6 @@ impl Ship { // {{{2
     pub fn seakeeping_desc(&self) -> Vec<String> {
         let mut s: Vec<String> = Vec::new();
         
-        if self.tender_warn() && !self.capsize_warn() {
-            s.push("Caution: Poor stability - excessive risk of capsizing".into());
-        }
-
-        if self.hull_strained() {
-            s.push("Caution: Hull subject to strain in open-sea".into());
-        }
-
         if self.is_steady() {
             s.push("Ship has slow easy roll, a good steady, gun platform".into());
         } else if self.is_unsteady() {
@@ -2000,6 +1992,13 @@ impl Ship { // {{{2
         report.push(format!("        - Overall: {:.2}",
             self.str_comp()
         ));
+
+        if self.tender_warn() && !self.capsize_warn() {
+            report.push("Caution: Poor stability - excessive risk of capsizing".into());
+        }
+        if self.hull_strained() {
+            report.push("Caution: Hull subject to strain in open-sea".into());
+        }
         report.push(format!("    {} machinery, storage, compartmentation space",
             self.hull_room_quality()
         ));
@@ -2010,6 +2009,7 @@ impl Ship { // {{{2
             report.push(format!("    {}", s
             ));
         }
+
         report.push("".to_string());
 
         // Custom Notes {{{4
