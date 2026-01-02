@@ -1,33 +1,30 @@
 mod hull;
+use hull::{Hull, BowType};
+
 mod armor;
+use armor::{Armor, BulkheadType};
+
 mod engine;
+use engine::{Engine, FuelType, BoilerType, DriveType};
+
 mod weapons;
+use weapons::{Battery, Torpedoes, Mines, ASW};
+use weapons::{MountType, GunDistributionType};
+
 mod weights;
+use weights::MiscWgts;
+
 mod units;
-
-use crate::engine::{FuelType, BoilerType, DriveType};
-use crate::hull::BowType;
-use crate::weapons::{MountType, GunDistributionType};
-use crate::armor::BulkheadType;
-
 use units::Units::*;
 use units::metric;
 use units::UnitType::*;
-
-use hull::Hull;
-use armor::Armor;
-use engine::Engine;
-use weapons::{Battery, Torpedoes, Mines, ASW};
-use weights::MiscWgts;
 
 use serde::{Serialize, Deserialize};
 
 use std::error::Error;
 use std::fs;
-
 use std::fs::File;
-use std::io::BufReader;
-use std::io::BufRead;
+use std::io::{BufRead, BufReader};
 
 pub const SHIP_FILE_EXT: &str = "ship";
 pub const SS_SHIP_FILE_EXT: &str = "sship";
