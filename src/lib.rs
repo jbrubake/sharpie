@@ -1736,6 +1736,17 @@ impl Ship { // {{{2
                 format_num!(",.0", self.engine.bunker_max(self.hull.d(), self.hull.lwl(), self.hull.leff(), self.hull.cs(), self.hull.ws())),
                 if self.engine.pct_coal > 0.0 { format!(" ({:.0}% coal)", self.engine.pct_coal * 100.0) } else { "".into() }
             ));
+            let ratio = self.engine.hp_max(self.hull.d(), self.hull.lwl(), self.hull.leff(), self.hull.cs(), self.hull.ws()) / self.engine.shafts() as f64;
+
+            if ratio > 20_000.0 && self.engine.boiler.is_reciprocating()
+                { report.push("    Caution: Too much power for reciprocating engines.".to_string()); }
+            else if ratio > 75_000.0
+                { report.push("    Caution: Too much power for number of propellor shafts.".to_string()); }
+
+            if self.wgt_engine() < self.engine.d_engine(self.hull.d(), self.hull.lwl(), self.hull.leff(), self.hull.cs(), self.hull.ws()) / 5.0 {
+                report.push("    Caution: Delicate, lightweight machinery.".to_string());
+            }
+
         } else {
             report.push("    Immobile floating battery".to_string());
         }
