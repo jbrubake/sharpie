@@ -110,13 +110,6 @@ fn save_ship(ship: Ship) {
     };
 }
 
-// Error handling {{{1
-//
-fn die(error: Box<dyn Error>) -> Result<(), Box<dyn Error>> {
-    eprintln!("{}", error);
-    Err(error)
-}
-
 // Run the GUI {{{1
 //
 fn run_gui() -> Result<(), Box<dyn Error>> {
@@ -146,7 +139,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                     Ok(())
                 },
 
-                Err(error) => die(error),
+                Err(error) => Err(error),
             }
         },
 
@@ -159,14 +152,14 @@ fn main() -> Result<(), Box<dyn Error>> {
                     match to {
                         Some(to) => match ship.save(to) {
                             Ok(_) => Ok(()),
-                            Err(error) => die(error),
+                            Err(error) => Err(error),
                         },
 
                         None => Ok(()),
                     }
                 },
 
-                Err(error) => die(error),
+                Err(error) => Err(error),
             }
         },
 
