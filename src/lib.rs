@@ -20,14 +20,26 @@ use units::metric;
 use units::UnitType::*;
 
 use serde::{Serialize, Deserialize};
+use serde_json::Value;
 
 use std::error::Error;
 use std::fs;
-use std::fs::File;
-use std::io::{BufRead, BufReader};
+use std::fs::{File, OpenOptions};
+use std::io::{BufRead, BufReader, Write};
 
 pub const SHIP_FILE_EXT: &str = "ship";
 pub const SS_SHIP_FILE_EXT: &str = "sship";
+
+/// The Ship file version created by this version of sharpie.
+pub const SHIP_FILE_VERSION: u32 = 1;
+
+// Version {{{1
+/// Holds Ship file version information.
+///
+#[derive(Serialize, Deserialize, Clone, Debug)]
+struct Version {
+    version: u32,
+}
 
 // Testing support {{{1
 #[cfg(test)]
@@ -1193,7 +1205,20 @@ impl Ship { // {{{2
     ///
     pub fn load(p: String) -> Result<Ship, Box<dyn Error>> {
         let s = fs::read_to_string(p)?;
-        let mut ship: Ship = serde_json::from_str(&s)?;
+
+        let mut stream = serde_json::Deserializer::from_str(&s).into_iter::<Value>();
+
+        // Handle opening older ship file formats
+        //
+        let version: Version = serde_json::from_value(stream.next().ok_or("")??)?;
+        if version.version == 1 { // No special handling required
+            ()
+        } else { // Cannot open any other versions
+            let err = format!("Cannot open ship files of this version: {}!", version.version);
+            return Err(err.into())
+        }
+
+        let mut ship: Ship = serde_json::from_value(stream.next().ok_or("")??)?;
 
         // Set any derived values
         //
@@ -1206,9 +1231,16 @@ impl Ship { // {{{2
     /// Save ship to a file.
     ///
     pub fn save(&self, p: String) -> Result<(), Box<dyn Error>> {
+        let version = serde_json::to_string(&Version { version: SHIP_FILE_VERSION })?;
+        let ship    = serde_json::to_string(&self)?;
 
-        let s = serde_json::to_string(&self)?;
-        fs::write(p, s)?;
+        // Empty or clear the ship file
+        let _ = OpenOptions::new().write(true).truncate(true).open(&p)?;
+        // Append to the ship file
+        let mut file = OpenOptions::new().append(true).open(&p)?;
+
+        writeln!(file, "{}", version)?;
+        writeln!(file, "{}", ship)?;
 
         Ok(())
     }
