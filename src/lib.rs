@@ -2010,7 +2010,9 @@ impl Ship { // {{{2
     }
 }
 
-impl Ship { // Inernals Output {{{2
+// Inernals Output {{{2
+#[cfg(debug_assertions)]
+impl Ship {
     // Print internal values {{{3
     pub fn internals(&self) -> String {
         let mut s: Vec<String> = Vec::new();

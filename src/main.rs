@@ -16,6 +16,7 @@ struct Cli {
     #[command(subcommand)]
     command: Option<Commands>,
 
+    #[cfg(debug_assertions)]
     #[arg(short, long)]
     #[arg(help = "Show internal values")]
     debug: bool,
@@ -134,6 +135,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             match Ship::load(file) {
                 Ok(ship) => {
                     println!("{}", ship.report());
+                    #[cfg(debug_assertions)]
                     if cli.debug { eprintln!("{}", ship.internals()); }
 
                     Ok(())
@@ -147,6 +149,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             match Ship::convert(from) {
                 Ok(ship) => {
                     if report    { println!("{}", ship.report()); }
+                    #[cfg(debug_assertions)]
                     if cli.debug { eprintln!("{}", ship.internals()); }
 
                     match to {

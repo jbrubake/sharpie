@@ -331,7 +331,9 @@ impl Battery { // {{{2
     }
 }
 
-impl Battery { // Internals Output {{{2
+// Inernals Output {{{2
+#[cfg(debug_assertions)]
+impl Battery {
     pub fn internals(&self, hull: Hull, wgt_broad: f64) -> () {
         eprintln!("units = {}", self.units);
         eprintln!("num = {}", self.num);
@@ -1321,7 +1323,9 @@ pub struct SubBattery {
     pub lower_deck: bool,
 }
 
-impl SubBattery { // Internals Output {{{2
+// Internals Output {{{2
+#[cfg(debug_assertions)]
+impl SubBattery {
     pub fn internals(&self, hull: Hull, diam: f64) -> () {
         eprintln!("layout = {}", self.layout);
         eprintln!("distribution = {}", self.distribution);
