@@ -1136,6 +1136,7 @@ mod hull {
     }
 
 }
+
 // SternType {{{1
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
 pub enum SternType {
