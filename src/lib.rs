@@ -1384,7 +1384,7 @@ impl Ship { // {{{2
             let main_gun = i == 0;
 
             if b.num == 0 { continue; }
-            report.push(format!("    {} - {:.2}\" / {} mm {:.1} cal gun{} - {:.2}lbs / {:.2}kg shells, {:.0} per gun",
+            report.push(format!("    {} - {:.2}\" / {} mm {:.1} cal gun{} - {}lbs / {}kg shells, {} per gun",
                 b.num,
                 b.diam,
                 if b.diam * 25.4 < 100.0 {
@@ -1394,9 +1394,9 @@ impl Ship { // {{{2
                 },
                 b.len,
                 match b.num { 1 => "", _ => "s", },
-                b.shell_wgt(),
-                metric(b.shell_wgt(), Weight, b.units),
-                b.shells
+                format_num!(",.2", b.shell_wgt()),
+                format_num!(",.2", metric(b.shell_wgt(), Weight, b.units)),
+                format_num!(",.0", b.shells),
             ));
             report.push(format!("        {} gun{} in {} mount{}, {} Model",
                 b.kind,
@@ -1475,9 +1475,9 @@ impl Ship { // {{{2
                 }
             }
         }
-        report.push(format!("    Weight of broadside {:.0} lbs / {:.0} kg",
-            self.wgt_broad(),
-            metric(self.wgt_broad(), Weight, Imperial)
+        report.push(format!("    Weight of broadside {} lbs / {} kg",
+            format_num!(",.0", self.wgt_broad()),
+            format_num!(",.0", metric(self.wgt_broad(), Weight, Imperial)),
         ));
 
         // Weapons {{{4
@@ -1720,21 +1720,21 @@ impl Ship { // {{{2
                 self.engine.fuel,
                 self.engine.boiler
             ));
-            report.push(format!("    {}, {} shaft{}, {:.0} {} / {:.0} Kw = {:.2} kts",
+            report.push(format!("    {}, {} shaft{}, {} {} / {} Kw = {:.2} kts",
                 self.engine.drive,
                 self.engine.shafts(),
                 match self.engine.shafts() { 1 => "", _ => "s", },
-                self.engine.hp_max(self.hull.d(), self.hull.lwl(), self.hull.leff(), self.hull.cs(), self.hull.ws()),
+                format_num!(",.0", self.engine.hp_max(self.hull.d(), self.hull.lwl(), self.hull.leff(), self.hull.cs(), self.hull.ws())),
                 self.engine.boiler.hp_type(),
-                metric(self.engine.hp_max(self.hull.d(), self.hull.lwl(), self.hull.leff(), self.hull.cs(), self.hull.ws()), Power, Imperial),
+                format_num!(",.0", metric(self.engine.hp_max(self.hull.d(), self.hull.lwl(), self.hull.leff(), self.hull.cs(), self.hull.ws()), Power, Imperial)),
                 self.engine.vmax
             ));
             report.push(format!("    Range {}nm at {:.2} kts",
-                self.engine.range,
+                format_num!(",.0", self.engine.range),
                 self.engine.vcruise
             ));
-            report.push(format!("    Bunker at max displacement = {:.0} tons{}",
-                self.engine.bunker_max(self.hull.d(), self.hull.lwl(), self.hull.leff(), self.hull.cs(), self.hull.ws()),
+            report.push(format!("    Bunker at max displacement = {} tons{}",
+                format_num!(",.0", self.engine.bunker_max(self.hull.d(), self.hull.lwl(), self.hull.leff(), self.hull.cs(), self.hull.ws())),
                 if self.engine.pct_coal > 0.0 { format!(" ({:.0}% coal)", self.engine.pct_coal * 100.0) } else { "".into() }
             ));
         } else {
@@ -1757,37 +1757,37 @@ impl Ship { // {{{2
         report.push("".to_string());
 
         report.push("Distribution of weights at normal displacement:".to_string()); // {{{4
-        report.push(format!("    Armament: {:.0} tons, {:.1} %",
-            (self.wgt_guns() + self.wgt_gun_mounts() + self.wgt_weaps()),
+        report.push(format!("    Armament: {} tons, {:.1} %",
+            format_num!(",.0", self.wgt_guns() + self.wgt_gun_mounts() + self.wgt_weaps()),
             Ship::percent_calc(self.hull.d(), self.wgt_guns() + self.wgt_gun_mounts()) +
             Ship::percent_calc(self.hull.d(), self.wgt_weaps())
         ));
 
         if self.wgt_guns() > 0.0 {
-            report.push(format!("    - Guns: {:.0} tons, {:.1} %",
-                (self.wgt_guns() + self.wgt_gun_mounts()),
+            report.push(format!("    - Guns: {} tons, {:.1} %",
+                format_num!(",.0", self.wgt_guns() + self.wgt_gun_mounts()),
                 Ship::percent_calc(self.hull.d(), self.wgt_guns() + self.wgt_gun_mounts())
             ));
         }
 
         if self.torps[0].wgt() + self.torps[1].wgt() + self.mines.wgt() + self.asw[0].wgt() + self.asw[1].wgt > 0.0 {
-            report.push(format!("    - Weapons: {:.0} tons, {:.1} %",
-                (self.torps[0].wgt() + self.torps[1].wgt() + self.mines.wgt() + self.asw[0].wgt() + self.asw[1].wgt()),
+            report.push(format!("    - Weapons: {} tons, {:.1} %",
+                format_num!(",.0", self.torps[0].wgt() + self.torps[1].wgt() + self.mines.wgt() + self.asw[0].wgt() + self.asw[1].wgt()),
                 Ship::percent_calc(self.hull.d(), self.torps[0].wgt() + self.torps[1].wgt() + self.mines.wgt() + self.asw[0].wgt() + self.asw[1].wgt())
             ));
         }
 
         if self.wgt_armor() > 0.0 {
-            report.push(format!("    Armour: {:.0} tons, {:.1} %",
-                self.wgt_armor(),
+            report.push(format!("    Armour: {} tons, {:.1} %",
+                format_num!(",.0", self.wgt_armor()),
                 Ship::percent_calc(self.hull.d(), self.wgt_armor())
             ));
 
             if self.armor.main.thick + self.armor.end.thick + self.armor.upper.thick > 0.0 {
-                report.push(format!("    - Belts: {:.0} tons, {:.1} %",
-                    (self.armor.main.wgt(self.hull.lwl(), self.hull.cwp(), self.hull.b) +
-                    self.armor.end.wgt(self.hull.lwl(), self.hull.cwp(), self.hull.b) +
-                    self.armor.upper.wgt(self.hull.lwl(), self.hull.cwp(), self.hull.b)),
+                report.push(format!("    - Belts: {} tons, {:.1} %",
+                    format_num!(",.0", self.armor.main.wgt(self.hull.lwl(), self.hull.cwp(), self.hull.b) +
+                        self.armor.end.wgt(self.hull.lwl(), self.hull.cwp(), self.hull.b) +
+                        self.armor.upper.wgt(self.hull.lwl(), self.hull.cwp(), self.hull.b)),
                     Ship::percent_calc(self.hull.d(), 
                         self.armor.main.wgt(self.hull.lwl(), self.hull.cwp(), self.hull.b) +
                         self.armor.end.wgt(self.hull.lwl(), self.hull.cwp(), self.hull.b) +
@@ -1796,72 +1796,73 @@ impl Ship { // {{{2
             }
 
             if self.armor.bulkhead.thick > 0.0 {
-                report.push(format!("    - Torpedo bulkhead: {:.0} tons, {:.1} %",
-                    (self.armor.bulkhead.wgt(self.hull.lwl(), self.hull.cwp(), self.hull.b)),
+                report.push(format!("    - Torpedo bulkhead: {} tons, {:.1} %",
+                    format_num!(",.0", self.armor.bulkhead.wgt(self.hull.lwl(), self.hull.cwp(), self.hull.b)),
                     Ship::percent_calc(self.hull.d(), self.armor.bulkhead.wgt(self.hull.lwl(), self.hull.cwp(), self.hull.b))
                 ));
             }
 
             if self.armor.bulge.wgt(self.hull.lwl(), self.hull.cwp(), self.hull.b) > 0.0 {
-                report.push(format!("    - {}: {:.0} tons, {:.1} %",
+                report.push(format!("    - {}: {} tons, {:.1} %",
                     if self.hull.b == self.hull.bb { "Void" } else { "Bulges" },
-                    self.armor.bulge.wgt(self.hull.lwl(), self.hull.cwp(), self.hull.b),
+                    format_num!(",.0", self.armor.bulge.wgt(self.hull.lwl(), self.hull.cwp(), self.hull.b)),
                     Ship::percent_calc(self.hull.d(), self.armor.bulge.wgt(self.hull.lwl(), self.hull.cwp(), self.hull.b))
                 ));
             }
 
             if self.wgt_gun_armor() > 0.0 {
-                report.push(format!("    - Armament: {:.0} tons, {:.1} %",
-                    self.wgt_gun_armor(),
+                report.push(format!("    - Armament: {} tons, {:.1} %",
+                    format_num!(",.0", self.wgt_gun_armor()),
                     Ship::percent_calc(self.hull.d(), self.wgt_gun_armor())
                 ));
             }
 
             if self.armor.deck.fc + self.armor.deck.md + self.armor.deck.qd > 0.0 {
-                report.push(format!("    - Armour Deck: {:.0} tons, {:.1} %",
+                report.push(format!("    - Armour Deck: {} tons, {:.1} %",
                     // TODO: Replace with the following once the circular references are fixed:
-                    // (self.armor.deck.wgt(self.hull.clone(), self.wgt_mag(), self.wgt_engine())),
+                    // format_num!(",.0", self.armor.deck.wgt(self.hull.clone(), self.wgt_mag(), self.wgt_engine())),
                     // Ship::percent_calc(self.hull.d(), self.armor.deck.wgt(self.hull.clone(), self.wgt_mag(), self.wgt_engine())));
-                    (self.armor.deck.wgt(self.hull.clone(), self.wgt_mag(), 0.0)),
+                    format_num!(",.0", self.armor.deck.wgt(self.hull.clone(), self.wgt_mag(), 0.0)),
                     Ship::percent_calc(self.hull.d(), self.armor.deck.wgt(self.hull.clone(), self.wgt_mag(), 0.0))
                 ));
             }
 
             if self.armor.ct_fwd.thick + self.armor.ct_aft.thick > 0.0 {
-                report.push(format!("    - Conning Tower{}: {:.0} tons, {:.1} %",
+                report.push(format!("    - Conning Tower{}: {} tons, {:.1} %",
                     if self.armor.ct_fwd.thick > 0.0 && self.armor.ct_aft.thick > 0.0 {
                         "s"
                     } else { "" },
-                    (self.armor.ct_fwd.wgt(self.hull.d()) + self.armor.ct_aft.wgt(self.hull.d())),
+                    format_num!(",.0", self.armor.ct_fwd.wgt(self.hull.d()) + self.armor.ct_aft.wgt(self.hull.d())),
                     Ship::percent_calc(self.hull.d(), self.armor.ct_fwd.wgt(self.hull.d()) + self.armor.ct_aft.wgt(self.hull.d()))
                 ));
             }
         }
 
-        report.push(format!("    Machinery: {:.0} tons, {:.1} %",
-            self.wgt_engine(),
+        report.push(format!("    Machinery: {} tons, {:.1} %",
+            format_num!(",.0", self.wgt_engine()),
             Ship::percent_calc(self.hull.d(), self.wgt_engine())
         ));
-        report.push(format!("    Hull, fittings & equipment: {:.0} tons, {:.1} %",
-            self.wgt_hull(),
+        report.push(format!("    Hull, fittings & equipment: {} tons, {:.1} %",
+            format_num!(",.0", self.wgt_hull()),
             Ship::percent_calc(self.hull.d(), self.wgt_hull())
         ));
-        report.push(format!("    Fuel, ammunition & stores: {:.0} tons, {:.1} %",
-            self.wgt_load(),
+        report.push(format!("    Fuel, ammunition & stores: {} tons, {:.1} %",
+            format_num!(",.0", self.wgt_load()),
             Ship::percent_calc(self.hull.d(), self.wgt_load())
         ));
 
         if self.wgts.wgt() > 0 {
-            report.push(format!("    Miscellaneous weights: {:.0} tons, {:.1} %",
-                self.wgts.wgt(),
+            report.push(format!("    Miscellaneous weights: {} tons, {:.1} %",
+                format_num!(",.0", self.wgts.wgt()),
                 Ship::percent_calc(self.hull.d(), self.wgts.wgt().into())
             ));
-            if self.wgts.vital > 0 { report.push(format!("    - Hull below water: {:.0} tons", self.wgts.vital
+            if self.wgts.vital > 0 { report.push(format!("    - Hull below water: {} tons", 
+                    format_num!(",.0", self.wgts.vital)
             )); }
             if self.wgts.void > 0 {
-                report.push(format!("    - {} void weights: {:.0} tons",
+                report.push(format!("    - {} void weights: {} tons",
                     if self.hull.bb > self.hull.b { "Bulge" } else { "Hull" },
-                    self.wgts.void
+                    format_num!(",.0", self.wgts.void),
                 ));
             }
             if self.wgts.hull > 0 { report.push(format!("    - Hull above water: {:.0} tons", self.wgts.hull
@@ -1967,9 +1968,9 @@ impl Ship { // {{{2
         report.push(format!("        - Above water (accommodation/working, high = better): {:.1} %",
             self.deck_room() * 100.0
         ));
-        report.push(format!("    Waterplane Area: {:.0} Square feet or {:.0} Square metres",
-            self.hull.wp(),
-            metric(self.hull.wp(), Area, Imperial)
+        report.push(format!("    Waterplane Area: {} Square feet or {} Square metres",
+            format_num!(",.0", self.hull.wp()),
+            format_num!(",.0", metric(self.hull.wp(), Area, Imperial))
         ));
         report.push(format!("    Displacement factor (Displacement / loading): {:.0} %",
             self.d_factor() * 100.0
