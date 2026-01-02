@@ -44,10 +44,10 @@ pub struct Hull {
     /// The Waterplane Coefficient is calculated differently if the engine has
     /// less than two shafts. Set this to true if the engine has less than two
     /// shafts but set to false otherwise.
-    /// Set to true if the engine has less than two shafts. Otherwise set to false.
     ///
-    // TODO: replace this with simply passing the number of shafts to the functions that currently use boxy
-    pub boxy: bool,
+    // NOTE: Do not serialize as this is a derived value
+    #[serde(skip)]
+        boxy: bool,
 
     /// Type of bow.
     pub bow_type: BowType,
@@ -122,6 +122,18 @@ impl Default for Hull { // {{{2
 impl Hull { // {{{2
     /// Volume of one long ton of seawater in cubic feet.
     pub const FT3_PER_TON_SEA: f64 = 35.0;
+
+    // set_shafts {{{3
+    /// Set any derived values that depend on the
+    /// number of shafts in the engine.
+    ///
+    pub fn set_shafts(&mut self, shafts: u32) {
+        if shafts < 2 {
+            self.boxy = true;
+        } else {
+            self.boxy = false;
+        }
+    }
 
     // freeboard_desc {{{3
     /// Get a description of the freeboard.

@@ -1059,7 +1059,7 @@ impl Ship { // {{{2
         ship.engine.vmax        = lines.next().unwrap().parse()?;
         ship.engine.vcruise     = lines.next().unwrap().parse()?;
         ship.engine.range       = lines.next().unwrap().parse()?;
-        ship.engine.shafts      = lines.next().unwrap().parse()?;
+        ship.engine.set_shafts(lines.next().unwrap().parse()?, &mut ship.hull);
         ship.engine.pct_coal    = lines.next().unwrap().parse()?;
         ship.engine.pct_coal /= 100.0; // convert from % to decimal
 
@@ -1187,7 +1187,11 @@ impl Ship { // {{{2
     ///
     pub fn load(p: String) -> Result<Ship, Box<dyn Error>> {
         let s = fs::read_to_string(p)?;
-        let ship = serde_json::from_str(&s)?;
+        let mut ship: Ship = serde_json::from_str(&s)?;
+
+        // Set any derived values
+        //
+        ship.engine.set_shafts(ship.engine.shafts(), &mut ship.hull);
 
         Ok(ship)
     }
@@ -1652,8 +1656,8 @@ impl Ship { // {{{2
             ));
             report.push(format!("    {}, {} shaft{}, {:.0} {} / {:.0} Kw = {:.2} kts",
                 self.engine.drive,
-                self.engine.shafts,
-                match self.engine.shafts { 1 => "", _ => "s", },
+                self.engine.shafts(),
+                match self.engine.shafts() { 1 => "", _ => "s", },
                 self.engine.hp_max(self.hull.d(), self.hull.lwl(), self.hull.leff(), self.hull.cs(), self.hull.ws()),
                 self.engine.boiler.hp_type(),
                 metric(self.engine.hp_max(self.hull.d(), self.hull.lwl(), self.hull.leff(), self.hull.cs(), self.hull.ws()), Power, Imperial),

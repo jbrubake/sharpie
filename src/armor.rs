@@ -390,7 +390,7 @@ mod deck {
                     let mut hull = Hull::default();
                     hull.set_lwl(100.0);
                     hull.set_d(1000.0);
-                    hull.boxy = false;
+                    hull.set_shafts(2); // hull.boxy == false
                     hull.b = 50.0;
                     hull.bb = hull.b;
                     hull.t = 10.0;

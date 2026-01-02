@@ -1,3 +1,5 @@
+use crate::Hull;
+
 use bitflags::{bitflags, bitflags_match};
 use serde::{Serialize, Deserialize};
 
@@ -30,8 +32,7 @@ pub struct Engine {
 
     /// Number of propeller shafts.
     ///
-    // TODO: If this is < 2, the 'boxy' field in the corresponding Hull should be set to true.
-    pub shafts: u32,
+        shafts: u32,
 
     /// Percentage of bunker weight devoted to coal.
     pub pct_coal: f64,
@@ -40,6 +41,24 @@ pub struct Engine {
 impl Engine { // {{{2
     /// XXX: self.range is divided by this in bunker()
     const RANGE: f64 = 7000.0;
+
+    // set_shafts {{{3
+    /// Set the number of shafts in the engine and set any
+    /// Hull parameters that depend on the number of shafts.
+    ///
+    pub fn set_shafts(&mut self, shafts: u32, hull: &mut Hull) -> u32 {
+        hull.set_shafts(shafts);
+
+        self.shafts = shafts;
+        shafts
+    }
+
+    // shafts {{{3
+    /// Return number of shafts in the engine.
+    ///
+    pub fn shafts(&self) -> u32 {
+        self.shafts
+    }
 
     // hp {{{3
     /// Horsepower required to achieve a given speed.
