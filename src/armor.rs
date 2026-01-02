@@ -26,8 +26,8 @@ pub struct Armor {
     pub bulge: Belt,
     /// Bulkhead armor.
     pub bulkhead: Belt,
-    /// True is 'strengthened bulkheads' and false is 'additional bulkheads'
-    pub strengthened_bulkhead: bool,
+    /// What it says on the tin.
+    pub bh_kind: BulkheadType,
     /// Beam between outer and inner bulkheads.
     pub beam_between: f64,
 
@@ -51,7 +51,7 @@ impl Default for Armor { // {{{2
             bulge:    Belt::new(BeltType::Bulge),
             bulkhead: Belt::new(BeltType::Bulkhead),
 
-            strengthened_bulkhead: false,
+            bh_kind: BulkheadType::Additional,
             incline: 0.0,
             beam_between: 0.0,
 
@@ -253,6 +253,15 @@ mod belt {
         wgt_bulge:    (37.0, 1.0, 100.0, 10.0, BeltType::Bulge),
         wgt_bulkhead: (37.0, 1.0, 100.0, 10.0, BeltType::Bulkhead),
     }
+}
+
+// BulkheadType {{{1
+/// Values for Armor::bh_kind
+///
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub enum BulkheadType {
+    Strengthened,
+    Additional,
 }
 
 // BeltType {{{1

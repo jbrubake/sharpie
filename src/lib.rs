@@ -8,6 +8,7 @@ mod units;
 use crate::engine::{FuelType, BoilerType, DriveType};
 use crate::hull::BowType;
 use crate::weapons::{MountType, GunDistributionType};
+use crate::armor::BulkheadType;
 
 use units::Units::*;
 use units::metric;
@@ -625,9 +626,11 @@ impl Ship { // {{{2
     ///
     pub fn str_long(&self) -> f64 {
         (
-            self.wgt_hull_plus() + if self.armor.strengthened_bulkhead {
-                    self.armor.bulkhead.wgt(self.hull.lwl(), self.hull.cwp(), self.hull.b)
-                } else { 0.0 }
+            self.wgt_hull_plus() + match self.armor.bh_kind {
+                BulkheadType::Strengthened =>
+                    self.armor.bulkhead.wgt(self.hull.lwl(), self.hull.cwp(), self.hull.b),
+                BulkheadType::Additional => 0.0,
+            }
         ) /
             (
                 (self.hull.lwl() / (self.hull.t + self.hull.free_cap(self.cap_calc_broadside()))).powf(2.0) *
@@ -739,10 +742,10 @@ impl Ship { // {{{2
     pub fn wgt_struct(&self) -> f64 {
         (
             self.wgt_hull_plus() +
-            if self.armor.strengthened_bulkhead {
-                self.armor.bulkhead.wgt(self.hull.lwl(), self.hull.cwp(), self.hull.b)
-            } else {
-                0.0
+            match self.armor.bh_kind {
+                BulkheadType::Strengthened => 
+                    self.armor.bulkhead.wgt(self.hull.lwl(), self.hull.cwp(), self.hull.b),
+                BulkheadType::Additional => 0.0,
             }
         ) * Self::POUND2TON / (
             self.hull.ws() +
@@ -1143,7 +1146,13 @@ impl Ship { // {{{2
         ship.armor.bulge.thick           = lines.next().unwrap().parse()?;
         ship.armor.bulge.len             = lines.next().unwrap().parse()?;
         ship.armor.bulge.hgt             = lines.next().unwrap().parse()?;
-        ship.armor.strengthened_bulkhead = match lines.next().unwrap().parse()? { 0 => false, 1 | _ => true, };
+
+        ship.armor.bh_kind =
+            match lines.next().unwrap().parse()? {
+                0 => BulkheadType::Additional,
+                1 | _ => BulkheadType::Strengthened,
+            };
+
         ship.armor.beam_between          = lines.next().unwrap().parse()?;
         ship.armor.deck.fc               = lines.next().unwrap().parse()?;
         ship.armor.deck.qd               = lines.next().unwrap().parse()?;
@@ -1564,8 +1573,10 @@ impl Ship { // {{{2
 
             if self.armor.bulkhead.thick > 0.0 {
                 report.push(format!("- Torpedo Bulkhead - {} bulkheads:",
-                    if self.armor.strengthened_bulkhead { "Strengthened structural" }
-                    else { "Additional damage containing" }
+                    match self.armor.bh_kind {
+                        BulkheadType::Strengthened => "Strengthened structural",
+                        BulkheadType::Additional   => "Additional damage containing",
+                    }
                 ));
                 report.push(format!("        {:.2}\" / {:.0} mm    {:.2} ft / {:.2} m    {:.2} ft / {:.2} m",
                     self.armor.bulkhead.thick,
