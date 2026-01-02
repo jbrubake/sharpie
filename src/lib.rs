@@ -27,7 +27,9 @@ use std::fs;
 use std::fs::{File, OpenOptions};
 use std::io::{BufRead, BufReader, Write};
 
+/// File extension for sharpie files.
 pub const SHIP_FILE_EXT: &str = "ship";
+/// File extension for Springsharp files.
 pub const SS_SHIP_FILE_EXT: &str = "sship";
 
 /// The Ship file version created by this version of sharpie.
