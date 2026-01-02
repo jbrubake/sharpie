@@ -1616,9 +1616,9 @@ impl Ship { // {{{2
                     self.armor.incline
                 ));
             }
-            report.push("".to_string());
 
             if self.armor.bulkhead.thick > 0.0 {
+                report.push("".to_string());
                 report.push(format!("- Torpedo Bulkhead - {} bulkheads:",
                     match self.armor.bh_kind {
                         BulkheadType::Strengthened => "Strengthened structural",
@@ -1641,8 +1641,8 @@ impl Ship { // {{{2
                     self.armor.bh_beam,
                     metric(self.armor.bh_beam, LengthLong, self.armor.units)
                 ));
+                report.push("".to_string());
             }
-            report.push("".to_string());
 
             if self.armor.bulge.thick > 0.0 || self.wgts.void > 0 {
                 report.push(format!("- Hull {}:",
@@ -1661,9 +1661,8 @@ impl Ship { // {{{2
                     self.armor.bulge.hgt,
                     metric(self.armor.bulge.hgt, LengthLong, self.armor.units),
                 ));
-                }
-
             report.push("".to_string());
+            }
         }
 
         if self.wgt_gun_armor() > 0.0 {
@@ -1939,7 +1938,6 @@ impl Ship { // {{{2
         report.push(format!("    Freeboard (% = length of deck as a percentage of waterline length):"
         ));
         report.push("            Fore end, Aft end".to_string());
-        report.push("".to_string());
         report.push(format!("    - Forecastle:    {:.2} %, {:.2} ft / {:.2} m, {:.2} ft / {:.2} m",
             self.hull.fc_len*100.0,   self.hull.fc_fwd, metric(self.hull.fc_fwd, LengthLong, self.hull.units), self.hull.fc_aft, metric(self.hull.fc_aft, LengthLong, self.hull.units)
         ));
