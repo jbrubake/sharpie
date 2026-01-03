@@ -241,6 +241,22 @@ impl Ship { // {{{2
         (self.crew_max() as f64 * 0.7692) as u32
     }
 
+    // vitalspace {{{3
+    /// Forecastle and Quarterdeck length required
+    /// to cover engine and magazine spaces.
+    ///
+    pub fn vitalspace(&self) -> f64 {
+        (1.0 - 0.65 * self.hull_room()) * 50.0 - 0.01
+    }
+
+    // vitalspace_length {{{3
+    /// Minimum armor belt length to cover
+    /// engine and magazine spaces.
+    ///
+    pub fn vitalspace_length(&self) -> f64 {
+        self.hull.lwl() * 0.65 * self.hull_room() + 0.01
+    }
+
     // room {{{3
     /// XXX: I do not know what this does.
     ///
