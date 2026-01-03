@@ -10,7 +10,9 @@ values). New features will be added in **Version 2**.
 
 # Usage
 
-Running `sharpie` without any arguments launches the GUI.
+`sharpie` can convert `Springsharp` files to its own format, load its own
+`*.ship` files and generate reports for both. `sharpie` files can only be edited
+by hand for now. Running `sharpie` without any arguments launches the GUI.
 
 Load a ship FILE and print a report:
 
@@ -24,6 +26,15 @@ Convert a `SpringSharp` file to `sharpie` format and print a report:
 
     sharpie convert [SpringSharp FILE] --to [OUTPUT FILE] --report
 
+# Missing Functionality
+
+- Metric units are not suppored in either `sharpie` or `Springsharp` files.
+  Files using them will load but all values are interpreted as Impreial so
+  they will not work properly.
+- **Box over Machinery** and **Box over Machinery & Magazines** decks types
+  are not fully implemented and will generate values different than
+  `Springsharp`.
+
 # Comparing Sharpie reports to Springsharp reports
 
 The report output by `sharpie` is supposed to be formatted exactly like a
@@ -31,7 +42,7 @@ The report output by `sharpie` is supposed to be formatted exactly like a
 through the following command you should be able to use `diff(1)` to easily spot
 differences between the two reports:
 
-    sed -e 's/\t\t*/ /g' -e 's/  */ /g' -e 's/^ *//' [REPORT] > [REPORT].nospaces
+    sed -e 's/\t/ /g' -e 's/  */ /g' -e 's/^ *//' -e 's/ *$// [REPORT] > [REPORT].nospaces
 
 Please file an [issue](https://github.com/jbrubake/sharpie/issues/new/choose)
 for any `sharpie` reports that differ from `Springsharp`. Include both the
@@ -41,8 +52,4 @@ Although the `sharpie` report is intended to be identical to the `Springsharp`
 report, small differences due to rounding or oddities in the way `Springsharp`
 outputs values can occur. These should still be reported although they may not
 result in any changes.
-
-`sharpie` currently only supports Imperial measurements. It will display Metric
-equivalents but loading a `Springsharp` file with Metric units will give
-incorrect results as the numbers will be interpreted as Imperial.
 
