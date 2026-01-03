@@ -19,6 +19,8 @@ use units::Units::*;
 use units::metric;
 use units::UnitType::*;
 
+use format_num::format_num;
+
 use serde::{Serialize, Deserialize};
 use serde_json::Value;
 
@@ -952,14 +954,16 @@ impl Ship { // {{{2
     }
 
     // percent_calc {{{3
-    /// Return the ratio of portion to total as a percentage.
+    /// Return the ratio of a value to the displacement as a percentage.
     ///
-    fn percent_calc(total: f64, portion: f64) -> f64 {
-        if total > 0.0 {
-            (portion / total) * 100.0
-        } else {
-            0.0
-        }
+    fn percent_calc(&self, portion: f64) -> String {
+        format!("{} tons, {:.1} %", format_num!(",.0", portion),
+            if self.hull.d() > 0.0 {
+                (portion / self.hull.d()) * 100.0
+            } else {
+                0.0
+            }
+        )
     }
 
     // convert {{{3
@@ -1324,95 +1328,137 @@ impl Ship { // {{{2
 
         s.join("\n")
     }
-    // report {{{3
+}
+
+// Report {{{2
+// addto {{{3
+/// Pass arguments to format!() and push to a Vec<String>.
+///
+macro_rules! addto {
+    ($r:ident,$($tts:tt)*) => {
+        $r.push(format!($($tts)*))
+    };
+    ($r:ident) => {
+        $r.push("".to_string())
+    };
+}
+
+// addif {{{3
+/// Return a formatted string if the condition is true.
+/// Otherwise return an empty string.
+///
+macro_rules! addif {
+    ($cond:expr, $($tts:tt)*) => {
+        if $cond {
+            format!($($tts)*)
+        } else {
+            "".into()
+        }
+    }
+}
+
+// num {{{3
+/// Format a number with commas and the specified number of
+/// significant digits.
+///
+// This is a macro instead of a function to avoid having to cast
+// floats to ints or ints to floats
+macro_rules! num {
+    ($val:expr, $digits: expr) => {
+        format_num!(&*format!(",.{}", $digits), $val)
+    }
+}
+
+// plural {{{3
+/// Return an "s" is num is anything other than 1.
+///
+fn plural(num: u32) -> String {
+    match num { 1 => "".to_string(), _ => "s".to_string() }
+}
+
+impl Ship { // {{{3
+    // report {{{4
     /// Print report.
     ///
     pub fn report(&self) -> String {
-        let mut report: Vec<String> = Vec::new();
+        let mut r: Vec<String> = Vec::new();
 
-        // Header {{{4
-        report.push(format!("{}, {} {} laid down {}{}",
+        // Header {{{5
+        addto!(r, "{}, {} {} laid down {}{}",
             self.name,
             self.country,
             self.kind,
             self.year,
-            if self.year != self.engine.year {
-                format!(" (Engine {})", self.engine.year)
-            } else { "".into() }
-        ));
+            addif!(self.year != self.engine.year, " (Engine {})", self.engine.year),
+        );
         if self.ship_type() != "" {
-            report.push(format!("{}", self.ship_type()));
+            addto!(r, "{}", self.ship_type());
         }
 
-        // Warnings {{{4
+        // Warnings {{{5
         if self.hull.cb() <= 0.0 || self.hull.cb() > 1.0
-            { report.push("DESIGN FAILURE: Displacement impossible with given dimensions".to_string()); }
+            { addto!(r, "DESIGN FAILURE: Displacement impossible with given dimensions"); }
         if self.hull.d() < (self.wgt_broad() / 4.0)
-            { report.push("DESIGN FAILURE: Gun weight too much for hull".to_string()); }
+            { addto!(r, "DESIGN FAILURE: Gun weight too much for hull"); }
         if self.wgt_armor() > self.hull.d()
-            { report.push("DESIGN FAILURE: Armour weight too much for hull".to_string()); }
+            { addto!(r, "DESIGN FAILURE: Armour weight too much for hull"); }
         if self.str_comp() < 0.5
-            { report.push("DESIGN FAILURE: Overall load weight too much for hull".to_string()); }
+            { addto!(r, "DESIGN FAILURE: Overall load weight too much for hull"); }
         if self.capsize_warn()
-            { report.push("DESIGN FAILURE: Ship will capsize".to_string()); }
+            { addto!(r, "DESIGN FAILURE: Ship will capsize"); }
 
-        report.push("".to_string());
+        addto!(r);
 
-    use format_num::format_num;
-        report.push("Displacement:".to_string()); // {{{4
-        report.push(format!("    {} t light; {} t standard; {} t normal; {} t full load",
-            format_num!(",.0", self.d_lite()),
-            format_num!(",.0", self.d_std()),
-            format_num!(",.0", self.hull.d()),
-            format_num!(",.0", self.d_max())
-        ));
-        report.push("".to_string());
+        addto!(r, "Displacement:"); // {{{5
+        addto!(r, "    {} t light; {} t standard; {} t normal; {} t full load",
+            num!(self.d_lite(), 0),
+            num!(self.d_std(), 0),
+            num!(self.hull.d(), 0),
+            num!(self.d_max(), 0)
+        );
+        addto!(r);
 
-        report.push("Dimensions: Length (overall / waterline) x beam x draught (normal/deep)".to_string()); // {{{4
-        report.push(format!("    ({:.2} ft / {:.2} ft) x {:.2} ft {}x ({:.2} / {:.2} ft)",
+        addto!(r, "Dimensions: Length (overall / waterline) x beam x draught (normal/deep)"); // {{{5
+        addto!(r, "    ({:.2} ft / {:.2} ft) x {:.2} ft {}x ({:.2} / {:.2} ft)",
             self.hull.loa(),
             self.hull.lwl(),
             self.hull.b,
-            if self.hull.bb > self.hull.b { format!("(Bulges {:.2} ft) ", self.hull.bb) } else { "".into() },
+            addif!(self.hull.bb > self.hull.b, "(Bulges {:.2} ft) ", self.hull.bb),
             self.hull.t,
             self.t_max()
-        ));
-        report.push(format!("    ({:.2} m / {:.2} m) x {:.2} m {}x ({:.2} / {:.2} m)",
+        );
+        addto!(r, "    ({:.2} m / {:.2} m) x {:.2} m {}x ({:.2} / {:.2} m)",
             metric(self.hull.loa(), LengthLong, self.hull.units),
             metric(self.hull.lwl(), LengthLong, self.hull.units),
             metric(self.hull.b, LengthLong, self.hull.units),
-            if self.hull.bb > self.hull.b { format!("(Bulges {:.2} m) ", metric(self.hull.bb, LengthLong, self.hull.units)) } else { "".into() },
+            addif!(self.hull.bb > self.hull.b, "(Bulges {:.2} m) ", metric(self.hull.bb, LengthLong, self.hull.units)),
             metric(self.hull.t, LengthLong, self.hull.units),
             metric(self.t_max(), LengthLong, self.hull.units)
-        ));
-        report.push("".to_string());
+        );
+        addto!(r);
 
-        report.push("Armament:".to_string()); // {{{4
+        addto!(r, "Armament:"); // {{{5
         for (i, b) in self.batteries.iter().enumerate() {
             let main_gun = i == 0;
 
             if b.num == 0 { continue; }
-            report.push(format!("    {} - {:.2}\" / {} mm {:.1} cal gun{} - {}lbs / {}kg shells, {} per gun",
+            addto!(r, "    {} - {:.2}\" / {} mm {:.1} cal gun{} - {}lbs / {}kg shells, {} per gun",
                 b.num,
                 b.diam,
-                if b.diam * 25.4 < 100.0 {
-                    format!("{:.1}", metric(b.diam, LengthSmall, b.units))
-                } else {
-                    format!("{:.0}", metric(b.diam, LengthSmall, b.units))
-                },
+                num!(metric(b.diam, LengthSmall, b.units), if b.diam * 25.4 < 100.0 { 1 } else { 0 }),
                 b.len,
-                match b.num { 1 => "", _ => "s", },
-                format_num!(",.2", b.shell_wgt()),
-                format_num!(",.2", metric(b.shell_wgt(), Weight, b.units)),
-                format_num!(",.0", b.shells),
-            ));
-            report.push(format!("        {} gun{} in {} mount{}, {} Model",
+                plural(b.num),
+                num!(b.shell_wgt(), 2),
+                num!(metric(b.shell_wgt(), Weight, b.units), 2),
+                num!(b.shells, 0),
+            );
+            addto!(r, "        {} gun{} in {} mount{}, {} Model",
                 b.kind,
-                match b.num { 1 => "", _ => "s", },
+                plural(b.num),
                 b.mount_kind,
-                match b.num { 1 => "", _ => "s", },
+                plural(b.num),
                 b.year
-            ));
+            );
 
             for (i, sb) in b.groups.iter().enumerate() {
                 let sb_super = match i {
@@ -1423,14 +1469,14 @@ impl Ship { // {{{2
                 };
 
                 if sb.num_mounts() == 0 { continue; }
-                report.push(format!("        {} x {} mount{} on {}",
+                addto!(r, "        {} x {} mount{} on {}",
                     sb.num_mounts(),
                     sb.layout,
-                    match sb.num_mounts() { 1 => "", _ => "s", },
+                    plural(sb.num_mounts()),
                     sb.distribution.desc(sb.num_mounts(), self.hull.fc_len + self.hull.fd_len)
-                ));
+                );
                 if sb.above > 0 {
-                    report.push(format!("        {} {}raised mount{}{}",
+                    addto!(r, "        {} {}raised mount{}{}",
                         sb.above,
                         match sb.two_mounts_up { true => "double ", false => "", },
                         if sb.above > 1 { "s" } else if sb.distribution.super_aft() && main_gun { " aft" } else { "" },
@@ -1453,19 +1499,19 @@ impl Ship { // {{{2
                         } else {
                             ""
                         }
-                    ));
+                    );
                 }
 
                 if sb.below > 0 {
-                    report.push(format!("        {} hull mount{} {}- Limited use in {}",
+                    addto!(r, "        {} hull mount{} {}- Limited use in {}",
                         sb.below,
                         if sb.above > 1 { "s" } else if sb.distribution.super_aft() && main_gun { " aft" } else { "" },
                         if b.mount_kind == MountType::Broadside {
                             (match sb.lower_deck { true => "on gundeck", false => "on upperdeck", }).into()
                         } else {
                             format!("in {}casemate{}",
-                                if sb.lower_deck { "lower " } else { "" },
-                                match sb.below { 1 => "", _ => "s", }
+                                addif!(sb.lower_deck, "{}", "lower "),
+                                plural(sb.below),
                             )
                         },
                         if b.free(self.hull.clone()) < 12.0 ||
@@ -1479,561 +1525,514 @@ impl Ship { // {{{2
                         } else {
                             "heavy seas"
                         }
-                    ));
+                    );
                 }
             }
         }
-        report.push(format!("    Weight of broadside {} lbs / {} kg",
-            format_num!(",.0", self.wgt_broad()),
-            format_num!(",.0", metric(self.wgt_broad(), Weight, Imperial)),
-        ));
+        addto!(r, "    Weight of broadside {} lbs / {} kg",
+            num!(self.wgt_broad(), 0),
+            num!(metric(self.wgt_broad(), Weight, Imperial), 0),
+        );
 
-        // Weapons {{{4
+        // Weapons {{{5
         for (i, torp) in self.torps.iter().enumerate() {
             if torp.num == 0 { continue; }
 
-            report.push(format!("{} Torpedoes",
+            addto!(r, "{} Torpedoes",
                 match i { 0 => "Main", 1 => "2nd", _ => "Other", }
-            ));
-            report.push(format!("{} - {:.1}\" / {:.0} mm, {:.2} ft / {:.2} m torpedo{} {:.3} t total",
+            );
+            addto!(r, "{} - {:.1}\" / {:.0} mm, {:.2} ft / {:.2} m torpedo{} {:.3} t total",
                 torp.num,
                 torp.diam,
                 metric(torp.diam, LengthSmall, torp.units),
                 torp.len,
                 metric(torp.len, LengthLong, torp.units),
                 match torp.num {
-                    1 => " -".to_string(),
-                    _ => format!("es - {:.3} t each,", torp.wgt_weaps() / torp.num as f64),
+                    1 => " -",
+                    _ => &format!("es - {:.3} t each,", torp.wgt_weaps() / torp.num as f64).to_string(),
                 },
                 torp.wgt_weaps()
-            ));
-            report.push(format!("    {}",
+            );
+            addto!(r, "    {}",
                 torp.mount_kind.desc(torp.num, torp.mounts)
-            ));
+            );
         }
 
         if self.mines.num != 0 {
-            report.push("Mines".to_string());
-            report.push(format!("{} - {:.2} lbs / {:.2} kg mines{} - {:.3} t total",
+            addto!(r, "Mines");
+            addto!(r, "{} - {:.2} lbs / {:.2} kg mines{} - {:.3} t total",
                 self.mines.num,
                 self.mines.wgt,
                 metric(self.mines.wgt, Weight, self.mines.units),
-                if self.mines.reload > 0 {
-                    format!(" + {} reloads", self.mines.reload)
-                } else { "".into() },
+                addif!(self.mines.reload > 0, " + {} reloads", self.mines.reload),
                 self.mines.wgt_weaps()
-            ));
-            report.push(format!("    {}",
+            );
+            addto!(r, "    {}",
                 self.mines.mount_kind.desc()
-            ));
+            );
         }
 
         for (i, asw) in self.asw.iter().enumerate() {
             if asw.num == 0 { continue; }
 
-            report.push(format!("{} DC/AS Mortars",
+            addto!(r, "{} DC/AS Mortars",
                 match i { 0 => "Main", 1 => "2nd", _ => "Other", }
-            ));
-            report.push(format!("{} - {:.2} lbs / {:.2} kg {}{} - {:.3} t total",
+            );
+            addto!(r, "{} - {:.2} lbs / {:.2} kg {}{} - {:.3} t total",
                 asw.num,
                 asw.wgt,
                 metric(asw.wgt, Weight, asw.units),
                 asw.kind.desc(),
-                if asw.reload > 0 {
-                    format!(" + {} reloads", self.mines.reload)
-                } else { "".into() },
+                addif!(asw.reload > 0, " + {} reloads", asw.reload),
                 asw.wgt_weaps()
-            ));
+            );
             if asw.kind.dc_desc() != "" {
-                report.push(format!("    {}",
+                addto!(r, "    {}",
                     asw.kind.dc_desc()
-                ));
+                );
             }
         }
 
-        // Armor {{{4
-        report.push("".to_string());
-        report.push("Armour:".to_string());
+        // Armor {{{5
+        addto!(r);
+        addto!(r, "Armour:");
 
         if self.armor.main.thick + self.armor.end.thick + self.armor.upper.thick + self.armor.bulkhead.thick > 0.0 {
-            report.push(" - Belts:    Width (max)    Length (avg)    Height (avg)".to_string());
+            addto!(r, " - Belts:    Width (max)    Length (avg)    Height (avg)");
             if self.armor.main.thick > 0.0 {
-                report.push(format!("    Main:    {}\" / {:.0} mm    {:.2} ft / {:.2} m    {:.2} ft / {:.2} m",
-                    if self.armor.main.thick < 10.0 {
-                        format!("{:.2}", self.armor.main.thick)
-                    } else {
-                        format!("{:.1}", self.armor.main.thick)
-                    },
+                addto!(r, "    Main:    {}\" / {:.0} mm    {:.2} ft / {:.2} m    {:.2} ft / {:.2} m",
+                    num!(self.armor.main.thick, if self.armor.main.thick < 10.0 { 2 } else { 1 }),
                     metric(self.armor.main.thick, LengthSmall, self.armor.units),
                     self.armor.main.len,
                     metric(self.armor.main.len, LengthLong, self.armor.units),
                     self.armor.main.hgt,
                     metric(self.armor.main.hgt, LengthLong, self.armor.units),
-                ));
+                );
             }
 
             if self.armor.end.thick > 0.0 {
-                report.push(format!("    Ends:    {}\" / {:.0} mm    {:.2} ft / {:.2} m    {:.2} ft / {:.2} m",
-                    if self.armor.end.thick < 10.0 {
-                        format!("{:.2}", self.armor.end.thick)
-                    } else {
-                        format!("{:.1}", self.armor.end.thick)
-                    },
+                addto!(r, "    Ends:    {}\" / {:.0} mm    {:.2} ft / {:.2} m    {:.2} ft / {:.2} m",
+                    num!(self.armor.end.thick, if self.armor.end.thick < 10.0 { 2 } else { 1 }),
                     metric(self.armor.end.thick, LengthSmall, self.armor.units),
                     self.armor.end.len,
                     metric(self.armor.end.len, LengthLong, self.armor.units),
                     self.armor.end.hgt,
                     metric(self.armor.end.hgt, LengthLong, self.armor.units),
-                ));
+                );
                 if self.armor.main.len + self.armor.end.len < self.hull.lwl() {
-                    report.push(format!("    {:.2} ft / {:.2} m Unarmoured ends",
+                    addto!(r, "    {:.2} ft / {:.2} m Unarmoured ends",
                         self.hull.lwl() - self.armor.main.len - self.armor.end.len,
                         metric(self.hull.lwl() - self.armor.main.len - self.armor.end.len, LengthLong, self.armor.units)
-                    ));
+                    );
                 }
             } else if self.armor.main.len < self.hull.lwl() {
-                report.push("    Ends:    Unarmoured".to_string());
+                addto!(r, "    Ends:    Unarmoured");
             }
 
             if self.armor.upper.thick > 0.0 {
-                report.push(format!("    Upper:    {}\" / {:.0} mm    {:.2} ft / {:.2} m    {:.2} ft / {:.2} m",
-                    if self.armor.upper.thick < 10.0 {
-                        format!("{:.2}", self.armor.upper.thick)
-                    } else {
-                        format!("{:.1}", self.armor.upper.thick)
-                    },
+                addto!(r, "    Upper:    {}\" / {:.0} mm    {:.2} ft / {:.2} m    {:.2} ft / {:.2} m",
+                    num!(self.armor.upper.thick, if self.armor.upper.thick < 10.0 { 2 } else { 1 }),
                     metric(self.armor.upper.thick, LengthSmall, self.armor.units),
                     self.armor.upper.len,
                     metric(self.armor.upper.len, LengthLong, self.armor.units),
                     self.armor.upper.hgt,
                     metric(self.armor.upper.hgt, LengthLong, self.armor.units),
-                ));
+                );
             }
 
             if self.armor.main.thick > 0.0 {
-                report.push(format!("    Main Belt covers {:.0} % of normal length",
+                addto!(r, "    Main Belt covers {:.0} % of normal length",
                     self.armor.belt_coverage(self.hull.lwl())*100.0
-                ));
+                );
                 if self.armor.belt_coverage(self.hull.lwl()) < self.hull_room() {
-                    report.push("    Main belt does not fully cover magazines and engineering spaces".to_string());
+                    addto!(r, "    Main belt does not fully cover magazines and engineering spaces");
                 }
             }
 
             if self.armor.incline != 0.0 {
-                report.push(format!("    Main Belt inclined {:.2} degrees (positive = in)",
+                addto!(r, "    Main Belt inclined {:.2} degrees (positive = in)",
                     self.armor.incline
-                ));
+                );
             }
 
             if self.armor.bulkhead.thick > 0.0 {
-                report.push("".to_string());
-                report.push(format!("- Torpedo Bulkhead - {} bulkheads:",
+                addto!(r);
+                addto!(r, "- Torpedo Bulkhead - {} bulkheads:",
                     match self.armor.bh_kind {
                         BulkheadType::Strengthened => "Strengthened structural",
                         BulkheadType::Additional   => "Additional damage containing",
                     }
-                ));
-                report.push(format!("        {}\" / {:.0} mm    {:.2} ft / {:.2} m    {:.2} ft / {:.2} m",
-                    if self.armor.bulkhead.thick < 10.0 {
-                        format!("{:.2}", self.armor.bulkhead.thick)
-                    } else {
-                        format!("{:.1}", self.armor.bulkhead.thick)
-                    },
+                );
+                addto!(r, "        {}\" / {:.0} mm    {:.2} ft / {:.2} m    {:.2} ft / {:.2} m",
+                    num!(self.armor.bulkhead.thick, if self.armor.bulkhead.thick < 10.0 { 2 } else { 1 }),
                     metric(self.armor.bulkhead.thick, LengthSmall, self.armor.units),
                     self.armor.bulkhead.len,
                     metric(self.armor.bulkhead.len, LengthLong, self.armor.units),
                     self.armor.bulkhead.hgt,
                     metric(self.armor.bulkhead.hgt, LengthLong, self.armor.units),
-                ));
-                report.push(format!("    Beam between torpedo bulkheads {:.2} ft / {:.2} m",
+                );
+                addto!(r, "    Beam between torpedo bulkheads {:.2} ft / {:.2} m",
                     self.armor.bh_beam,
                     metric(self.armor.bh_beam, LengthLong, self.armor.units)
-                ));
-                report.push("".to_string());
+                );
+                addto!(r);
             }
 
             if self.armor.bulge.thick > 0.0 || self.wgts.void > 0 {
-                report.push(format!("- Hull {}:",
+                addto!(r, "- Hull {}:",
                     if self.hull.b == self.hull.bb { "void" }
                     else { "Bulges" }
-                ));
-                report.push(format!("        {}\" / {:.0} mm    {:.2} ft / {:.2} m    {:.2} ft / {:.2} m",
-                    if self.armor.bulge.thick < 10.0 {
-                        format!("{:.2}", self.armor.bulge.thick)
-                    } else {
-                        format!("{:.1}", self.armor.bulge.thick)
-                    },
+                );
+                addto!(r, "        {}\" / {:.0} mm    {:.2} ft / {:.2} m    {:.2} ft / {:.2} m",
+                    num!(self.armor.bulge.thick, if self.armor.bulge.thick < 10.0 { 2 } else { 1 }),
                     metric(self.armor.bulge.thick, LengthSmall, self.armor.units),
                     self.armor.bulge.len,
                     metric(self.armor.bulge.len, LengthLong, self.armor.units),
                     self.armor.bulge.hgt,
                     metric(self.armor.bulge.hgt, LengthLong, self.armor.units),
-                ));
-            report.push("".to_string());
+                );
+            addto!(r);
             }
         }
 
         if self.wgt_gun_armor() > 0.0 {
-            report.push("- Gun armour:    Face (max)    Other gunhouse (avg)    Barbette/hoist (max)".to_string());
+            addto!(r, "- Gun armour:    Face (max)    Other gunhouse (avg)    Barbette/hoist (max)");
 
             for (i, b) in self.batteries.iter().enumerate() {
                 if b.armor_face == 0.0 &&
                 b.armor_back == 0.0 &&
                 b.armor_barb == 0.0 { continue; }
-                report.push(format!("    {}:    {}        {}            {}",
+                addto!(r, "    {}:    {}        {}            {}",
                     match i { 0 => "Main", 1 => "2nd", 2 => "3rd", 3 => "4th", 4 => "5th", _ => "Other", },
-                    if b.armor_face == 0.0 { "-".into() } else if b.armor_face >= 10.0 { format!("{:.1}\" / {:.0} mm", b.armor_face, metric(b.armor_face, LengthSmall, b.units)) } else { format!("{:.2}\" / {:.0} mm", b.armor_face, metric(b.armor_face, LengthSmall, b.units)) },
-                    if b.armor_back == 0.0 { "-".into() } else if b.armor_back >= 10.0 { format!("{:.1}\" / {:.0} mm", b.armor_back, metric(b.armor_back, LengthSmall, b.units)) } else { format!("{:.2}\" / {:.0} mm", b.armor_back, metric(b.armor_back, LengthSmall, b.units)) },
-                    if b.armor_barb == 0.0 { "-".into() } else if b.armor_barb >= 10.0 { format!("{:.1}\" / {:.0} mm", b.armor_barb, metric(b.armor_barb, LengthSmall, b.units)) } else { format!("{:.2}\" / {:.0} mm", b.armor_barb, metric(b.armor_barb, LengthSmall, b.units)) },
-                
-                ));
+                    if b.armor_face == 0.0 { "-".into() } else { format!("{}\" / {:.0} mm", num!(b.armor_face, if b.armor_face >= 10.0 { 1 } else { 2 }), metric(b.armor_face, LengthSmall, b.units)) },
+                    if b.armor_back == 0.0 { "-".into() } else { format!("{}\" / {:.0} mm", num!(b.armor_back, if b.armor_back >= 10.0 { 1 } else { 2 }), metric(b.armor_back, LengthSmall, b.units)) },
+                    if b.armor_barb == 0.0 { "-".into() } else { format!("{}\" / {:.0} mm", num!(b.armor_barb, if b.armor_barb >= 10.0 { 1 } else { 2 }), metric(b.armor_barb, LengthSmall, b.units)) },
+                );
             }
-            report.push("".to_string());
+            addto!(r);
         }
 
         if self.armor.deck.fc + self.armor.deck.md + self.armor.deck.qd > 0.0 {
-            report.push(format!("- {}:",
+            addto!(r, "- {}:",
                 self.armor.deck.kind
-            ));
+            );
             // TODO: Change spelling to Fore (required to match Springsharp reports)
-            report.push(format!("    For and Aft decks: {:.2}\" / {:.0} mm",
+            addto!(r, "    For and Aft decks: {:.2}\" / {:.0} mm",
                 self.armor.deck.md,
                 metric(self.armor.deck.md, LengthSmall, self.armor.units)
-            ));
+            );
             // TODO: Change spelling to Quarterdeck (required to match Springsharp reports)
-            report.push(format!("    Forecastle: {:.2}\" / {:.0} mm    Quarter deck: {:.2}\" / {:.0} mm",
+            addto!(r, "    Forecastle: {:.2}\" / {:.0} mm    Quarter deck: {:.2}\" / {:.0} mm",
                 self.armor.deck.fc,
                 metric(self.armor.deck.fc, LengthSmall, self.armor.units),
                 self.armor.deck.qd,
                 metric(self.armor.deck.qd, LengthSmall, self.armor.units)
-            ));
-            report.push("".to_string());
+            );
+            addto!(r);
         }
 
         if self.armor.ct_fwd.thick + self.armor.ct_aft.thick > 0.0 {
             // TODO: Remove stray space before comma (required to match Springsharp reports)
-            report.push(format!("- Conning towers: Forward {:.2}\" / {:.0} mm, Aft {:.2}\" / {:.0} mm",
+            addto!(r, "- Conning towers: Forward {:.2}\" / {:.0} mm, Aft {:.2}\" / {:.0} mm",
                 self.armor.ct_fwd.thick,
                 metric(self.armor.ct_fwd.thick, LengthSmall, self.armor.units),
                 self.armor.ct_aft.thick,
                 metric(self.armor.ct_aft.thick, LengthSmall, self.armor.units)
-            ));
-            report.push("".to_string());
+            );
+            addto!(r);
         }
 
-        report.push("Machinery:".to_string()); // {{{4
+        addto!(r, "Machinery:"); // {{{5
         if self.engine.vmax != 0.0 {
-            report.push(format!("    {}, {},",
+            addto!(r, "    {}, {},",
                 self.engine.fuel,
                 self.engine.boiler
-            ));
-            report.push(format!("    {}, {} shaft{}, {} {} / {} Kw = {:.2} kts",
+            );
+            addto!(r, "    {}, {} shaft{}, {} {} / {} Kw = {:.2} kts",
                 self.engine.drive,
                 self.engine.shafts(),
-                match self.engine.shafts() { 1 => "", _ => "s", },
-                format_num!(",.0", self.engine.hp_max(self.hull.d(), self.hull.lwl(), self.hull.leff(), self.hull.cs(), self.hull.ws())),
+                plural(self.engine.shafts()),
+                num!(self.engine.hp_max(self.hull.d(), self.hull.lwl(), self.hull.leff(), self.hull.cs(), self.hull.ws()), 0),
                 self.engine.boiler.hp_type(),
-                format_num!(",.0", metric(self.engine.hp_max(self.hull.d(), self.hull.lwl(), self.hull.leff(), self.hull.cs(), self.hull.ws()), Power, Imperial)),
+                num!(metric(self.engine.hp_max(self.hull.d(), self.hull.lwl(), self.hull.leff(), self.hull.cs(), self.hull.ws()), Power, Imperial), 0),
                 self.engine.vmax
-            ));
-            report.push(format!("    Range {}nm at {:.2} kts",
-                format_num!(",.0", self.engine.range),
+            );
+            addto!(r, "    Range {}nm at {:.2} kts",
+                num!(self.engine.range, 0),
                 self.engine.vcruise
-            ));
-            report.push(format!("    Bunker at max displacement = {} tons{}",
-                format_num!(",.0", self.engine.bunker_max(self.hull.d(), self.hull.lwl(), self.hull.leff(), self.hull.cs(), self.hull.ws())),
+            );
+            addto!(r, "    Bunker at max displacement = {} tons{}",
+                num!(self.engine.bunker_max(self.hull.d(), self.hull.lwl(), self.hull.leff(), self.hull.cs(), self.hull.ws()), 0),
                 if self.engine.pct_coal > 0.0 { format!(" ({:.0}% coal)", self.engine.pct_coal * 100.0) } else { "".into() }
-            ));
+            );
             let ratio = self.engine.hp_max(self.hull.d(), self.hull.lwl(), self.hull.leff(), self.hull.cs(), self.hull.ws()) / self.engine.shafts() as f64;
 
             if ratio > 20_000.0 && self.engine.boiler.is_reciprocating()
-                { report.push("    Caution: Too much power for reciprocating engines.".to_string()); }
+                { addto!(r, "    Caution: Too much power for reciprocating engines."); }
             else if ratio > 75_000.0
-                { report.push("    Caution: Too much power for number of propellor shafts.".to_string()); }
+                { addto!(r, "    Caution: Too much power for number of propellor shafts."); }
 
             if self.wgt_engine() < self.engine.d_engine(self.hull.d(), self.hull.lwl(), self.hull.leff(), self.hull.cs(), self.hull.ws()) / 5.0 {
-                report.push("    Caution: Delicate, lightweight machinery.".to_string());
+                addto!(r, "    Caution: Delicate, lightweight machinery.");
             }
 
         } else {
-            report.push("    Immobile floating battery".to_string());
+            addto!(r, "    Immobile floating battery");
         }
-        report.push("".to_string());
+        addto!(r);
 
-        report.push("Complement:".to_string()); // {{{4
-        report.push(format!("    {} - {}",
+        addto!(r, "Complement:"); // {{{5
+        addto!(r, "    {} - {}",
             self.crew_min(),
             self.crew_max()
-        ));
-        report.push("".to_string());
+        );
+        addto!(r);
 
-        report.push("Cost:".to_string()); // {{{4
-        report.push(format!("    £{:.3} million / ${:.3} million",
+        addto!(r, "Cost:"); // {{{5
+        addto!(r, "    £{:.3} million / ${:.3} million",
             self.cost_lb(),
             self.cost_dollar()
-        ));
-        report.push("".to_string());
+        );
+        addto!(r);
 
-        report.push("Distribution of weights at normal displacement:".to_string()); // {{{4
-        report.push(format!("    Armament: {} tons, {:.1} %",
-            format_num!(",.0", self.wgt_guns() + self.wgt_gun_mounts() + self.wgt_weaps()),
-            Ship::percent_calc(self.hull.d(), self.wgt_guns() + self.wgt_gun_mounts()) +
-            Ship::percent_calc(self.hull.d(), self.wgt_weaps())
-        ));
+        addto!(r, "Distribution of weights at normal displacement:"); // {{{5
+        addto!(r, "    Armament: {}",
+            self.percent_calc(self.wgt_guns() + self.wgt_gun_mounts() + self.wgt_weaps()),
+        );
 
         if self.wgt_guns() > 0.0 {
-            report.push(format!("    - Guns: {} tons, {:.1} %",
-                format_num!(",.0", self.wgt_guns() + self.wgt_gun_mounts()),
-                Ship::percent_calc(self.hull.d(), self.wgt_guns() + self.wgt_gun_mounts())
-            ));
+            addto!(r, "    - Guns: {}",
+                self.percent_calc(self.wgt_guns() + self.wgt_gun_mounts()),
+            );
         }
 
         if self.torps[0].wgt() + self.torps[1].wgt() + self.mines.wgt() + self.asw[0].wgt() + self.asw[1].wgt > 0.0 {
-            report.push(format!("    - Weapons: {} tons, {:.1} %",
-                format_num!(",.0", self.torps[0].wgt() + self.torps[1].wgt() + self.mines.wgt() + self.asw[0].wgt() + self.asw[1].wgt()),
-                Ship::percent_calc(self.hull.d(), self.torps[0].wgt() + self.torps[1].wgt() + self.mines.wgt() + self.asw[0].wgt() + self.asw[1].wgt())
-            ));
+            addto!(r, "    - Weapons: {}",
+                self.percent_calc(self.torps[0].wgt() + self.torps[1].wgt() + self.mines.wgt() + self.asw[0].wgt() + self.asw[1].wgt()),
+            );
         }
 
         if self.wgt_armor() > 0.0 {
-            report.push(format!("    Armour: {} tons, {:.1} %",
-                format_num!(",.0", self.wgt_armor()),
-                Ship::percent_calc(self.hull.d(), self.wgt_armor())
-            ));
+            addto!(r, "    Armour: {}",
+                self.percent_calc(self.wgt_armor()),
+            );
 
             if self.armor.main.thick + self.armor.end.thick + self.armor.upper.thick > 0.0 {
-                report.push(format!("    - Belts: {} tons, {:.1} %",
-                    format_num!(",.0", self.armor.main.wgt(self.hull.lwl(), self.hull.cwp(), self.hull.b) +
+                addto!(r, "    - Belts: {}",
+                    self.percent_calc(self.armor.main.wgt(self.hull.lwl(), self.hull.cwp(), self.hull.b) +
                         self.armor.end.wgt(self.hull.lwl(), self.hull.cwp(), self.hull.b) +
                         self.armor.upper.wgt(self.hull.lwl(), self.hull.cwp(), self.hull.b)),
-                    Ship::percent_calc(self.hull.d(), 
-                        self.armor.main.wgt(self.hull.lwl(), self.hull.cwp(), self.hull.b) +
-                        self.armor.end.wgt(self.hull.lwl(), self.hull.cwp(), self.hull.b) +
-                        self.armor.upper.wgt(self.hull.lwl(), self.hull.cwp(), self.hull.b))
-                ));
+                );
             }
 
             if self.armor.bulkhead.thick > 0.0 {
-                report.push(format!("    - Torpedo bulkhead: {} tons, {:.1} %",
-                    format_num!(",.0", self.armor.bulkhead.wgt(self.hull.lwl(), self.hull.cwp(), self.hull.b)),
-                    Ship::percent_calc(self.hull.d(), self.armor.bulkhead.wgt(self.hull.lwl(), self.hull.cwp(), self.hull.b))
-                ));
+                addto!(r, "    - Torpedo bulkhead: {}",
+                    self.percent_calc(self.armor.bulkhead.wgt(self.hull.lwl(), self.hull.cwp(), self.hull.b)),
+                );
             }
 
             if self.armor.bulge.wgt(self.hull.lwl(), self.hull.cwp(), self.hull.b) > 0.0 {
-                report.push(format!("    - {}: {} tons, {:.1} %",
+                addto!(r, "    - {}: {}",
                     if self.hull.b == self.hull.bb { "Void" } else { "Bulges" },
-                    format_num!(",.0", self.armor.bulge.wgt(self.hull.lwl(), self.hull.cwp(), self.hull.b)),
-                    Ship::percent_calc(self.hull.d(), self.armor.bulge.wgt(self.hull.lwl(), self.hull.cwp(), self.hull.b))
-                ));
+                    self.percent_calc(self.armor.bulge.wgt(self.hull.lwl(), self.hull.cwp(), self.hull.b)),
+                );
             }
 
             if self.wgt_gun_armor() > 0.0 {
-                report.push(format!("    - Armament: {} tons, {:.1} %",
-                    format_num!(",.0", self.wgt_gun_armor()),
-                    Ship::percent_calc(self.hull.d(), self.wgt_gun_armor())
-                ));
+                addto!(r, "    - Armament: {}",
+                    self.percent_calc(self.wgt_gun_armor()),
+                );
             }
 
             if self.armor.deck.fc + self.armor.deck.md + self.armor.deck.qd > 0.0 {
-                report.push(format!("    - Armour Deck: {} tons, {:.1} %",
+                addto!(r, "    - Armour Deck: {}",
                     // TODO: Replace with the following once the circular references are fixed:
-                    // format_num!(",.0", self.armor.deck.wgt(self.hull.clone(), self.wgt_mag(), self.wgt_engine())),
-                    // Ship::percent_calc(self.hull.d(), self.armor.deck.wgt(self.hull.clone(), self.wgt_mag(), self.wgt_engine())));
-                    format_num!(",.0", self.armor.deck.wgt(self.hull.clone(), self.wgt_mag(), 0.0)),
-                    Ship::percent_calc(self.hull.d(), self.armor.deck.wgt(self.hull.clone(), self.wgt_mag(), 0.0))
-                ));
+                    // self.percent_calc(self.armor.deck.wgt(self.hull.clone(), self.wgt_mag(), self.wgt_engine())),
+                    self.percent_calc(self.armor.deck.wgt(self.hull.clone(), self.wgt_mag(), 0.0)),
+                );
             }
 
             if self.armor.ct_fwd.thick + self.armor.ct_aft.thick > 0.0 {
-                report.push(format!("    - Conning Tower{}: {} tons, {:.1} %",
+                addto!(r, "    - Conning Tower{}: {}",
                     if self.armor.ct_fwd.thick > 0.0 && self.armor.ct_aft.thick > 0.0 {
                         "s"
                     } else { "" },
-                    format_num!(",.0", self.armor.ct_fwd.wgt(self.hull.d()) + self.armor.ct_aft.wgt(self.hull.d())),
-                    Ship::percent_calc(self.hull.d(), self.armor.ct_fwd.wgt(self.hull.d()) + self.armor.ct_aft.wgt(self.hull.d()))
-                ));
+                    self.percent_calc(self.armor.ct_fwd.wgt(self.hull.d()) + self.armor.ct_aft.wgt(self.hull.d())),
+                );
             }
         }
 
-        report.push(format!("    Machinery: {} tons, {:.1} %",
-            format_num!(",.0", self.wgt_engine()),
-            Ship::percent_calc(self.hull.d(), self.wgt_engine())
-        ));
-        report.push(format!("    Hull, fittings & equipment: {} tons, {:.1} %",
-            format_num!(",.0", self.wgt_hull()),
-            Ship::percent_calc(self.hull.d(), self.wgt_hull())
-        ));
-        report.push(format!("    Fuel, ammunition & stores: {} tons, {:.1} %",
-            format_num!(",.0", self.wgt_load()),
-            Ship::percent_calc(self.hull.d(), self.wgt_load())
-        ));
+        addto!(r, "    Machinery: {}",
+            self.percent_calc(self.wgt_engine()),
+        );
+        addto!(r, "    Hull, fittings & equipment: {}",
+            self.percent_calc(self.wgt_hull()),
+        );
+        addto!(r, "    Fuel, ammunition & stores: {}",
+            self.percent_calc(self.wgt_load()),
+        );
 
         if self.wgts.wgt() > 0 {
-            report.push(format!("    Miscellaneous weights: {} tons, {:.1} %",
-                format_num!(",.0", self.wgts.wgt()),
-                Ship::percent_calc(self.hull.d(), self.wgts.wgt().into())
-            ));
-            if self.wgts.vital > 0 { report.push(format!("    - Hull below water: {} tons", 
-                    format_num!(",.0", self.wgts.vital)
-            )); }
+            addto!(r, "    Miscellaneous weights: {}",
+                self.percent_calc(self.wgts.wgt() as f64),
+            );
+            if self.wgts.vital > 0 { addto!(r, "    - Hull below water: {} tons", 
+                    num!(self.wgts.vital, 0)
+            ); }
             if self.wgts.void > 0 {
-                report.push(format!("    - {} void weights: {} tons",
+                addto!(r, "    - {} void weights: {} tons",
                     if self.hull.bb > self.hull.b { "Bulge" } else { "Hull" },
-                    format_num!(",.0", self.wgts.void),
-                ));
+                    num!(self.wgts.void, 0),
+                );
             }
-            if self.wgts.hull > 0 { report.push(format!("    - Hull above water: {:.0} tons", self.wgts.hull
-            )); }
-            if self.wgts.on > 0 { report.push(format!("    - On freeboard deck: {:.0} tons", self.wgts.on
-            )); }
-            if self.wgts.above > 0 { report.push(format!("    - Above deck: {:.0} tons", self.wgts.above
-            )); }
+            if self.wgts.hull > 0  { addto!(r, "    - Hull above water: {:.0} tons", self.wgts.hull) };
+            if self.wgts.on > 0    { addto!(r, "    - On freeboard deck: {:.0} tons", self.wgts.on) };
+            if self.wgts.above > 0 { addto!(r, "    - Above deck: {:.0} tons", self.wgts.above) };
         }
 
-        report.push("".to_string());
+        addto!(r);
 
-        report.push("Overall survivability and seakeeping ability:".to_string()); // {{{4
-        report.push("    Survivability (Non-critical penetrating hits needed to sink ship):".to_string());
-        report.push(format!("    {:.0} lbs / {:.0} Kg = {:.1} x {:.1} \" / {:.0} mm shells or {:.1} torpedoes",
+        addto!(r, "Overall survivability and seakeeping ability:"); // {{{5
+        addto!(r, "    Survivability (Non-critical penetrating hits needed to sink ship):");
+        addto!(r, "    {:.0} lbs / {:.0} Kg = {:.1} x {:.1} \" / {:.0} mm shells or {:.1} torpedoes",
             self.flotation(),
             metric(self.flotation(), Weight, Imperial),
             self.damage_shell_num(),
             self.damage_shell_size(),
             metric(self.damage_shell_size(), LengthSmall, Imperial),
             self.damage_torp_num()
-        ));
-        report.push(format!("    Stability (Unstable if below 1.00): {:.2}",
+        );
+        addto!(r, "    Stability (Unstable if below 1.00): {:.2}",
             self.stability_adj()
-        ));
-        report.push(format!("    Metacentric height {:.1} ft / {:.1} m",
+        );
+        addto!(r, "    Metacentric height {:.1} ft / {:.1} m",
             self.metacenter(),
             metric(self.metacenter(), LengthLong, Imperial)
-        ));
-        report.push(format!("    Roll period: {:.1} seconds",
+        );
+        addto!(r, "    Roll period: {:.1} seconds",
             self.roll_period()
-        ));
-        report.push(format!("    Steadiness    - As gun platform (Average = 50 %): {:.0} %",
+        );
+        addto!(r, "    Steadiness    - As gun platform (Average = 50 %): {:.0} %",
             self.steadiness()
-        ));
-        report.push(format!("        - Recoil effect (Restricted arc if above 1.00): {:.2}",
+        );
+        addto!(r, "        - Recoil effect (Restricted arc if above 1.00): {:.2}",
             self.recoil()
-        ));
-        report.push(format!("    Seaboat quality (Average = 1.00): {:.2}",
+        );
+        addto!(r, "    Seaboat quality (Average = 1.00): {:.2}",
             self.seakeeping()
-        ));
-        report.push("".to_string());
+        );
+        addto!(r);
 
-        report.push("Hull form characteristics:".to_string()); // {{{4
-        report.push(format!("    Hull has {},",
+        addto!(r, "Hull form characteristics:"); // {{{5
+        addto!(r, "    Hull has {},",
             self.hull.freeboard_desc()
-        ));
-        report.push(format!("    {} and {}",
+        );
+        addto!(r, "    {} and {}",
             self.hull.bow_type,
             self.hull.stern_type
-        ));
-        report.push(format!("    Block coefficient (normal/deep): {:.3} / {:.3}",
+        );
+        addto!(r, "    Block coefficient (normal/deep): {:.3} / {:.3}",
             self.hull.cb(), self.cb_max()
-        ));
-        report.push(format!("    Length to Beam Ratio: {:.2} : 1",
+        );
+        addto!(r, "    Length to Beam Ratio: {:.2} : 1",
             self.hull.len2beam()
-        ));
-        report.push(format!("    'Natural speed' for length: {:.2} kts",
+        );
+        addto!(r, "    'Natural speed' for length: {:.2} kts",
             self.hull.vn()
-        ));
-        report.push(format!("    Power going to wave formation at top speed: {:.0} %",
+        );
+        addto!(r, "    Power going to wave formation at top speed: {:.0} %",
             self.engine.pw_max(self.hull.d(), self.hull.lwl(), self.hull.cs(), self.hull.ws()) * 100.0
-        ));
-        report.push(format!("    Trim (Max stability = 0, Max steadiness = 100): {}",
+        );
+        addto!(r, "    Trim (Max stability = 0, Max steadiness = 100): {}",
             self.trim
-        ));
-        report.push(format!("    Bow angle (Positive = bow angles forward): {:.2} degrees",
+        );
+        addto!(r, "    Bow angle (Positive = bow angles forward): {:.2} degrees",
             self.hull.bow_angle
-        ));
-        report.push(format!("    Stern overhang: {:.2} ft / {:.2} m",
+        );
+        addto!(r, "    Stern overhang: {:.2} ft / {:.2} m",
             self.hull.stern_overhang,
             metric(self.hull.stern_overhang, LengthLong, self.hull.units)
-        ));
-        report.push(format!("    Freeboard (% = length of deck as a percentage of waterline length):"
-        ));
-        report.push("            Fore end, Aft end".to_string());
-        report.push(format!("    - Forecastle:    {:.2} %, {:.2} ft / {:.2} m, {:.2} ft / {:.2} m",
+        );
+        addto!(r, "    Freeboard (% = length of deck as a percentage of waterline length):"
+        );
+        addto!(r, "            Fore end, Aft end");
+        addto!(r, "    - Forecastle:    {:.2} %, {:.2} ft / {:.2} m, {:.2} ft / {:.2} m",
             self.hull.fc_len*100.0,   self.hull.fc_fwd, metric(self.hull.fc_fwd, LengthLong, self.hull.units), self.hull.fc_aft, metric(self.hull.fc_aft, LengthLong, self.hull.units)
-        ));
-        report.push(format!("    - Forward deck:    {:.2} %, {:.2} ft / {:.2} m, {:.2} ft / {:.2} m",
+        );
+        addto!(r, "    - Forward deck:    {:.2} %, {:.2} ft / {:.2} m, {:.2} ft / {:.2} m",
             self.hull.fd_len*100.0,   self.hull.fd_fwd, metric(self.hull.fd_fwd, LengthLong, self.hull.units), self.hull.fd_aft, metric(self.hull.fd_aft, LengthLong, self.hull.units)
-        ));
-        report.push(format!("    - Aft deck:    {:.2} %, {:.2} ft / {:.2} m, {:.2} ft / {:.2} m",
+        );
+        addto!(r, "    - Aft deck:    {:.2} %, {:.2} ft / {:.2} m, {:.2} ft / {:.2} m",
             self.hull.ad_len()*100.0, self.hull.ad_fwd, metric(self.hull.ad_fwd, LengthLong, self.hull.units), self.hull.ad_aft, metric(self.hull.ad_aft, LengthLong, self.hull.units)
-        ));
-        report.push(format!("    - Quarter deck:    {:.2} %, {:.2} ft / {:.2} m, {:.2} ft / {:.2} m",
+        );
+        addto!(r, "    - Quarter deck:    {:.2} %, {:.2} ft / {:.2} m, {:.2} ft / {:.2} m",
             self.hull.qd_len*100.0,   self.hull.qd_fwd, metric(self.hull.qd_fwd, LengthLong, self.hull.units), self.hull.qd_aft, metric(self.hull.qd_aft, LengthLong, self.hull.units)
-        ));
-        report.push(format!("    - Average freeboard:        {:.2} ft / {:.2} m",
+        );
+        addto!(r, "    - Average freeboard:        {:.2} ft / {:.2} m",
             self.hull.freeboard(), metric(self.hull.freeboard(), LengthLong, self.hull.units)
         
-        ));
+        );
         if self.hull.is_wet_fwd() {
-            report.push("    Ship tends to be wet forward".to_string());
+            addto!(r, "    Ship tends to be wet forward");
         }
-        report.push("".to_string());
+        addto!(r);
 
-        report.push("Ship space, strength and comments:".to_string()); // {{{4
-        report.push(format!("    Space    - Hull below water (magazines/engines, low = better): {:.1} %",
+        addto!(r, "Ship space, strength and comments:"); // {{{5
+        addto!(r, "    Space    - Hull below water (magazines/engines, low = better): {:.1} %",
             self.hull_room() * 100.0
-        ));
-        report.push(format!("        - Above water (accommodation/working, high = better): {:.1} %",
+        );
+        addto!(r, "        - Above water (accommodation/working, high = better): {:.1} %",
             self.deck_room() * 100.0
-        ));
-        report.push(format!("    Waterplane Area: {} Square feet or {} Square metres",
-            format_num!(",.0", self.hull.wp()),
-            format_num!(",.0", metric(self.hull.wp(), Area, Imperial))
-        ));
-        report.push(format!("    Displacement factor (Displacement / loading): {:.0} %",
+        );
+        addto!(r, "    Waterplane Area: {} Square feet or {} Square metres",
+            num!(self.hull.wp(), 0),
+            num!(metric(self.hull.wp(), Area, Imperial), 0)
+        );
+        addto!(r, "    Displacement factor (Displacement / loading): {:.0} %",
             self.d_factor() * 100.0
-        ));
-        report.push(format!("    Structure weight / hull surface area: {:.0} lbs/sq ft or {:.0} Kg/sq metre",
+        );
+        addto!(r, "    Structure weight / hull surface area: {:.0} lbs/sq ft or {:.0} Kg/sq metre",
             self.wgt_struct(),
             metric(self.wgt_struct(), WeightPerArea, Imperial)
 
             
-        ));
-        report.push("Hull strength (Relative):".to_string());
-        report.push(format!("        - Cross-sectional: {:.2}",
+        );
+        addto!(r, "Hull strength (Relative):");
+        addto!(r, "        - Cross-sectional: {:.2}",
             self.str_cross()
-        ));
-        report.push(format!("        - Longitudinal: {:.2}",
+        );
+        addto!(r, "        - Longitudinal: {:.2}",
             self.str_long()
-        ));
-        report.push(format!("        - Overall: {:.2}",
+        );
+        addto!(r, "        - Overall: {:.2}",
             self.str_comp()
-        ));
+        );
 
         if self.tender_warn() && !self.capsize_warn() {
-            report.push("Caution: Poor stability - excessive risk of capsizing".into());
+            addto!(r, "Caution: Poor stability - excessive risk of capsizing");
         }
         if self.hull_strained() {
-            report.push("Caution: Hull subject to strain in open-sea".into());
+            addto!(r, "Caution: Hull subject to strain in open-sea");
         }
-        report.push(format!("    {} machinery, storage, compartmentation space",
+        addto!(r, "    {} machinery, storage, compartmentation space",
             self.hull_room_quality()
-        ));
-        report.push(format!("    {} accommodation and workspace room",
+        );
+        addto!(r, "    {} accommodation and workspace room",
             self.deck_room_quality()
-        ));
+        );
         for s in self.seakeeping_desc() {
-            report.push(format!("    {}", s
-            ));
+            addto!(r, "    {}", s
+            );
         }
 
-        report.push("".to_string());
+        addto!(r);
 
-        // Custom Notes {{{4
+        // Custom Notes {{{5
         for s in self.notes.iter() {
-            report.push(format!("{}", s));
+            addto!(r, "{}", s);
         }
 
-        report.join("\n")
+        r.join("\n")
     }
 }
 
