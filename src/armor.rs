@@ -197,13 +197,18 @@ impl Belt { // {{{2
     /// Belt weight.
     ///
     pub fn wgt(&self, lwl: f64, cwp: f64, b: f64) -> f64 {
-        let extra = match self.kind {
+        // Calculate the area of one bulkhead across the beam
+        let beam_bulkhead = match self.kind {
             BeltType::Main | BeltType::Upper =>
                 (1.0 - self.len / lwl).powf(1.0 - cwp) * b,
             _ => 0.0
         };
 
-        (self.len + extra) * self.hgt * self.thick * Armor::INCH * 2.0
+        // Calculate the weight of one belt and one bulkhead across the beam
+        let wgt = (self.len + beam_bulkhead) * self.hgt * self.thick * Armor::INCH;
+
+        // Double the weight to account for two belts and two beam bulkheads
+        wgt * 2.0
     }
 
     // new {{{3
