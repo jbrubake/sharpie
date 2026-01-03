@@ -260,7 +260,9 @@ mod belt {
 ///
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum BulkheadType {
+    /// Simpler and thinner.
     Strengthened,
+    /// Modern, multilayered and thicker.
     Additional,
 }
 
