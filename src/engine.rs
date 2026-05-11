@@ -747,6 +747,8 @@ impl BoilerType {
     /// XXX: I do not know what this does.
     ///
     pub fn d_engine_factor(&self, year: u32, fuel: FuelType) -> f64 {
+        if year < 1860 { return 0.0 };
+
         let a = if self.is_simple() {
                     if year <= 1884 { 1.2 + (year - 1860) as f64 * 0.05 }
                else if year <= 1949 { 2.45 + (year - 1885) as f64 * 0.025 }
