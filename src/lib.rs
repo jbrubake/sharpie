@@ -1249,7 +1249,12 @@ impl Ship { // {{{2
         let ship    = serde_json::to_string(&self)?;
 
         // Empty or clear the ship file
-        let _ = OpenOptions::new().write(true).truncate(true).open(&p)?;
+        let _ = OpenOptions::new()
+            .write(true)
+            .create(true)
+            .truncate(true)
+            .open(&p)?;
+
         // Append to the ship file
         let mut file = OpenOptions::new().append(true).open(&p)?;
 
