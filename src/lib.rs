@@ -1,20 +1,20 @@
-mod hull;
+pub mod hull;
 use hull::{Hull, BowType};
 
-mod armor;
-use armor::{Armor, BulkheadType};
+pub mod armor;
+use armor::{Armor, Belt, BulkheadType};
 
-mod engine;
+pub mod engine;
 use engine::{Engine, FuelType, BoilerType, DriveType};
 
-mod weapons;
+pub mod weapons;
 use weapons::{Battery, Torpedoes, Mines, ASW};
 use weapons::{MountType, GunDistributionType};
 
-mod weights;
+pub mod weights;
 use weights::MiscWgts;
 
-mod units;
+pub mod units;
 use units::Units::*;
 use units::metric;
 use units::UnitType::*;
@@ -173,7 +173,7 @@ impl Ship { // {{{2
     // wgt_bunker {{{3
     /// Convenience function to get bunkerage weight from the engine.
     ///
-    fn wgt_bunker(&self) -> f64 {
+    pub fn wgt_bunker(&self) -> f64 {
         self.engine.bunker(
             self.hull.d(),
             self.hull.lwl(),
@@ -186,7 +186,7 @@ impl Ship { // {{{2
     // wgt_load {{{3
     /// Weight of bunkerage, magazine and stores.
     ///
-    fn wgt_load(&self) -> f64 {
+    pub fn wgt_load(&self) -> f64 {
         self.hull.d() * 0.02 + self.wgt_bunker() + self.wgt_mag()
     }
 
@@ -741,7 +741,7 @@ impl Ship { // {{{2
     // wgt_engine {{{3
     /// Weight of the engine, adjusted by the displacement factor (d_factor()).
     ///
-    fn wgt_engine(&self) -> f64 {
+    pub fn wgt_engine(&self) -> f64 {
 
         let p =
             if (self.hull.d() < 5000.0) && (self.hull.d() >= 600.0) && (self.d_factor() < 1.0)
@@ -778,7 +778,7 @@ impl Ship { // {{{2
     // wgt_hull {{{3
     /// Weight of the hull.
     ///
-    fn wgt_hull(&self) -> f64 {
+    pub fn wgt_hull(&self) -> f64 {
         self.hull.d() -
             self.wgt_guns() -
             self.wgt_gun_mounts() -
@@ -826,7 +826,7 @@ impl Ship { // {{{2
     // wgt_guns {{{3
     /// Weight of guns (excluding mounts).
     ///
-    fn wgt_guns(&self) -> f64 {
+    pub fn wgt_guns(&self) -> f64 {
         let mut wgt = 0.0;
         for b in self.batteries.iter() {
             wgt += b.gun_wgt();
@@ -848,7 +848,7 @@ impl Ship { // {{{2
     // wgt_gun_armor {{{3
     /// Weight of gun mount armor.
     ///
-    fn wgt_gun_armor(&self) -> f64 {
+    pub fn wgt_gun_armor(&self) -> f64 {
         let mut wgt = 0.0;
         for b in self.batteries.iter() {
             wgt += b.armor_wgt(self.hull.clone());
@@ -859,7 +859,7 @@ impl Ship { // {{{2
     // wgt_mag {{{3
     /// Weight of the ship's magazines.
     ///
-    fn wgt_mag(&self) -> f64 {
+    pub fn wgt_mag(&self) -> f64 {
         let mut wgt = 0.0;
         for b in self.batteries.iter() {
             wgt += b.mag_wgt();
@@ -870,7 +870,7 @@ impl Ship { // {{{2
     // wgt_broad {{{3
     /// Sum of the broadside weights of all batteries.
     ///
-    fn wgt_broad(&self) -> f64 {
+    pub fn wgt_broad(&self) -> f64 {
         let mut broad = 0.0;
         for b in self.batteries.iter() {
             broad += b.broadside_wgt();
@@ -881,7 +881,7 @@ impl Ship { // {{{2
     // wgt_armor {{{3
     /// Weight of ship and battery armor.
     ///
-    fn wgt_armor(&self) -> f64 {
+    pub fn wgt_armor(&self) -> f64 {
         // TODO: Replace with the following once the circular references are fixed:
         // self.armor.wgt(self.hull.clone(), self.wgt_mag(), self.wgt_engine()) + self.wgt_gun_armor()
         self.armor.wgt(self.hull.clone(), self.wgt_mag(), 0.0) + self.wgt_gun_armor()
