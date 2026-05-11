@@ -1144,13 +1144,13 @@ impl Ship { // {{{2
         ship.torps[1].diam       = lines.next().unwrap().parse()?;
         ship.torps[0].len        = lines.next().unwrap().parse()?;
         ship.torps[1].len        = lines.next().unwrap().parse()?;
-        ship.torps[0].mount_kind = lines.next().unwrap().into();
-        ship.torps[1].mount_kind = lines.next().unwrap().into();
+        ship.torps[0].kind       = lines.next().unwrap().into();
+        ship.torps[1].kind       = lines.next().unwrap().into();
 
         ship.mines.num        = lines.next().unwrap().parse()?;
         ship.mines.reload     = lines.next().unwrap().parse()?;
         ship.mines.wgt        = lines.next().unwrap().parse()?;
-        ship.mines.mount_kind = lines.next().unwrap().into();
+        ship.mines.kind       = lines.next().unwrap().into();
 
         ship.asw[0].num    = lines.next().unwrap().parse()?;
         ship.asw[1].num    = lines.next().unwrap().parse()?;
@@ -1559,7 +1559,7 @@ impl Ship { // {{{3
                 torp.wgt_weaps()
             );
             addto!(r, "    {}",
-                torp.mount_kind.desc(torp.num, torp.mounts)
+                torp.kind.desc(torp.num, torp.mounts)
             );
         }
 
@@ -1573,7 +1573,7 @@ impl Ship { // {{{3
                 self.mines.wgt_weaps()
             );
             addto!(r, "    {}",
-                self.mines.mount_kind.desc()
+                self.mines.kind.desc()
             );
         }
 
@@ -2216,7 +2216,7 @@ mod ship {
                     ship.torps[0].mounts = 2;
                     ship.torps[0].diam = 20.0;
                     ship.torps[0].len = 10.0;
-                    ship.torps[0].mount_kind = kind;
+                    ship.torps[0].kind = kind;
 
                     ship.torps[1].num = 0;
 
@@ -2255,7 +2255,7 @@ mod ship {
                     ship.torps[0].mounts = 2;
                     ship.torps[0].diam = 20.0;
                     ship.torps[0].len = 10.0;
-                    ship.torps[0].mount_kind = kind;
+                    ship.torps[0].kind = kind;
 
                     ship.torps[1].num = 0;
 

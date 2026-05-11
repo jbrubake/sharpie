@@ -2208,7 +2208,7 @@ pub struct Torpedoes {
     /// Number of mounts.
     pub mounts: u32,
     /// Type of mount.
-    pub mount_kind: TorpedoMountType,
+    pub kind: TorpedoMountType,
 
     /// Number of torpedoes in the set
     pub num: u32,
@@ -2243,21 +2243,21 @@ impl Torpedoes { // {{{2
     /// Weight of mounts in the set.
     ///
     pub fn wgt_mounts(&self) -> f64 {
-        self.mount_kind.wgt_factor() * self.wgt_weaps()
+        self.kind.wgt_factor() * self.wgt_weaps()
     }
 
     // hull_space {{{3
     /// Hull space taken up by the set.
     ///
     pub fn hull_space(&self) -> f64 {
-        self.mount_kind.hull_space(self.len, self.diam) * self.num as f64
+        self.kind.hull_space(self.len, self.diam) * self.num as f64
     }
 
     // deck_space {{{3
     /// Deck space taken up by the set.
     ///
     pub fn deck_space(&self, b: f64) -> f64 {
-        self.mount_kind.deck_space(b, self.num, self.len, self.diam, self.mounts)
+        self.kind.deck_space(b, self.num, self.len, self.diam, self.mounts)
     }
 }
 
@@ -2519,7 +2519,7 @@ pub struct Mines {
     pub wgt: f64,
 
     /// Type of mine deployment system.
-    pub mount_kind: MineType,
+    pub kind: MineType,
 }
 
 impl Mines { // {{{2
@@ -2541,7 +2541,7 @@ impl Mines { // {{{2
     /// Weight of deployment gear.
     ///
     pub fn wgt_mounts(&self) -> f64 {
-        self.wgt_weaps() * self.mount_kind.wgt_factor()
+        self.wgt_weaps() * self.kind.wgt_factor()
     }
 }
 
@@ -2690,7 +2690,7 @@ mod weapons {
                     let (expected, kind, num, reload, wgt) = $value;
 
                     let mut mines = Mines::default();
-                    mines.mount_kind = kind;
+                    mines.kind = kind;
                     mines.num = num;
                     mines.reload = reload;
                     mines.wgt = wgt;
@@ -2717,7 +2717,7 @@ mod weapons {
                     let (expected, kind, num, reload, wgt) = $value;
 
                     let mut mines = Mines::default();
-                    mines.mount_kind = kind;
+                    mines.kind = kind;
                     mines.num = num;
                     mines.reload = reload;
                     mines.wgt = wgt;
@@ -2744,7 +2744,7 @@ mod weapons {
                     let (expected, kind, num, reload, wgt) = $value;
 
                     let mut mines = Mines::default();
-                    mines.mount_kind = kind;
+                    mines.kind = kind;
                     mines.num = num;
                     mines.reload = reload;
                     mines.wgt = wgt;
@@ -2843,7 +2843,7 @@ mod weapons {
                     let (expected, kind, diam, len, num, year) = $value;
 
                     let mut torp = Torpedoes::default();
-                    torp.mount_kind = kind; torp.diam = diam; torp.len = len; torp.num = num; torp.year = year;
+                    torp.kind = kind; torp.diam = diam; torp.len = len; torp.num = num; torp.year = year;
 
                     assert!(expected == to_place(torp.wgt_weaps(), 3));
                 }
@@ -2872,7 +2872,7 @@ mod weapons {
                     let (expected, kind, diam, len, num, year) = $value;
 
                     let mut torp = Torpedoes::default();
-                    torp.mount_kind = kind; torp.diam = diam; torp.len = len; torp.num = num; torp.year = year;
+                    torp.kind = kind; torp.diam = diam; torp.len = len; torp.num = num; torp.year = year;
 
                     assert!(expected == to_place(torp.wgt_mounts(), 3));
                 }
@@ -2901,7 +2901,7 @@ mod weapons {
                     let (expected, kind, diam, len, num, year) = $value;
 
                     let mut torp = Torpedoes::default();
-                    torp.mount_kind = kind; torp.diam = diam; torp.len = len; torp.num = num; torp.year = year;
+                    torp.kind = kind; torp.diam = diam; torp.len = len; torp.num = num; torp.year = year;
 
                     assert!(expected == to_place(torp.wgt(), 3));
                 }
@@ -2929,7 +2929,7 @@ mod weapons {
                 fn $name() {
                     let (expected, kind, diam, len, num) = $value;
                     let mut torp = Torpedoes::default();
-                    torp.mount_kind = kind; torp.diam = diam; torp.len = len; torp.num = num;
+                    torp.kind = kind; torp.diam = diam; torp.len = len; torp.num = num;
 
                     assert!(expected == to_place(torp.hull_space(), 3));
                 }
@@ -2958,7 +2958,7 @@ mod weapons {
                     let (expected,kind, diam, len, num, mounts) = $value;
 
                     let mut torp = Torpedoes::default();
-                    torp.mount_kind = kind; torp.diam = diam; torp.len = len; torp.num = num; torp.mounts = mounts;
+                    torp.kind = kind; torp.diam = diam; torp.len = len; torp.num = num; torp.mounts = mounts;
 
                     let b = 10.0;
                     assert!(expected == to_place(torp.deck_space(b), 3));
