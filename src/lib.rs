@@ -394,10 +394,10 @@ impl Ship { // {{{2
             };
 
         let c = b *
-            if (self.engine.rf_max(self.hull.ws()) / (self.engine.rf_max(self.hull.ws()) + self.engine.rw_max(self.hull.d(), self.hull.lwl(), self.hull.cs()))) < 0.55 &&
+            if (self.rf_max() / (self.rf_max() + self.rw_max())) < 0.55 &&
                 self.engine.vmax > 0.0
             {
-                (self.engine.rf_max(self.hull.ws()) / (self.engine.rf_max(self.hull.ws()) + self.engine.rw_max(self.hull.d(), self.hull.lwl(), self.hull.cs()))).powf(2.0)
+                (self.rf_max() / (self.rf_max() + self.rw_max())).powf(2.0)
             } else {
                 0.3025
             };
@@ -633,7 +633,7 @@ impl Ship { // {{{2
         }
 
         let mut str_cross = self.wgt_struct() / f64::sqrt(self.hull.bb * (self.hull.t + self.hull.freeboard_dist())) /
-            ((self.hull.d() + ((self.wgt_broad() + self.wgt_borne() + self.wgt_gun_armor() + self.armor.ct_fwd.wgt(self.hull.d()) + self.armor.ct_aft.wgt(self.hull.d())) * (concentration * self.gun_super_factor()) + f64::max(self.engine.hp_max(self.hull.d(), self.hull.lwl(), self.hull.leff(), self.hull.cs(), self.hull.ws()), 0.0) / 100.0)) / self.hull.d()) * 0.6;
+            ((self.hull.d() + ((self.wgt_broad() + self.wgt_borne() + self.wgt_gun_armor() + self.armor.ct_fwd.wgt(self.hull.d()) + self.armor.ct_aft.wgt(self.hull.d())) * (concentration * self.gun_super_factor()) + f64::max(self.hp_max(), 0.0) / 100.0)) / self.hull.d()) * 0.6;
 
         if self.year < 1900 {
             str_cross *= 1.0 - (1900.0 - self.year as f64) / 100.0;
@@ -1335,6 +1335,66 @@ impl Ship { // {{{2
     }
 }
 
+impl Ship { // Convenience wrappers {{{2
+    pub fn ct_wgt(&self) -> f64 { // {{{3
+        self.armor.ct_fwd.wgt(self.hull.d()) + self.armor.ct_fwd.wgt(self.hull.d()) 
+    }
+
+    pub fn deck_wgt(&self) -> f64 { // {{{3
+        // TODO: Replace with the following once the circular references are fixed:
+        // self.armor.deck.wgt(hull.clone(), self.wgt_mag(), self.wgt_engine())
+        self.armor.deck.wgt(self.hull.clone(), self.wgt_mag(), 0.0)
+    }
+
+    pub fn battery_armor_wgt(&self, btry: &Battery) -> f64 { // {{{3
+        btry.armor_wgt(self.hull.clone())
+    }
+
+    pub fn belt_wgt(&self, belt: Belt) -> f64 { // {{{3
+        belt.wgt(self.hull.lwl(), self.hull.cwp(), self.hull.b)
+    }
+
+    pub fn hp_max(&self) -> f64 { // {{{3
+        self.engine.hp_max(self.hull.d(), self.hull.lwl(), self.hull.leff(), self.hull.cs(), self.hull.ws())
+    }
+
+    pub fn hp_cruise(&self) -> f64 { // {{{3
+        self.engine.hp_cruise(self.hull.d(), self.hull.lwl(), self.hull.leff(), self.hull.cs(), self.hull.ws())
+    }
+
+    pub fn rf_max(&self) -> f64 { // {{{3
+        self.engine.rf_max(self.hull.ws())
+    }
+
+    pub fn rf_cruise(&self) -> f64 { // {{{3
+        self.engine.rf_cruise(self.hull.ws())
+    }
+
+    pub fn rw_max(&self) -> f64 { // {{{3
+        self.engine.rw_max(self.hull.d(), self.hull.lwl(), self.hull.cs())
+    }
+
+    pub fn rw_cruise(&self) -> f64 { // {{{3
+        self.engine.rw_cruise(self.hull.d(), self.hull.lwl(), self.hull.cs())
+    }
+
+    pub fn pw_max(&self) -> f64 { // {{{3
+        self.engine.pw_max(self.hull.d(), self.hull.lwl(), self.hull.cs(), self.hull.ws())
+    }
+
+    pub fn pw_cruise(&self) -> f64 { // {{{3
+        self.engine.pw_cruise(self.hull.d(), self.hull.lwl(), self.hull.cs(), self.hull.ws())
+    }
+
+    pub fn d_engine(&self) -> f64 { // {{{3
+        self.engine.d_engine(self.hull.d(), self.hull.lwl(), self.hull.leff(), self.hull.cs(), self.hull.ws())
+    }
+
+    pub fn bunker_max(&self) -> f64 { // {{{3
+        self.engine.bunker_max(self.hull.d(), self.hull.lwl(), self.hull.leff(), self.hull.cs(), self.hull.ws())
+    }
+}
+
 // Report {{{2
 // addto {{{3
 /// Pass arguments to format!() and push to a Vec<String>.
@@ -1757,9 +1817,9 @@ impl Ship { // {{{3
                 self.engine.drive,
                 self.engine.shafts(),
                 plural(self.engine.shafts()),
-                num!(self.engine.hp_max(self.hull.d(), self.hull.lwl(), self.hull.leff(), self.hull.cs(), self.hull.ws()), 0),
+                num!(self.hp_max(), 0),
                 self.engine.boiler.hp_type(),
-                num!(metric(self.engine.hp_max(self.hull.d(), self.hull.lwl(), self.hull.leff(), self.hull.cs(), self.hull.ws()), Power, Imperial), 0),
+                num!(metric(self.hp_max(), Power, Imperial), 0),
                 self.engine.vmax
             );
             addto!(r, "    Range {}nm at {:.2} kts",
@@ -1767,17 +1827,17 @@ impl Ship { // {{{3
                 self.engine.vcruise
             );
             addto!(r, "    Bunker at max displacement = {} tons{}",
-                num!(self.engine.bunker_max(self.hull.d(), self.hull.lwl(), self.hull.leff(), self.hull.cs(), self.hull.ws()), 0),
+                num!(self.bunker_max(), 0),
                 if self.engine.pct_coal > 0.0 { format!(" ({:.0}% coal)", self.engine.pct_coal * 100.0) } else { "".into() }
             );
-            let ratio = self.engine.hp_max(self.hull.d(), self.hull.lwl(), self.hull.leff(), self.hull.cs(), self.hull.ws()) / self.engine.shafts() as f64;
+            let ratio = self.hp_max() / self.engine.shafts() as f64;
 
             if ratio > 20_000.0 && self.engine.boiler.is_reciprocating()
                 { addto!(r, "    Caution: Too much power for reciprocating engines."); }
             else if ratio > 75_000.0
                 { addto!(r, "    Caution: Too much power for number of propellor shafts."); }
 
-            if self.wgt_engine() < self.engine.d_engine(self.hull.d(), self.hull.lwl(), self.hull.leff(), self.hull.cs(), self.hull.ws()) / 5.0 {
+            if self.wgt_engine() < self.d_engine() / 5.0 {
                 addto!(r, "    Caution: Delicate, lightweight machinery.");
             }
 
@@ -1852,8 +1912,8 @@ impl Ship { // {{{3
             if self.armor.deck.fc + self.armor.deck.md + self.armor.deck.qd > 0.0 {
                 addto!(r, "    - Armour Deck: {}",
                     // TODO: Replace with the following once the circular references are fixed:
-                    // self.percent_calc(self.armor.deck.wgt(self.hull.clone(), self.wgt_mag(), self.wgt_engine())),
-                    self.percent_calc(self.armor.deck.wgt(self.hull.clone(), self.wgt_mag(), 0.0)),
+                    // self.percent_calc(self.deck.wgt()),
+                    self.percent_calc(self.deck_wgt()),
                 );
             }
 
@@ -1946,7 +2006,7 @@ impl Ship { // {{{3
             self.hull.vn()
         );
         addto!(r, "    Power going to wave formation at top speed: {:.0} %",
-            self.engine.pw_max(self.hull.d(), self.hull.lwl(), self.hull.cs(), self.hull.ws()) * 100.0
+            self.pw_max() * 100.0
         );
         addto!(r, "    Trim (Max stability = 0, Max steadiness = 100): {}",
             self.trim
