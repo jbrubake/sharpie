@@ -76,6 +76,7 @@ pub struct Ship {
     pub year: u32,
 
     /// Balance between stability and seakeeping.
+    // TODO
     pub trim: u8,
 
     /// Hull configuration.
@@ -711,7 +712,7 @@ impl Ship { // {{{2
             )
     }
 
-    // damage_shell_torp_num {{{3
+    // damage_torp_num {{{3
     /// Number of non-critical 20" torpedo hits required to sink the ship.
     ///
     pub fn damage_torp_num(&self) -> f64 {
@@ -1139,18 +1140,18 @@ impl Ship { // {{{2
         for b in ship.batteries.iter_mut() { b.groups[1].below         = lines.next().unwrap().parse()?; }
         for b in ship.batteries.iter_mut() { b.groups[1].lower_deck    = match lines.next().unwrap().as_str() { "True" => true, _ => false, }; }
 
-        ship.torps[0].mounts     = lines.next().unwrap().parse()?;
-        ship.torps[1].mounts     = lines.next().unwrap().parse()?;
-        ship.torps[1].diam       = lines.next().unwrap().parse()?;
-        ship.torps[0].len        = lines.next().unwrap().parse()?;
-        ship.torps[1].len        = lines.next().unwrap().parse()?;
-        ship.torps[0].kind       = lines.next().unwrap().into();
-        ship.torps[1].kind       = lines.next().unwrap().into();
+        ship.torps[0].mounts = lines.next().unwrap().parse()?;
+        ship.torps[1].mounts = lines.next().unwrap().parse()?;
+        ship.torps[1].diam   = lines.next().unwrap().parse()?;
+        ship.torps[0].len    = lines.next().unwrap().parse()?;
+        ship.torps[1].len    = lines.next().unwrap().parse()?;
+        ship.torps[0].kind   = lines.next().unwrap().into();
+        ship.torps[1].kind   = lines.next().unwrap().into();
 
-        ship.mines.num        = lines.next().unwrap().parse()?;
-        ship.mines.reload     = lines.next().unwrap().parse()?;
-        ship.mines.wgt        = lines.next().unwrap().parse()?;
-        ship.mines.kind       = lines.next().unwrap().into();
+        ship.mines.num    = lines.next().unwrap().parse()?;
+        ship.mines.reload = lines.next().unwrap().parse()?;
+        ship.mines.wgt    = lines.next().unwrap().parse()?;
+        ship.mines.kind   = lines.next().unwrap().into();
 
         ship.asw[0].num    = lines.next().unwrap().parse()?;
         ship.asw[1].num    = lines.next().unwrap().parse()?;

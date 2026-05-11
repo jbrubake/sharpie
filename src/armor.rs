@@ -23,6 +23,7 @@ pub struct Armor {
     pub incline: f64,
 
     /// Torpedo bulge armor.
+    ///
     pub bulge: Belt,
     /// Bulkhead armor.
     pub bulkhead: Belt,

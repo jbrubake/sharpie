@@ -202,7 +202,7 @@ impl Hull { // {{{2
     // cb {{{3
     /// Block Coefficient at normal displacement.
     ///
-    /// Return a perviously set value or cb_calc() if unset.
+    /// Return a previously set value or cb_calc() if unset.
     pub fn cb(&self) -> f64 {
         match (self.cb, self.d) {
             (None, None)    => 0.0,

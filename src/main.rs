@@ -157,7 +157,6 @@ fn main() -> Result<(), Box<dyn Error>> {
                             Ok(_) => Ok(()),
                             Err(error) => Err(error),
                         },
-
                         None => Ok(()),
                     }
                 },
