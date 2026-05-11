@@ -204,9 +204,10 @@ impl Hull { // {{{2
     ///
     /// Return a perviously set value or cb_calc() if unset.
     pub fn cb(&self) -> f64 {
-        match self.cb {
-            Some(cb) => cb,
-            None     => self.cb_calc(self.d(), self.t),
+        match (self.cb, self.d) {
+            (None, None)    => 0.0,
+            (Some(cb), _)   => cb,
+            (None, Some(d)) => self.cb_calc(d, self.t),
         }
     }
 
@@ -239,9 +240,10 @@ impl Hull { // {{{2
     ///
     /// Return a perviously set value or caluculate from cb if unset.
     pub fn d(&self) -> f64 {
-        match self.d {
-            Some(d) => d,
-            None    => self.d_calc(self.cb(),),
+        match (self.d, self.cb) {
+            (None, None)     => 0.0,
+            (Some(d), _)     => d,
+            (None, Some(cb)) => self.d_calc(cb),
         }
     }
 
