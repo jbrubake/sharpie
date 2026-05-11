@@ -94,7 +94,7 @@ impl Default for Hull { // {{{2
         Hull {
             units: Units::Imperial,
 
-            cb: None,
+            cb: Some(0.550),
             d: None,
             lwl: None,
             loa: None,
