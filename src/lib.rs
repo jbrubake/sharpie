@@ -105,7 +105,7 @@ impl Default for Ship { // {{{2
             name: "".into(),
             country: "".into(),
             kind: "".into(),
-            year: 0,
+            year: 1950,
 
             trim: 50,
 
