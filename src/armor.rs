@@ -157,9 +157,10 @@ mod armor {
         }
     }
     test_max_hgt! {
-        // name:        (max_hgt, incline)
-        max_belt_hgt_0: (20.02, 0.0),
-        max_belt_hgt_45: (28.3, 45.0),
+        // name:            (max_hgt, incline)
+        max_belt_hgt_0:     (20.02, 0.0),
+        max_belt_hgt_45:     (28.3, 45.0),
+        max_belt_hgt_neg_45: (28.3, -45.0),
     }
 
     // Test wgt {{{3
