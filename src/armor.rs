@@ -464,6 +464,57 @@ mod deck {
         wgt_box_magazine_md:  (23.24, DeckType::BoxOverMagazine, 0.0, 1.0, 0.0),
         wgt_box_both_md:      (48.57, DeckType::BoxOverBoth, 0.0, 1.0, 0.0),
     }
+    // Test Display {{{3
+    macro_rules! test_display {
+        ($($name:ident: $value:expr,)*) => {
+            $(
+                #[test]
+                fn $name() {
+                    let (expected, layout) = $value;
+
+                    assert_eq!(expected, format!("{}", layout));
+                }
+            )*
+        }
+    }
+
+    test_display! {
+        display_multiple_armored: ("Armoured deck - multiple decks", DeckType::MultipleArmored),
+        display_single_armored: ("Armoured deck - single deck", DeckType::SingleArmored),
+        display_multiple_protected: ("Protected deck - multiple decks", DeckType::MultipleProtected),
+        display_single_protected: ("Protected deck - single deck", DeckType::SingleProtected),
+        display_box_machinery: ("Box over machinery", DeckType::BoxOverMachinery),
+        display_box_magazine: ("Box over magazines", DeckType::BoxOverMagazine),
+        display_box_both: ("Box over machiner & magazines", DeckType::BoxOverBoth),
+    }
+
+    // Test From<&str> {{{3
+    macro_rules! test_from_str {
+        ($($name:ident: $value:expr,)*) => {
+            $(
+                #[test]
+                fn $name() {
+                    let (expected, index) = $value;
+
+                    assert_eq!(
+                        std::mem::discriminant(&expected),
+                        std::mem::discriminant(&index.into())
+                    );
+                }
+            )*
+        }
+    }
+
+    test_from_str! {
+        // name: (type, index)
+        from_str_zero:    (DeckType::MultipleArmored, "0"),
+        from_str_one:     (DeckType::SingleArmored, "1"),
+        from_str_two:     (DeckType::MultipleProtected, "2"),
+        from_str_three:   (DeckType::SingleProtected, "3"),
+        from_str_four:    (DeckType::BoxOverMachinery, "4"),
+        from_str_five:    (DeckType::BoxOverMagazine, "5"),
+        from_str_six:     (DeckType::BoxOverBoth, "6"),
+    }
 }
 
 // DeckType {{{1
