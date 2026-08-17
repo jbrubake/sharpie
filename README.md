@@ -26,6 +26,20 @@ Convert a `SpringSharp` file to `sharpie` format and print a report:
 
     sharpie convert [SpringSharp FILE] --to [OUTPUT FILE] --report
 
+# Building
+
+`sharpie` is written in Rust. Build it with:
+
+    cargo build --release
+
+Run the test suite with:
+
+    cargo test
+
+A `Makefile` provides convenience targets: `make build`, `make gui` (build and
+launch the GUI), `make preview` (preview the UI with `slint-viewer`),
+`make live-preview` and `make docs`.
+
 # Missing Functionality
 
 - Metric units are not supported in either `sharpie` or `SpringSharp` files.
