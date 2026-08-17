@@ -1035,6 +1035,60 @@ mod gun_type {
         wgt_lg_rf:     (1.5, GunType::RapidFire),
         wgt_lg_mg:     (1.0, GunType::MachineGun),
     }
+
+    // Test Display {{{3
+    macro_rules! test_display {
+        ($($name:ident: $value:expr,)*) => {
+            $(
+                #[test]
+                fn $name() {
+                    let (expected, gun) = $value;
+
+                    assert_eq!(expected, format!("{}", gun));
+                }
+            )*
+        }
+    }
+
+    test_display! {
+        // name:               (display, gun)
+        display_muzzle:        ("Muzzle loading", GunType::MuzzleLoading),
+        display_breech:        ("Breech loading", GunType::BreechLoading),
+        display_qf:            ("Quick-firing", GunType::QuickFiring),
+        display_aa:            ("Anti-air", GunType::AntiAir),
+        display_dp:            ("Dual-purpose", GunType::DualPurpose),
+        display_rf:            ("Automatic rapid-fire", GunType::RapidFire),
+        display_mg:            ("Machine", GunType::MachineGun),
+    }
+
+    // Test From<&str> {{{3
+    macro_rules! test_from_str {
+        ($($name:ident: $value:expr,)*) => {
+            $(
+                #[test]
+                fn $name() {
+                    let (expected, index) = $value;
+
+                    assert_eq!(
+                        std::mem::discriminant(&expected),
+                        std::mem::discriminant(&index.into())
+                    );
+                }
+            )*
+        }
+    }
+
+    test_from_str! {
+        // name:            (gun, index)
+        from_str_muzzle:   (GunType::MuzzleLoading, "0"),
+        from_str_breech:   (GunType::BreechLoading, "1"),
+        from_str_qf:       (GunType::QuickFiring, "2"),
+        from_str_aa:       (GunType::AntiAir, "3"),
+        from_str_dp:       (GunType::DualPurpose, "4"),
+        from_str_rf:       (GunType::RapidFire, "5"),
+        from_str_mg:       (GunType::MachineGun, "6"),
+        from_str_default:  (GunType::MuzzleLoading, "9"),
+    }
 }
 
 // MountType {{{1
@@ -1296,6 +1350,56 @@ mod mount_type {
         face_wgt_casemate_no_back:    (1.0, MountType::Casemate, 0.0),
     }
 
+    // Test Display {{{3
+    macro_rules! test_display {
+        ($($name:ident: $value:expr,)*) => {
+            $(
+                #[test]
+                fn $name() {
+                    let (expected, mount) = $value;
+
+                    assert_eq!(expected, format!("{}", mount));
+                }
+            )*
+        }
+    }
+
+    test_display! {
+        // name:               (display, mount)
+        display_broad:        ("broadside", MountType::Broadside),
+        display_coles:        ("Coles/Ericsson turret", MountType::ColesTurret),
+        display_open_barb:    ("open barbette", MountType::OpenBarbette),
+        display_closed_barb:  ("turret on barbette", MountType::ClosedBarbette),
+        display_deckhoist:    ("deck and hoist", MountType::DeckAndHoist),
+        display_deck:         ("deck", MountType::Deck),
+        display_casemate:     ("casemate", MountType::Casemate),
+    }
+
+    // Test From<&str> {{{3
+    macro_rules! test_from_str {
+        ($($name:ident: $value:expr,)*) => {
+            $(
+                #[test]
+                fn $name() {
+                    let (expected, index) = $value;
+
+                    assert_eq!(expected, index.into());
+                }
+            )*
+        }
+    }
+
+    test_from_str! {
+        // name:            (mount, index)
+        from_str_broad:    (MountType::Broadside, "0"),
+        from_str_coles:    (MountType::ColesTurret, "1"),
+        from_str_open_barb: (MountType::OpenBarbette, "2"),
+        from_str_closed_barb: (MountType::ClosedBarbette, "3"),
+        from_str_deckhoist: (MountType::DeckAndHoist, "4"),
+        from_str_deck:     (MountType::Deck, "5"),
+        from_str_casemate: (MountType::Casemate, "6"),
+        from_str_default:  (MountType::Broadside, "9"),
+    }
 }
 
 // SubBattery {{{1
@@ -2051,6 +2155,130 @@ mod gun_dist_type {
         free_case_8_1: (4.0, 5, GunDistributionType::CenterlineADAft),
         free_case_8_2: (4.0, 5, GunDistributionType::SidesADAft),
     }
+
+    // Test desc {{{3
+    macro_rules! test_desc {
+        ($($name:ident: $value:expr,)*) => {
+            $(
+                #[test]
+                fn $name() {
+                    let (expected, mounts, fwd_len, dist) = $value;
+
+                    assert_eq!(expected, dist.desc(mounts, fwd_len));
+                }
+            )*
+        }
+    }
+
+    test_desc! {
+        // name:                     (desc, mounts, fwd_len, dist)
+        desc_even_1_fwd:             ("centreline amidships (forward deck)", 1, 0.5, GunDistributionType::CenterlineEven),
+        desc_even_1_aft:             ("centreline amidships (aft deck)", 1, 0.4, GunDistributionType::CenterlineEven),
+        desc_even_multi:             ("centreline, evenly spread", 2, 0.5, GunDistributionType::CenterlineEven),
+        desc_end_fd_1:               ("centreline forward", 1, 0.5, GunDistributionType::CenterlineEndsFD),
+        desc_end_fd_even:            ("centreline ends, evenly spread", 2, 0.5, GunDistributionType::CenterlineEndsFD),
+        desc_end_fd_odd:             ("centreline ends, majority forward", 3, 0.5, GunDistributionType::CenterlineEndsFD),
+        desc_end_ad_1:               ("centreline aft", 1, 0.5, GunDistributionType::CenterlineEndsAD),
+        desc_end_ad_even:            ("centrelineends, evenly spread", 2, 0.5, GunDistributionType::CenterlineEndsAD),
+        desc_end_ad_odd:             ("centreline ends, majority aft", 3, 0.5, GunDistributionType::CenterlineEndsAD),
+        desc_fd_fwd:                 ("centreline, forward deck forward", 2, 0.5, GunDistributionType::CenterlineFDFwd),
+        desc_fd_1:                   ("centreline, forward deck centre", 1, 0.5, GunDistributionType::CenterlineFD),
+        desc_fd_multi:               ("centreline, forward evenly spread", 2, 0.5, GunDistributionType::CenterlineFD),
+        desc_fd_aft:                 ("centreline, forward deck aft", 2, 0.5, GunDistributionType::CenterlineFDAft),
+        desc_ad_fwd:                 ("centreline, aft deck forward", 2, 0.5, GunDistributionType::CenterlineADFwd),
+        desc_ad_1:                   ("centreline, aft deck centre", 1, 0.5, GunDistributionType::CenterlineAD),
+        desc_ad_multi:               ("centreline, aft evenly spread", 2, 0.5, GunDistributionType::CenterlineAD),
+        desc_ad_aft:                 ("cenreline, aft deck aft", 2, 0.5, GunDistributionType::CenterlineADAft),
+        desc_sides_few:              ("sides amidships", 2, 0.5, GunDistributionType::SidesEven),
+        desc_sides_multi:            ("sides, evenly spread", 3, 0.5, GunDistributionType::SidesEven),
+        desc_sides_end_fd_few:       ("sides, forward", 2, 0.5, GunDistributionType::SidesEndsFD),
+        desc_sides_end_fd_even:      ("side ends, evenly spread", 4, 0.5, GunDistributionType::SidesEndsFD),
+        desc_sides_end_fd_odd:       ("side ends, majority forward", 6, 0.5, GunDistributionType::SidesEndsFD),
+        desc_sides_end_ad_few:       ("sides aft", 2, 0.5, GunDistributionType::SidesEndsAD),
+        desc_sides_end_ad_even:      ("side ends, evenly spread", 4, 0.5, GunDistributionType::SidesEndsAD),
+        desc_sides_end_ad_odd:       ("side ends, majority aft", 6, 0.5, GunDistributionType::SidesEndsAD),
+        desc_sides_fd_fwd:           ("sides, forward deck forward", 2, 0.5, GunDistributionType::SidesFDFwd),
+        desc_sides_fd_few:           ("sides, forward deck centre", 2, 0.5, GunDistributionType::SidesFD),
+        desc_sides_fd_multi:         ("sides, forward evenly spread", 3, 0.5, GunDistributionType::SidesFD),
+        desc_sides_fd_aft:           ("sides, forward deck aft", 2, 0.5, GunDistributionType::SidesFDAft),
+        desc_sides_ad_fwd:           ("sides, aft deck forward", 2, 0.5, GunDistributionType::SidesADFwd),
+        desc_sides_ad_few:           ("sides, aft deck centre", 2, 0.5, GunDistributionType::SidesAD),
+        desc_sides_ad_multi:         ("sides, aft evenly spread", 3, 0.5, GunDistributionType::SidesAD),
+        desc_sides_ad_aft:           ("sides, aft deck aft", 2, 0.5, GunDistributionType::SidesADAft),
+    }
+
+    // Test Display {{{3
+    macro_rules! test_display {
+        ($($name:ident: $value:expr,)*) => {
+            $(
+                #[test]
+                fn $name() {
+                    let (expected, dist) = $value;
+
+                    assert_eq!(expected, format!("{}", dist));
+                }
+            )*
+        }
+    }
+
+    test_display! {
+        // name:                  (display, dist)
+        display_even:             ("centerline - distributed", GunDistributionType::CenterlineEven),
+        display_end_fd:           ("centerline - ends (fore ≥ aft)", GunDistributionType::CenterlineEndsFD),
+        display_end_ad:           ("centerline - ends (aft ≥ fore)", GunDistributionType::CenterlineEndsAD),
+        display_fd_fwd:           ("centerline - foredeck forward", GunDistributionType::CenterlineFDFwd),
+        display_fd:               ("centerline - foredeck", GunDistributionType::CenterlineFD),
+        display_fd_aft:           ("centerline - foredeck aft", GunDistributionType::CenterlineFDAft),
+        display_ad_fwd:           ("centerline - afterdeck forward", GunDistributionType::CenterlineADFwd),
+        display_ad:               ("centerline - afterdeck", GunDistributionType::CenterlineAD),
+        display_ad_aft:           ("centerline - afterdeck aft", GunDistributionType::CenterlineADAft),
+        display_sides:            ("sides - distributed", GunDistributionType::SidesEven),
+        display_sides_end_fd:     ("sides - ends (fore ≥ aft)", GunDistributionType::SidesEndsFD),
+        display_sides_end_ad:     ("sides - ends (aft ≥ fore)", GunDistributionType::SidesEndsAD),
+        display_sides_fd_fwd:     ("sides - foredeck forward", GunDistributionType::SidesFDFwd),
+        display_sides_fd:         ("sides - foredeck", GunDistributionType::SidesFD),
+        display_sides_fd_aft:     ("sides - foredeck aft", GunDistributionType::SidesFDAft),
+        display_sides_ad_fwd:     ("sides - afterdeck forared", GunDistributionType::SidesADFwd),
+        display_sides_ad:         ("sides - afterdeck", GunDistributionType::SidesAD),
+        display_sides_ad_aft:     ("sides - afterdeck aft", GunDistributionType::SidesADAft),
+    }
+
+    // Test From<&str> {{{3
+    macro_rules! test_from_str {
+        ($($name:ident: $value:expr,)*) => {
+            $(
+                #[test]
+                fn $name() {
+                    let (expected, index) = $value;
+
+                    assert_eq!(expected, index.into());
+                }
+            )*
+        }
+    }
+
+    test_from_str! {
+        // name:               (dist, index)
+        from_str_even:         (GunDistributionType::CenterlineEven, "0"),
+        from_str_end_fd:       (GunDistributionType::CenterlineEndsFD, "1"),
+        from_str_end_ad:       (GunDistributionType::CenterlineEndsAD, "2"),
+        from_str_fd_fwd:       (GunDistributionType::CenterlineFDFwd, "3"),
+        from_str_fd:           (GunDistributionType::CenterlineFD, "4"),
+        from_str_fd_aft:       (GunDistributionType::CenterlineFDAft, "5"),
+        from_str_ad_fwd:       (GunDistributionType::CenterlineADFwd, "6"),
+        from_str_ad:           (GunDistributionType::CenterlineAD, "7"),
+        from_str_ad_aft:       (GunDistributionType::CenterlineADAft, "8"),
+        from_str_sides:        (GunDistributionType::SidesEven, "9"),
+        from_str_sides_end_fd: (GunDistributionType::SidesEndsFD, "10"),
+        from_str_sides_end_ad: (GunDistributionType::SidesEndsAD, "11"),
+        from_str_sides_fd_fwd: (GunDistributionType::SidesFDFwd, "12"),
+        from_str_sides_fd:     (GunDistributionType::SidesFD, "13"),
+        from_str_sides_fd_aft: (GunDistributionType::SidesFDAft, "14"),
+        from_str_sides_ad_fwd: (GunDistributionType::SidesADFwd, "15"),
+        from_str_sides_ad:     (GunDistributionType::SidesAD, "16"),
+        from_str_sides_ad_aft: (GunDistributionType::SidesADAft, "17"),
+        from_str_default:      (GunDistributionType::CenterlineEven, "99"),
+    }
 }
 
 // GunLayoutType {{{1
@@ -2196,6 +2424,82 @@ impl GunLayoutType { // {{{2
             Self::FiveGun  => 1.0,
             Self::Dec2Row  => 1.0,
         }
+    }
+}
+
+// Testing GunLayoutType {{{2
+#[cfg(test)]
+mod gunlayouttype {
+    use super::*;
+
+    // Test Display {{{3
+    macro_rules! test_display {
+        ($($name:ident: $value:expr,)*) => {
+            $(
+                #[test]
+                fn $name() {
+                    let (expected, layout) = $value;
+
+                    assert_eq!(expected, format!("{}", layout));
+                }
+            )*
+        }
+    }
+
+    test_display! {
+        // name:            (display, layout)
+        display_single:    ("Single",          GunLayoutType::Single),
+        display_twin_2row: ("2 row, twin",     GunLayoutType::Twin2Row),
+        display_quad_4row: ("4 row, quad",     GunLayoutType::Quad4Row),
+        display_twin:      ("Twin",            GunLayoutType::Twin),
+        display_two_gun:   ("2-gun",           GunLayoutType::TwoGun),
+        display_quad_2row: ("2 row, quad",     GunLayoutType::Quad2Row),
+        display_triple:    ("Triple",          GunLayoutType::Triple),
+        display_three_gun: ("3-gun",           GunLayoutType::ThreeGun),
+        display_sex_2row:  ("2 row, sextuple", GunLayoutType::Sex2Row),
+        display_quad:      ("quad",            GunLayoutType::Quad),
+        display_four_gun:  ("4-gun",           GunLayoutType::FourGun),
+        display_oct_2row:  ("2 row, octuple",  GunLayoutType::Oct2Row),
+        display_quint:     ("quintuple",       GunLayoutType::Quint),
+        display_five_gun:  ("5-gun",           GunLayoutType::FiveGun),
+        display_dec_2row:  ("2 row, decuple",  GunLayoutType::Dec2Row),
+    }
+
+    // Test From<&str> {{{3
+    macro_rules! test_from_str {
+        ($($name:ident: $value:expr,)*) => {
+            $(
+                #[test]
+                fn $name() {
+                    let (expected, index) = $value;
+
+                    assert_eq!(
+                        std::mem::discriminant(&expected),
+                        std::mem::discriminant(&index.into())
+                    );
+                }
+            )*
+        }
+    }
+
+    test_from_str! {
+        // name:              (layout, index)
+        from_str_single:     (GunLayoutType::Single, "0"),
+        from_str_twin_2row:  (GunLayoutType::Twin2Row, "1"),
+        from_str_quad_4row:  (GunLayoutType::Quad4Row, "2"),
+        from_str_twin:       (GunLayoutType::Twin, "3"),
+        from_str_two_gun:    (GunLayoutType::TwoGun, "4"),
+        from_str_quad_2row:  (GunLayoutType::Quad2Row, "5"),
+        from_str_triple:     (GunLayoutType::Triple, "6"),
+        from_str_three_gun:  (GunLayoutType::ThreeGun, "7"),
+        from_str_sex_2row:   (GunLayoutType::Sex2Row, "8"),
+        from_str_quad:       (GunLayoutType::Quad, "9"),
+        from_str_four_gun:   (GunLayoutType::FourGun, "10"),
+        from_str_oct_2row:   (GunLayoutType::Oct2Row, "11"),
+        from_str_quint:      (GunLayoutType::Quint, "12"),
+        from_str_five_gun:   (GunLayoutType::FiveGun, "13"),
+        from_str_dec_2row:   (GunLayoutType::Dec2Row, "14"),
+        from_str_default:    (GunLayoutType::Single, "99"),
     }
 }
 
