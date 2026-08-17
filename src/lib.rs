@@ -48,6 +48,9 @@ struct Version {
 // Testing support {{{1
 #[cfg(test)]
 mod test_support {
+    use crate::Hull;
+    use crate::hull::SternType;
+
     // Round a float to a given number of digits
     //
     // This makes it much easier to test results that
@@ -56,6 +59,36 @@ mod test_support {
         let mult = 10_u32.pow(digits) as f64;
 
         (n * mult).round() / mult
+    }
+
+    // A Hull with reasonable defaults for testing.
+    //
+    pub fn test_hull() -> Hull {
+        let mut hull = Hull::default();
+        hull.set_lwl(100.0);
+        hull.set_d(1000.0);
+        hull.set_shafts(2); // hull.boxy == false
+        hull.b = 50.0;
+        hull.bb = hull.b;
+        hull.t = 10.0;
+        hull.stern_type = SternType::Cruiser;
+
+        hull.fc_len = 0.2;
+        hull.fc_fwd = 10.0;
+        hull.fc_aft = 10.0;
+
+        hull.fd_len = 0.3;
+        hull.fd_fwd = hull.fc_fwd;
+        hull.fd_aft = hull.fc_fwd;
+
+        hull.ad_fwd = hull.fc_fwd;
+        hull.ad_aft = hull.fc_fwd;
+
+        hull.qd_len = 0.15;
+        hull.qd_fwd = hull.fc_fwd;
+        hull.qd_aft = hull.fc_fwd;
+
+        hull
     }
 }
 

@@ -112,8 +112,6 @@ impl Armor { // {{{2
 #[cfg(test)]
 mod armor {
     use super::*;
-    use crate::Hull;
-    use crate::hull::SternType;
     use crate::test_support::*;
 
     // Test belt_coverage {{{3
@@ -150,19 +148,10 @@ mod armor {
                     let mut armor = Armor::default();
                     armor.incline = incline;
 
-                    let mut hull = Hull::default();
-                    hull.fc_len = 0.2;
-
-                    hull.fd_len = 0.3;
-                    hull.fd_fwd = 10.0;
-                    hull.fd_aft = 10.0;
-
-                    hull.ad_fwd = 10.0;
-                    hull.ad_aft = 10.0;
-
-                    hull.qd_len = 0.15;
-
-                    assert!(expected == to_place(armor.max_belt_hgt(t, hull.freeboard_dist()), 2));
+                    assert_eq!(
+                        to_place(armor.max_belt_hgt(t, test_hull().freeboard_dist()), 2),
+                        expected
+                    );
                 }
             )*
         }
@@ -174,40 +163,13 @@ mod armor {
     }
 
     // Test wgt {{{3
-    fn test_hull() -> Hull {
-        let mut hull = Hull::default();
-        hull.set_lwl(100.0);
-        hull.set_d(1000.0);
-        hull.set_shafts(2); // hull.boxy == false
-        hull.b = 50.0;
-        hull.bb = hull.b;
-        hull.t = 10.0;
-        hull.stern_type = SternType::Cruiser;
-
-        hull.fc_len = 0.2;
-        hull.fc_fwd = 10.0;
-        hull.fc_aft = 10.0;
-
-        hull.fd_len = 0.3;
-        hull.fd_fwd = hull.fc_fwd;
-        hull.fd_aft = hull.fc_fwd;
-
-        hull.ad_fwd = hull.fc_fwd;
-        hull.ad_aft = hull.fc_fwd;
-
-        hull.qd_len = 0.15;
-        hull.qd_fwd = hull.fc_fwd;
-        hull.qd_aft = hull.fc_fwd;
-
-        hull
-    }
 
     // All-zero armor weighs nothing.
     #[test]
     fn wgt_zero() {
         let armor = Armor::default();
 
-        assert!(0.0 == to_place(armor.wgt(test_hull(), 100.0, 100.0), 2));
+        assert_eq!(to_place(armor.wgt(test_hull(), 100.0, 100.0), 2), 0.0);
     }
 
     // The aggregate wgt() is the sum of every belt, the deck and both
@@ -248,7 +210,7 @@ mod armor {
         armor.ct_fwd.thick = 1.0;
         armor.ct_aft.thick = 2.0;
 
-        assert!(110.32 == to_place(armor.wgt(test_hull(), 100.0, 100.0), 2));
+        assert_eq!(to_place(armor.wgt(test_hull(), 100.0, 100.0), 2), 110.32);
     }
 }
 
@@ -461,8 +423,6 @@ impl Deck { // {{{2
 #[cfg(test)]
 mod deck {
     use super::*;
-    use crate::Hull;
-    use crate::hull::SternType;
     use crate::test_support::*;
 
     // Test wgt {{{3
@@ -482,31 +442,10 @@ mod deck {
                     deck.md = md;
                     deck.qd = qd;
 
-                    let mut hull = Hull::default();
-                    hull.set_lwl(100.0);
-                    hull.set_d(1000.0);
-                    hull.set_shafts(2); // hull.boxy == false
-                    hull.b = 50.0;
-                    hull.bb = hull.b;
-                    hull.t = 10.0;
-                    hull.stern_type = SternType::Cruiser;
-
-                    hull.fc_len = 0.2;
-                    hull.fc_fwd = 10.0;
-                    hull.fc_aft = 10.0;
-
-                    hull.fd_len = 0.3;
-                    hull.fd_fwd = hull.fc_fwd;
-                    hull.fd_aft = hull.fc_fwd;
-
-                    hull.ad_fwd = hull.fc_fwd;
-                    hull.ad_aft = hull.fc_fwd;
-
-                    hull.qd_len = 0.15;
-                    hull.qd_fwd = hull.fc_fwd;
-                    hull.qd_aft = hull.fc_fwd;
-
-                    assert!(expected == to_place(deck.wgt(hull, wgt_mag, wgt_engine), 2));
+                    assert_eq!(
+                        to_place(deck.wgt(test_hull(), wgt_mag, wgt_engine), 2),
+                        expected
+                    );
                 }
             )*
         }
