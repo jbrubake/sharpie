@@ -172,6 +172,43 @@ mod armor {
         max_belt_hgt_0: (20.02, 0.0),
         max_belt_hgt_45: (28.3, 45.0),
     }
+
+    // Test wgt {{{3
+    fn test_hull() -> Hull {
+        let mut hull = Hull::default();
+        hull.set_lwl(100.0);
+        hull.set_d(1000.0);
+        hull.set_shafts(2); // hull.boxy == false
+        hull.b = 50.0;
+        hull.bb = hull.b;
+        hull.t = 10.0;
+        hull.stern_type = SternType::Cruiser;
+
+        hull.fc_len = 0.2;
+        hull.fc_fwd = 10.0;
+        hull.fc_aft = 10.0;
+
+        hull.fd_len = 0.3;
+        hull.fd_fwd = hull.fc_fwd;
+        hull.fd_aft = hull.fc_fwd;
+
+        hull.ad_fwd = hull.fc_fwd;
+        hull.ad_aft = hull.fc_fwd;
+
+        hull.qd_len = 0.15;
+        hull.qd_fwd = hull.fc_fwd;
+        hull.qd_aft = hull.fc_fwd;
+
+        hull
+    }
+
+    // All-zero armor weighs nothing.
+    #[test]
+    fn wgt_zero() {
+        let armor = Armor::default();
+
+        assert!(0.0 == to_place(armor.wgt(test_hull(), 100.0, 100.0), 2));
+    }
 }
 
 // Belt {{{1
