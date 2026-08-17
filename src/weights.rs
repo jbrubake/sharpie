@@ -38,23 +38,28 @@ mod misc_wgts {
             $(
                 #[test]
                 fn $name() {
-                    let (expected, vital, hull, on, above, void) = $value;
-                    let misc_wgts = MiscWgts {
-                        vital: vital,
-                        hull: hull,
-                        on: on,
-                        above: above,
-                        void: void,
-                    };
+                    let (expected, misc_wgts) = $value;
 
-                    assert!(expected == misc_wgts.wgt());
+                    assert_eq!(expected, misc_wgts.wgt());
                 }
             )*
         }
     }
     test_wgt! {
-        // name: (wgt, vital, hull, on, above, void)
-        wgt_sum: (11_111, 1, 10, 100, 1_000, 10_000),
+        // name: (wgt, MiscWgts)
+        wgt_default: (0, MiscWgts::default()),
+        wgt_sum:     (11_111, MiscWgts {
+            vital: 1,
+            hull: 10,
+            on: 100,
+            above: 1_000,
+            void: 10_000,
+        }),
+        wgt_vital:   (1, MiscWgts { vital: 1, ..Default::default() }),
+        wgt_hull:    (1, MiscWgts { hull:  1, ..Default::default() }),
+        wgt_on:      (1, MiscWgts { on:    1, ..Default::default() }),
+        wgt_above:   (1, MiscWgts { above: 1, ..Default::default() }),
+        wgt_void:    (1, MiscWgts { void:  1, ..Default::default() }),
     }
 }
 
