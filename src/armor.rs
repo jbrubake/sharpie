@@ -179,27 +179,22 @@ mod armor {
     fn wgt_all() {
         let mut armor = Armor::default();
 
-        armor.main = Belt::new(BeltType::Main);
         armor.main.thick = 1.0;
         armor.main.len = 20.0;
         armor.main.hgt = 5.0;
 
-        armor.end = Belt::new(BeltType::End);
         armor.end.thick = 1.0;
         armor.end.len = 20.0;
         armor.end.hgt = 5.0;
 
-        armor.upper = Belt::new(BeltType::Upper);
         armor.upper.thick = 1.0;
         armor.upper.len = 20.0;
         armor.upper.hgt = 5.0;
 
-        armor.bulge = Belt::new(BeltType::Bulge);
         armor.bulge.thick = 1.0;
         armor.bulge.len = 20.0;
         armor.bulge.hgt = 5.0;
 
-        armor.bulkhead = Belt::new(BeltType::Bulkhead);
         armor.bulkhead.thick = 1.0;
         armor.bulkhead.len = 20.0;
         armor.bulkhead.hgt = 5.0;
