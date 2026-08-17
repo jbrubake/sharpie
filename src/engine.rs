@@ -1,7 +1,7 @@
 use crate::Hull;
 
 use bitflags::{bitflags, bitflags_match};
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 use std::fmt;
 
@@ -25,14 +25,14 @@ pub struct Engine {
 
     /// Maximum speed (not maximum trial speed).
     pub vmax: f64,
-    /// Crusing speed.
+    /// Cruising speed.
     pub vcruise: f64,
-    /// Maximum range at crusing speed.
+    /// Maximum range at cruising speed.
     pub range: u32,
 
     /// Number of propeller shafts.
     ///
-        shafts: u32,
+    shafts: u32,
 
     /// Percentage of bunker weight devoted to coal.
     pub pct_coal: f64,
@@ -66,7 +66,7 @@ impl Engine { // {{{2
     fn hp(&self, v: f64, d: f64, lwl: f64, leff: f64, cs: f64, ws: f64) -> f64 {
         let len_hp =
             if v <= 15.0 {
-                lwl - (leff - lwl) 
+                lwl - (leff - lwl)
             } else if v >= 25.0 {
                 leff
             } else {
@@ -93,7 +93,7 @@ impl Engine { // {{{2
     }
 
     // hp_cruise {{{3
-    /// Horsepower required to achieve crusing speed.
+    /// Horsepower required to achieve cruising speed.
     ///
     // XXX: Should vcruise be set to a minimum somewhere else?
     pub fn hp_cruise(&self, d: f64, lwl: f64, leff: f64, cs: f64, ws: f64) -> f64 {
@@ -104,7 +104,7 @@ impl Engine { // {{{2
     /// Friction resistance at a given speed.
     ///
     fn rf(v: f64, ws: f64) -> f64 {
-        0.01 * ws * v.powf(1.83) 
+        0.01 * ws * v.powf(1.83)
     }
 
     // rf_max {{{3
@@ -115,7 +115,7 @@ impl Engine { // {{{2
     }
 
     // rf_cruise {{{3
-    /// Friction resistance at crusing speed.
+    /// Friction resistance at cruising speed.
     ///
     pub fn rf_cruise(&self, ws: f64) -> f64 {
         Self::rf(self.vcruise, ws)
@@ -126,7 +126,7 @@ impl Engine { // {{{2
     ///
     fn rw(v: f64, d: f64, lwl: f64, cs: f64) -> f64 {
         if lwl == 0.0 { return 0.0; }
-        d.powf(2.0/3.0) / lwl * cs * v.powf(4.0) 
+        d.powf(2.0 / 3.0) / lwl * cs * v.powf(4.0)
     }
 
     // rw_max {{{3
@@ -137,7 +137,7 @@ impl Engine { // {{{2
     }
 
     // rw_cruise {{{3
-    /// Wave resistance at crusing speed.
+    /// Wave resistance at cruising speed.
     ///
     pub fn rw_cruise(&self, d: f64, lwl: f64, cs: f64) -> f64 {
         Self::rw(self.vcruise, d, lwl, cs)
@@ -173,11 +173,11 @@ impl Engine { // {{{2
     pub fn bunker(&self, d: f64, lwl: f64, leff: f64, cs: f64, ws: f64) -> f64 {
         if self.vcruise == 0.0 { return 0.0; } // catch divide by zero
 
-        let bunker = self.range as f64 / (1.0 + 0.4 * (1.0 - self.pct_coal as f64));
+        let bunker = self.range as f64 / (1.0 + 0.4 * (1.0 - self.pct_coal));
         let bunker = bunker / self.boiler.bunker_factor(self.year);
 
         bunker /
-            (1.8 / self.hp_cruise(d, lwl, leff, cs, ws) * Self::RANGE as f64 * self.vcruise * 0.1) +
+            (1.8 / self.hp_cruise(d, lwl, leff, cs, ws) * Self::RANGE * self.vcruise * 0.1) +
             d * 0.005
     }
 
@@ -187,7 +187,6 @@ impl Engine { // {{{2
     pub fn bunker_max(&self, d: f64, lwl: f64, leff: f64, cs: f64, ws: f64) -> f64 {
         self.bunker(d, lwl, leff, cs, ws) * 1.8
     }
-
 
     // num_engines {{{3
     /// Number of steam engines.
@@ -210,10 +209,9 @@ impl Engine { // {{{2
 
         (
             self.hp_max(d, lwl, leff, cs, ws) /
-            (factor /self.num_engines() as f64 * (1.1 - self.pct_coal / 10.0))
+            (factor / self.num_engines() as f64 * (1.1 - self.pct_coal / 10.0))
         ) / early
     }
-
 }
 
 // Testing Engine {{{2
@@ -414,7 +412,6 @@ mod engine {
         // name:        (rw, vcruise)
         rw_cruise_test: (2339.21, 10.0),
     }
-
 
     // Test pw {{{3
     macro_rules! test_pw {
@@ -685,7 +682,7 @@ impl fmt::Display for BoilerType { // {{{2
                     Self::Turbine => "reciprocating cruising steam engines and steam turbines",
 
                 Self::Simple |
-                    Self::Complex | 
+                    Self::Complex |
                     Self::Turbine => "ERROR: Too many types of steam engines",
 
                 _ => "ERROR: No steam engines",
@@ -750,26 +747,25 @@ impl BoilerType {
         if year < 1860 { return 0.0 };
 
         let a = if self.is_simple() {
-                    if year <= 1884 { 1.2 + (year - 1860) as f64 * 0.05 }
-               else if year <= 1949 { 2.45 + (year - 1885) as f64 * 0.025 }
-               else                 { 4.075 }
-            } else { 0.0 };
+                         if year <= 1884 { 1.2  + (year - 1860) as f64 * 0.05 }
+                    else if year <= 1949 { 2.45 + (year - 1885) as f64 * 0.025 }
+                    else                 { 4.075 }
+                } else { 0.0 };
 
         let b = if self.is_complex() {
-                    if year <= 1905 { 1.2 + (year - 1860) as f64 * 0.05 }
-               else if year <= 1910 { 3.5 + (year - 1906) as f64 }
-               else if year <= 1949 { 7.5 + (year - 1910) as f64 * 0.025 }
-               else                 { 8.5 }
-            } else { 0.0 };
+                         if year <= 1905 { 1.2 + (year - 1860) as f64 * 0.05 }
+                    else if year <= 1910 { 3.5 + (year - 1906) as f64 }
+                    else if year <= 1949 { 7.5 + (year - 1910) as f64 * 0.025 }
+                    else                 { 8.5 }
+                } else { 0.0 };
 
-        let c = if self.is_turbine() || ! fuel.is_steam()
-            {
-                    if year <= 1897 { 1.2 + (year - 1860) as f64 * 0.05 }
-               else if year <= 1902 { 1.0 + (year - 1898) as f64 * 0.5 }
-               else if year <= 1909 { 4.0 + (year - 1903) as f64 }
-               else if year <= 1949 { 11.0 + (year - 1910) as f64 * 0.2 }
-               else                 { 19.0 }
-            } else { 0.0 };
+        let c = if self.is_turbine() || ! fuel.is_steam() {
+                         if year <= 1897 { 1.2 + (year - 1860) as f64 * 0.05 }
+                    else if year <= 1902 { 1.0 + (year - 1898) as f64 * 0.5 }
+                    else if year <= 1909 { 4.0 + (year - 1903) as f64 }
+                    else if year <= 1949 { 11.0 + (year - 1910) as f64 * 0.2 }
+                    else                 { 19.0 }
+                } else { 0.0 };
 
         a + b + c
     }
@@ -779,7 +775,7 @@ impl BoilerType {
     ///
     pub fn bunker_factor(&self, year: u32) -> f64 {
         if self.is_reciprocating() {
-            1.0 - (1910 - year) as f64 / 70.0 
+            1.0 - (1910 - year) as f64 / 70.0
         } else if year < 1898 {
             1.0 - (1910 - year) as f64 / 70.0
         } else if year < 1920 {

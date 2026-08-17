@@ -1,7 +1,7 @@
 use crate::Hull;
 use crate::units::Units;
 
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 use std::fmt;
 
@@ -17,7 +17,7 @@ pub struct Armor {
     pub main: Belt,
     /// End belt armor.
     pub end: Belt,
-    /// Uppper belt armor.
+    /// Upper belt armor.
     pub upper: Belt,
     /// Incline of belt armor.
     pub incline: f64,
@@ -66,7 +66,7 @@ impl Default for Armor { // {{{2
 
 impl Armor { // {{{2
     // XXX: I do not know what this does.
-    pub const INCH: f64 = 0.0185; 
+    pub const INCH: f64 = 0.0185;
 
     // wgt {{{3
     /// Total weight of armor.
@@ -112,8 +112,9 @@ impl Armor { // {{{2
 #[cfg(test)]
 mod armor {
     use super::*;
-    use crate::test_support::*;
     use crate::Hull;
+    use crate::hull::SternType;
+    use crate::test_support::*;
 
     // Test belt_coverage {{{3
     macro_rules! test_belt_coverage {
@@ -181,7 +182,7 @@ mod armor {
 pub struct Belt {
     /// Belt thickness.
     pub thick: f64,
-    /// Belth length.
+    /// Belt length.
     pub len: f64,
     /// Belt height.
     pub hgt: f64,
@@ -190,7 +191,7 @@ pub struct Belt {
     ///
     /// Using this private "set once" field allows Belt to represent the
     /// multiple types that differ only in how their weight is calculated.
-        kind: BeltType, // kind should not be changed after creation
+    kind: BeltType, // kind should not be changed after creation
 }
 
 impl Belt { // {{{2
@@ -303,7 +304,7 @@ impl CT { // {{{2
     /// Weight of armor.
     ///
     pub fn wgt(&self, d: f64) -> f64 {
-        10.0 * (d / 10_000.0).powf(2.0/3.0) * self.thick
+        10.0 * (d / 10_000.0).powf(2.0 / 3.0) * self.thick
     }
 }
 
@@ -383,9 +384,9 @@ impl Deck { // {{{2
 #[cfg(test)]
 mod deck {
     use super::*;
-    use crate::test_support::*;
     use crate::Hull;
     use crate::hull::SternType;
+    use crate::test_support::*;
 
     // Test wgt {{{3
     macro_rules! test_wgt {

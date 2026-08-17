@@ -1,27 +1,27 @@
 pub mod hull;
-use hull::{Hull, BowType};
+use hull::{BowType, Hull};
 
 pub mod armor;
 use armor::{Armor, Belt, BulkheadType};
 
 pub mod engine;
-use engine::{Engine, FuelType, BoilerType, DriveType};
+use engine::{BoilerType, DriveType, Engine, FuelType};
 
 pub mod weapons;
-use weapons::{Battery, Torpedoes, Mines, ASW};
-use weapons::{MountType, GunDistributionType};
+use weapons::{ASW, Battery, Mines, Torpedoes};
+use weapons::{GunDistributionType, MountType};
 
 pub mod weights;
 use weights::MiscWgts;
 
 pub mod units;
+use units::UnitType::*;
 use units::Units::*;
 use units::metric;
-use units::UnitType::*;
 
 use format_num::format_num;
 
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 use std::error::Error;
@@ -31,7 +31,7 @@ use std::io::{BufRead, BufReader, Write};
 
 /// File extension for sharpie files.
 pub const SHIP_FILE_EXT: &str = "ship";
-/// File extension for Springsharp files.
+/// File extension for SpringSharp files.
 pub const SS_SHIP_FILE_EXT: &str = "sship";
 
 /// The Ship file version created by this version of sharpie.
@@ -150,7 +150,7 @@ impl Ship { // {{{2
     pub fn deck_space(&self) -> f64 {
         let mut space = 0.0;
         for w in self.torps.iter() {
-            space += w.deck_space(self.hull.b); 
+            space += w.deck_space(self.hull.b);
         }
 
         space / self.hull.wp()
@@ -166,7 +166,7 @@ impl Ship { // {{{2
     pub fn hull_space(&self) -> f64 {
         let mut space = 0.0;
         for w in self.torps.iter() {
-            space += w.hull_space(); 
+            space += w.hull_space();
         }
         space / (self.hull.d() * Hull::FT3_PER_TON_SEA)
     }
@@ -180,7 +180,7 @@ impl Ship { // {{{2
             self.hull.lwl(),
             self.hull.leff(),
             self.hull.cs(),
-            self.hull.ws()
+            self.hull.ws(),
         )
     }
 
@@ -224,7 +224,7 @@ impl Ship { // {{{2
     }
 
     // cb_max {{{3
-    /// Block coeficcient at maximum displacement.
+    /// Block coefficient at maximum displacement.
     ///
     pub fn cb_max(&self) -> f64 {
         self.hull.cb_calc(self.d_max(), self.t_max())
@@ -279,9 +279,13 @@ impl Ship { // {{{2
     /// bulkheads, hull mounted torpedoes and miscellaneous weights to displacement.
     ///
     pub fn hull_room(&self) -> f64 {
-        self.room() * if self.armor.bulkhead.wgt(self.hull.lwl(), self.hull.cwp(), self.hull.b) > 0.1 {
-            self.hull.b / self.armor.bh_beam
-        } else { 1.0 }
+        self.room() *
+            if self
+                .armor
+                .bulkhead
+                .wgt(self.hull.lwl(), self.hull.cwp(), self.hull.b) > 0.1 {
+                self.hull.b / self.armor.bh_beam
+            } else { 1.0 }
     }
 
     // deck_room {{{3
@@ -332,9 +336,10 @@ impl Ship { // {{{2
     /// Cost in millions of US dollars.
     ///
     pub fn cost_dollar(&self) -> f64 {
-        ((self.hull.d()-self.wgt_load())*0.00014+self.wgt_engine()*0.00056+(self.wgt_borne()*8.0)*0.00042)*
-            if self.year as f64 +2.0>1914.0 {
-                1.0+(self.year as f64 +1.5-1914.0)/5.5
+        ((self.hull.d() - self.wgt_load()) * 0.00014 +
+            self.wgt_engine() * 0.00056 + self.wgt_borne() * 8.0) * 0.00042) *
+            if self.year as f64 + 2.0>1914.0 {
+                1.0 + self.year as f64 + 1.5 - 1914.0) / 5.5
             } else { 1.0 }
     }
 
@@ -388,7 +393,8 @@ impl Ship { // {{{2
                 )
             ) * 8.0;
 
-        let b = a * if (self.hull.t / self.hull.bb) < 0.3 {
+        let b = a *
+            if (self.hull.t / self.hull.bb) < 0.3 {
                 (self.hull.t / self.hull.bb / 0.3).sqrt()
             } else {
                 1.0
@@ -407,7 +413,7 @@ impl Ship { // {{{2
     }
 
     // seakeeping {{{3
-    /// The sea keeping ability of the ship.
+    /// The seakeeping ability of the ship.
     ///
     pub fn seakeeping(&self) -> f64 {
         self.seaboat() * f64::min(self.steadiness(), 50.0) / 50.0
@@ -417,57 +423,37 @@ impl Ship { // {{{2
     /// If ship has an excessive risk of capsizing.
     ///
     fn tender_warn(&self) -> bool {
-        if self.stability_adj() <= 0.995 {
-            true
-        } else {
-            false
-        }
+        self.stability_adj() <= 0.995
     }
 
     // capsize_warn {{{3
     /// If ship will capsize.
     ///
     fn capsize_warn(&self) -> bool {
-        if self.metacenter() <= 0.0 {
-            true
-        } else {
-            false
-        }
+        self.metacenter() <= 0.0
     }
 
     // hull_strained {{{3
     /// If hull will be subject to strain in the open sea.
     ///
     fn hull_strained(&self) -> bool {
-        if self.str_comp() >= 0.5 && self.str_comp() < 0.885 && (
-            self.engine.vmax < 24.0 || self.hull.d() > 4000.0)
-        {
-            true
-        } else {
-            false
-        }
+        self.str_comp() >= 0.5
+            && self.str_comp() < 0.885
+            && (self.engine.vmax < 24.0 || self.hull.d() > 4000.0)
     }
 
     // is_steady {{{3
     /// If ship is a steady gun platform.
     ///
     fn is_steady(&self) -> bool {
-        if self.steadiness() >= 69.5 {
-            true
-        } else {
-            false
-        }
+        self.steadiness() >= 69.5
     }
 
     // is_unsteady {{{3
     /// If ship is not a steady gun platform.
     ///
     fn is_unsteady(&self) -> bool {
-        if self.steadiness() < 30.0 {
-            true
-        } else {
-            false
-        }
+        self.steadiness() < 30.0
     }
 
     // type_sea {{{3
@@ -493,7 +479,7 @@ impl Ship { // {{{2
     ///
     pub fn seakeeping_desc(&self) -> Vec<String> {
         let mut s: Vec<String> = Vec::new();
-        
+
         if self.is_steady() {
             s.push("Ship has slow easy roll, a good steady, gun platform".into());
         } else if self.is_unsteady() {
@@ -604,7 +590,8 @@ impl Ship { // {{{2
     /// hits required to sink or destroy the ship.
     ///
     pub fn flotation(&self) -> f64 {
-        let a = if self.cap_calc_broadside() {
+        let a =
+            if self.cap_calc_broadside() {
                 self.hull.free_cap(self.cap_calc_broadside())
             } else {
                 self.hull.freeboard_dist()
@@ -708,7 +695,7 @@ impl Ship { // {{{2
     pub fn damage_shell_num(&self) -> f64 {
         self.flotation() / (
             self.damage_shell_size().powf(3.0) /
-            2.0 * Self::year_adj(self.year) as f64
+            2.0 * Self::year_adj(self.year)
             )
     }
 
@@ -743,19 +730,23 @@ impl Ship { // {{{2
     /// Weight of the engine, adjusted by the displacement factor (d_factor()).
     ///
     pub fn wgt_engine(&self) -> f64 {
-
         let p =
-            if (self.hull.d() < 5000.0) && (self.hull.d() >= 600.0) && (self.d_factor() < 1.0)
-            {
+            if (self.hull.d() < 5000.0) && (self.hull.d() >= 600.0) && (self.d_factor() < 1.0) {
                 1.0 - self.hull.d() / 5000.0
             } else if (self.hull.d() < 600.0) && (self.d_factor() < 1.0) {
-                    0.88
-                } else {
-                    0.0
+                0.88
+            } else {
+                0.0
             };
 
-        (self.engine.d_engine(self.hull.d(), self.hull.lwl(), self.hull.leff(), self.hull.cs(), self.hull.ws()) / 2.0) *
-            self.d_factor().powf(p)
+        (self.engine.d_engine(
+            self.hull.d(),
+            self.hull.lwl(),
+            self.hull.leff(),
+            self.hull.cs(),
+            self.hull.ws(),
+        ) / 2.0)
+            * self.d_factor().powf(p)
     }
 
     // wgt_struct {{{3
@@ -813,7 +804,7 @@ impl Ship { // {{{2
     }
 
     // wgt_weaps {{{3
-    /// Weight of torpedos, mines and ASW weapons
+    /// Weight of torpedoes, mines and ASW weapons
     ///
     fn wgt_weaps(&self) -> f64 {
         let mut wgt = 0.0;
@@ -986,11 +977,11 @@ impl Ship { // {{{2
             Err("Unknown file format")?;
         }
 
-        ship.name    = lines.next().unwrap();
-        ship.country = lines.next().unwrap();
-        ship.kind    = lines.next().unwrap();
+        ship.name       = lines.next().unwrap();
+        ship.country    = lines.next().unwrap();
+        ship.kind       = lines.next().unwrap();
+        ship.hull.units = lines.next().unwrap().into();
 
-        ship.hull.units     = lines.next().unwrap().into();
         for b in ship.batteries.iter_mut() { b.units = lines.next().unwrap().into(); }
         ship.torps[0].units = lines.next().unwrap().into();
         ship.armor.units    = lines.next().unwrap().into();
@@ -1024,7 +1015,7 @@ impl Ship { // {{{2
 
         for b in ship.batteries.iter_mut() {
             b.num             = lines.next().unwrap().parse()?;
-            b.diam             = lines.next().unwrap().parse()?;
+            b.diam            = lines.next().unwrap().parse()?;
             b.kind            = lines.next().unwrap().into();
             b.groups[0].above = lines.next().unwrap().parse()?;
             b.groups[0].below = lines.next().unwrap().parse()?;
@@ -1091,22 +1082,22 @@ impl Ship { // {{{2
         ship.engine.pct_coal /= 100.0; // convert from % to decimal
 
         ship.engine.fuel = FuelType::empty();
-        match lines.next().unwrap().as_str() { "True" => ship.engine.fuel.toggle(FuelType::Coal), _ => (), };
-        match lines.next().unwrap().as_str() { "True" => ship.engine.fuel.toggle(FuelType::Oil), _ => (), };
-        match lines.next().unwrap().as_str() { "True" => ship.engine.fuel.toggle(FuelType::Diesel), _ => (), };
-        match lines.next().unwrap().as_str() { "True" => ship.engine.fuel.toggle(FuelType::Gasoline), _ => (), };
-        match lines.next().unwrap().as_str() { "True" => ship.engine.fuel.toggle(FuelType::Battery), _ => (), };
+        if lines.next().unwrap().as_str() == "True" { ship.engine.fuel.toggle(FuelType::Coal) };
+        if lines.next().unwrap().as_str() == "True" { ship.engine.fuel.toggle(FuelType::Oil) };
+        if lines.next().unwrap().as_str() == "True" { ship.engine.fuel.toggle(FuelType::Diesel) };
+        if lines.next().unwrap().as_str() == "True" { ship.engine.fuel.toggle(FuelType::Gasoline) };
+        if lines.next().unwrap().as_str() == "True" { ship.engine.fuel.toggle(FuelType::Battery) };
 
         ship.engine.boiler = BoilerType::empty();
-        match lines.next().unwrap().as_str() { "True" => ship.engine.boiler.toggle(BoilerType::Simple), _ => (), };
-        match lines.next().unwrap().as_str() { "True" => ship.engine.boiler.toggle(BoilerType::Complex), _ => (), };
-        match lines.next().unwrap().as_str() { "True" => ship.engine.boiler.toggle(BoilerType::Turbine), _ => (), };
+        if lines.next().unwrap().as_str() == "True" { ship.engine.boiler.toggle(BoilerType::Simple) };
+        if lines.next().unwrap().as_str() == "True" { ship.engine.boiler.toggle(BoilerType::Complex) };
+        if lines.next().unwrap().as_str() == "True" { ship.engine.boiler.toggle(BoilerType::Turbine) };
 
         ship.engine.drive = DriveType::empty();
-        match lines.next().unwrap().as_str() { "True" => ship.engine.drive.toggle(DriveType::Direct), _ => (), };
-        match lines.next().unwrap().as_str() { "True" => ship.engine.drive.toggle(DriveType::Geared), _ => (), };
-        match lines.next().unwrap().as_str() { "True" => ship.engine.drive.toggle(DriveType::Electric), _ => (), };
-        match lines.next().unwrap().as_str() { "True" => ship.engine.drive.toggle(DriveType::Hydraulic), _ => (), };
+        if lines.next().unwrap().as_str() == "True" { ship.engine.drive.toggle(DriveType::Direct) };
+        if lines.next().unwrap().as_str() == "True" { ship.engine.drive.toggle(DriveType::Geared) };
+        if lines.next().unwrap().as_str() == "True" { ship.engine.drive.toggle(DriveType::Electric) };
+        if lines.next().unwrap().as_str() == "True" { ship.engine.drive.toggle(DriveType::Hydraulic) };
 
         ship.trim        = lines.next().unwrap().parse()?;
         ship.hull.bb     = lines.next().unwrap().parse()?;
@@ -1120,7 +1111,7 @@ impl Ship { // {{{2
             BowType::Ram(_) => BowType::Ram(ram_len),
             _ => ship.hull.bow_type,
         };
-            
+
         ship.torps[1].units = lines.next().unwrap().into();
         ship.mines.units    = lines.next().unwrap().into();
         ship.asw[0].units   = lines.next().unwrap().into();
@@ -1135,10 +1126,10 @@ impl Ship { // {{{2
 
         for b in ship.batteries.iter_mut() { b.groups[1].distribution  = lines.next().unwrap().into(); }
         for b in ship.batteries.iter_mut() { b.groups[1].above         = lines.next().unwrap().parse()?; }
-        for b in ship.batteries.iter_mut() { b.groups[1].two_mounts_up = match lines.next().unwrap().as_str() { "True" => true, _ => false, }; }
+        for b in ship.batteries.iter_mut() { b.groups[1].two_mounts_up = matches!(lines.next().unwrap().as_str(), "True"); }
         for b in ship.batteries.iter_mut() { b.groups[1].on            = lines.next().unwrap().parse()?; }
         for b in ship.batteries.iter_mut() { b.groups[1].below         = lines.next().unwrap().parse()?; }
-        for b in ship.batteries.iter_mut() { b.groups[1].lower_deck    = match lines.next().unwrap().as_str() { "True" => true, _ => false, }; }
+        for b in ship.batteries.iter_mut() { b.groups[1].lower_deck    = matches!(lines.next().unwrap().as_str(), "True"); }
 
         ship.torps[0].mounts = lines.next().unwrap().parse()?;
         ship.torps[1].mounts = lines.next().unwrap().parse()?;
@@ -1166,26 +1157,26 @@ impl Ship { // {{{2
         ship.wgts.on    = lines.next().unwrap().parse()?;
         ship.wgts.above = lines.next().unwrap().parse()?;
 
-        ship.armor.incline               = lines.next().unwrap().parse()?;
-        ship.armor.bulge.thick           = lines.next().unwrap().parse()?;
-        ship.armor.bulge.len             = lines.next().unwrap().parse()?;
-        ship.armor.bulge.hgt             = lines.next().unwrap().parse()?;
+        ship.armor.incline     = lines.next().unwrap().parse()?;
+        ship.armor.bulge.thick = lines.next().unwrap().parse()?;
+        ship.armor.bulge.len   = lines.next().unwrap().parse()?;
+        ship.armor.bulge.hgt   = lines.next().unwrap().parse()?;
 
         ship.armor.bh_kind =
             match lines.next().unwrap().parse()? {
-                0 => BulkheadType::Additional,
+                0     => BulkheadType::Additional,
                 1 | _ => BulkheadType::Strengthened,
             };
 
-        ship.armor.bh_beam               = lines.next().unwrap().parse()?;
-        ship.armor.deck.fc               = lines.next().unwrap().parse()?;
-        ship.armor.deck.qd               = lines.next().unwrap().parse()?;
-        ship.armor.deck.kind             = lines.next().unwrap().into();
-        ship.armor.ct_aft.thick          = lines.next().unwrap().parse()?;
+        ship.armor.bh_beam      = lines.next().unwrap().parse()?;
+        ship.armor.deck.fc      = lines.next().unwrap().parse()?;
+        ship.armor.deck.qd      = lines.next().unwrap().parse()?;
+        ship.armor.deck.kind    = lines.next().unwrap().into();
+        ship.armor.ct_aft.thick = lines.next().unwrap().parse()?;
 
-        for b in ship.batteries.iter_mut() { b.groups[0].above  = lines.next().unwrap().parse()?; }
-        for b in ship.batteries.iter_mut() { b.groups[0].below  = lines.next().unwrap().parse()?; }
-        for b in ship.batteries.iter_mut() { b.groups[1].above  = lines.next().unwrap().parse()?; }
+        for b in ship.batteries.iter_mut() { b.groups[0].above = lines.next().unwrap().parse()?; }
+        for b in ship.batteries.iter_mut() { b.groups[0].below = lines.next().unwrap().parse()?; }
+        for b in ship.batteries.iter_mut() { b.groups[1].above = lines.next().unwrap().parse()?; }
         // Ignore extra reads of ship.batteries.groups[1].on, because, duplicate data in the file makes sense
         for _ in ship.batteries.iter_mut() { lines.next(); }
         for b in ship.batteries.iter_mut() { b.groups[1].below  = lines.next().unwrap().parse()?; }
@@ -1204,7 +1195,7 @@ impl Ship { // {{{2
         for b in ship.batteries.iter_mut() {
             b.groups[0].on = b.mount_num -
                 b.groups[0].above - b.groups[0].below -
-                b.groups[1].above - b.groups[1].on - b.groups[1].below;
+                b.groups[1].above - b.groups[1].below - b.groups[1].on;
         }
 
         // SpringSharp uses hull year for torpedo, mine and ASW year
@@ -1230,7 +1221,7 @@ impl Ship { // {{{2
             ()
         } else { // Cannot open any other versions
             let err = format!("Cannot open ship files of this version: {}!", version.version);
-            return Err(err.into())
+            return Err(err.into());
         }
 
         let mut ship: Ship = serde_json::from_value(stream.next().ok_or("")??)?;
@@ -1266,7 +1257,7 @@ impl Ship { // {{{2
     }
 
     // ship_type {{{3
-    /// Get a string describing the type of ship based 
+    /// Get a string describing the type of ship based
     /// on gun distribution, mounts and armor.
     ///
     fn ship_type(&self) -> String {
@@ -1305,8 +1296,8 @@ impl Ship { // {{{2
         let ter_broad_no_back  = ter_broad && ter_no_back;
 
         let has_belt = (
-            self.armor.main.wgt(self.hull.lwl(), self.hull.cwp(), self.hull.b) +
-            self.armor.end.wgt(self.hull.lwl(), self.hull.cwp(), self.hull.b) +
+            self.armor.main.wgt (self.hull.lwl(), self.hull.cwp(), self.hull.b) +
+            self.armor.end.wgt  (self.hull.lwl(), self.hull.cwp(), self.hull.b) +
             self.armor.upper.wgt(self.hull.lwl(), self.hull.cwp(), self.hull.b)
         ) > 0.0;
 
@@ -1338,7 +1329,7 @@ impl Ship { // {{{2
 
 impl Ship { // Convenience wrappers {{{2
     pub fn ct_wgt(&self) -> f64 { // {{{3
-        self.armor.ct_fwd.wgt(self.hull.d()) + self.armor.ct_fwd.wgt(self.hull.d()) 
+        self.armor.ct_fwd.wgt(self.hull.d()) + self.armor.ct_fwd.wgt(self.hull.d())
     }
 
     pub fn deck_wgt(&self) -> f64 { // {{{3
@@ -1356,11 +1347,23 @@ impl Ship { // Convenience wrappers {{{2
     }
 
     pub fn hp_max(&self) -> f64 { // {{{3
-        self.engine.hp_max(self.hull.d(), self.hull.lwl(), self.hull.leff(), self.hull.cs(), self.hull.ws())
+        self.engine.hp_max(
+            self.hull.d(),
+            self.hull.lwl(),
+            self.hull.leff(),
+            self.hull.cs(),
+            self.hull.ws(),
+        )
     }
 
     pub fn hp_cruise(&self) -> f64 { // {{{3
-        self.engine.hp_cruise(self.hull.d(), self.hull.lwl(), self.hull.leff(), self.hull.cs(), self.hull.ws())
+        self.engine.hp_cruise(
+            self.hull.d(),
+            self.hull.lwl(),
+            self.hull.leff(),
+            self.hull.cs(),
+            self.hull.ws(),
+        )
     }
 
     pub fn rf_max(&self) -> f64 { // {{{3
@@ -1432,11 +1435,11 @@ macro_rules! addif {
 macro_rules! num {
     ($val:expr, $digits: expr) => {
         format_num!(&*format!(",.{}", $digits), $val)
-    }
+    };
 }
 
 // plural {{{3
-/// Return an "s" is num is anything other than 1.
+/// Return an "s" if num is anything other than 1.
 ///
 fn plural(num: u32) -> String {
     match num { 1 => "".to_string(), _ => "s".to_string() }
@@ -1560,7 +1563,7 @@ impl Ship { // {{{3
                                     MountType::ColesTurret => "",
 
                                     _ => " - superfiring",
-                                    },
+                                },
                             }
                         } else {
                             ""
@@ -1653,9 +1656,7 @@ impl Ship { // {{{3
                 asw.wgt_weaps()
             );
             if asw.kind.dc_desc() != "" {
-                addto!(r, "    {}",
-                    asw.kind.dc_desc()
-                );
+                addto!(r, "    {}", asw.kind.dc_desc());
             }
         }
 
@@ -1757,7 +1758,7 @@ impl Ship { // {{{3
                     self.armor.bulge.hgt,
                     metric(self.armor.bulge.hgt, LengthLong, self.armor.units),
                 );
-            addto!(r);
+                addto!(r);
             }
         }
 
@@ -1779,15 +1780,13 @@ impl Ship { // {{{3
         }
 
         if self.armor.deck.fc + self.armor.deck.md + self.armor.deck.qd > 0.0 {
-            addto!(r, "- {}:",
-                self.armor.deck.kind
-            );
-            // TODO: Change spelling to Fore (required to match Springsharp reports)
+            addto!(r, "- {}:", self.armor.deck.kind);
+            // TODO: Change spelling to Fore (required to match SpringSharp reports)
             addto!(r, "    For and Aft decks: {:.2}\" / {:.0} mm",
                 self.armor.deck.md,
                 metric(self.armor.deck.md, LengthSmall, self.armor.units)
             );
-            // TODO: Change spelling to Quarterdeck (required to match Springsharp reports)
+            // TODO: Change spelling to Quarterdeck (required to match SpringSharp reports)
             addto!(r, "    Forecastle: {:.2}\" / {:.0} mm    Quarter deck: {:.2}\" / {:.0} mm",
                 self.armor.deck.fc,
                 metric(self.armor.deck.fc, LengthSmall, self.armor.units),
@@ -1798,7 +1797,7 @@ impl Ship { // {{{3
         }
 
         if self.armor.ct_fwd.thick + self.armor.ct_aft.thick > 0.0 {
-            // TODO: Remove stray space before comma (required to match Springsharp reports)
+            // TODO: Remove stray space before comma (required to match SpringSharp reports)
             addto!(r, "- Conning towers: Forward {:.2}\" / {:.0} mm, Aft {:.2}\" / {:.0} mm",
                 self.armor.ct_fwd.thick,
                 metric(self.armor.ct_fwd.thick, LengthSmall, self.armor.units),
@@ -1810,10 +1809,7 @@ impl Ship { // {{{3
 
         addto!(r, "Machinery:"); // {{{5
         if self.engine.vmax != 0.0 {
-            addto!(r, "    {}, {},",
-                self.engine.fuel,
-                self.engine.boiler
-            );
+            addto!(r, "    {}, {},", self.engine.fuel, self.engine.boiler);
             addto!(r, "    {}, {} shaft{}, {} {} / {} Kw = {:.2} kts",
                 self.engine.drive,
                 self.engine.shafts(),
@@ -1841,17 +1837,13 @@ impl Ship { // {{{3
             if self.wgt_engine() < self.d_engine() / 5.0 {
                 addto!(r, "    Caution: Delicate, lightweight machinery.");
             }
-
         } else {
             addto!(r, "    Immobile floating battery");
         }
         addto!(r);
 
         addto!(r, "Complement:"); // {{{5
-        addto!(r, "    {} - {}",
-            self.crew_min(),
-            self.crew_max()
-        );
+        addto!(r, "    {} - {}", self.crew_min(), self.crew_max());
         addto!(r);
 
         addto!(r, "Cost:"); // {{{5
@@ -1879,9 +1871,7 @@ impl Ship { // {{{3
         }
 
         if self.wgt_armor() > 0.0 {
-            addto!(r, "    Armour: {}",
-                self.percent_calc(self.wgt_armor()),
-            );
+            addto!(r, "    Armour: {}", self.percent_calc(self.wgt_armor()),);
 
             if self.armor.main.thick + self.armor.end.thick + self.armor.upper.thick > 0.0 {
                 addto!(r, "    - Belts: {}",
@@ -1928,9 +1918,7 @@ impl Ship { // {{{3
             }
         }
 
-        addto!(r, "    Machinery: {}",
-            self.percent_calc(self.wgt_engine()),
-        );
+        addto!(r, "    Machinery: {}", self.percent_calc(self.wgt_engine()),);
         addto!(r, "    Hull, fittings & equipment: {}",
             self.percent_calc(self.wgt_hull()),
         );
@@ -1944,7 +1932,8 @@ impl Ship { // {{{3
             );
             if self.wgts.vital > 0 { addto!(r, "    - Hull below water: {} tons", 
                     num!(self.wgts.vital, 0)
-            ); }
+                );
+            }
             if self.wgts.void > 0 {
                 addto!(r, "    - {} void weights: {} tons",
                     if self.hull.bb > self.hull.b { "Bulge" } else { "Hull" },
@@ -1975,52 +1964,28 @@ impl Ship { // {{{3
             self.metacenter(),
             metric(self.metacenter(), LengthLong, Imperial)
         );
-        addto!(r, "    Roll period: {:.1} seconds",
-            self.roll_period()
-        );
-        addto!(r, "    Steadiness    - As gun platform (Average = 50 %): {:.0} %",
-            self.steadiness()
-        );
+        addto!(r, "    Roll period: {:.1} seconds", self.roll_period());
+        addto!(r, "    Steadiness    - As gun platform (Average = 50 %): {:.0} %", self.steadiness());
         addto!(r, "        - Recoil effect (Restricted arc if above 1.00): {:.2}",
             self.recoil()
         );
-        addto!(r, "    Seaboat quality (Average = 1.00): {:.2}",
-            self.seakeeping()
-        );
+        addto!(r, "    Seaboat quality (Average = 1.00): {:.2}", self.seakeeping());
         addto!(r);
 
         addto!(r, "Hull form characteristics:"); // {{{5
-        addto!(r, "    Hull has {},",
-            self.hull.freeboard_desc()
-        );
-        addto!(r, "    {} and {}",
-            self.hull.bow_type,
-            self.hull.stern_type
-        );
-        addto!(r, "    Block coefficient (normal/deep): {:.3} / {:.3}",
-            self.hull.cb(), self.cb_max()
-        );
-        addto!(r, "    Length to Beam Ratio: {:.2} : 1",
-            self.hull.len2beam()
-        );
-        addto!(r, "    'Natural speed' for length: {:.2} kts",
-            self.hull.vn()
-        );
-        addto!(r, "    Power going to wave formation at top speed: {:.0} %",
-            self.pw_max() * 100.0
-        );
-        addto!(r, "    Trim (Max stability = 0, Max steadiness = 100): {}",
-            self.trim
-        );
-        addto!(r, "    Bow angle (Positive = bow angles forward): {:.2} degrees",
-            self.hull.bow_angle
-        );
+        addto!(r, "    Hull has {},", self.hull.freeboard_desc());
+        addto!(r, "    {} and {}", self.hull.bow_type, self.hull.stern_type);
+        addto!(r, "    Block coefficient (normal/deep): {:.3} / {:.3}", self.hull.cb(), self.cb_max());
+        addto!(r, "    Length to Beam Ratio: {:.2} : 1", self.hull.len2beam());
+        addto!(r, "    'Natural speed' for length: {:.2} kts", self.hull.vn());
+        addto!(r, "    Power going to wave formation at top speed: {:.0} %", self.pw_max() * 100.0);
+        addto!(r, "    Trim (Max stability = 0, Max steadiness = 100): {}", self.trim);
+        addto!(r, "    Bow angle (Positive = bow angles forward): {:.2} degrees", self.hull.bow_angle);
         addto!(r, "    Stern overhang: {:.2} ft / {:.2} m",
             self.hull.stern_overhang,
             metric(self.hull.stern_overhang, LengthLong, self.hull.units)
         );
-        addto!(r, "    Freeboard (% = length of deck as a percentage of waterline length):"
-        );
+        addto!(r, "    Freeboard (% = length of deck as a percentage of waterline length):");
         addto!(r, "            Fore end, Aft end");
         addto!(r, "    - Forecastle:    {:.2} %, {:.2} ft / {:.2} m, {:.2} ft / {:.2} m",
             self.hull.fc_len*100.0,   self.hull.fc_fwd, metric(self.hull.fc_fwd, LengthLong, self.hull.units), self.hull.fc_aft, metric(self.hull.fc_aft, LengthLong, self.hull.units)
@@ -2036,7 +2001,6 @@ impl Ship { // {{{3
         );
         addto!(r, "    - Average freeboard:        {:.2} ft / {:.2} m",
             self.hull.freeboard(), metric(self.hull.freeboard(), LengthLong, self.hull.units)
-        
         );
         if self.hull.is_wet_fwd() {
             addto!(r, "    Ship tends to be wet forward");
@@ -2060,19 +2024,11 @@ impl Ship { // {{{3
         addto!(r, "    Structure weight / hull surface area: {:.0} lbs/sq ft or {:.0} Kg/sq metre",
             self.wgt_struct(),
             metric(self.wgt_struct(), WeightPerArea, Imperial)
-
-            
         );
         addto!(r, "Hull strength (Relative):");
-        addto!(r, "        - Cross-sectional: {:.2}",
-            self.str_cross()
-        );
-        addto!(r, "        - Longitudinal: {:.2}",
-            self.str_long()
-        );
-        addto!(r, "        - Overall: {:.2}",
-            self.str_comp()
-        );
+        addto!(r, "        - Cross-sectional: {:.2}", self.str_cross());
+        addto!(r, "        - Longitudinal: {:.2}", self.str_long());
+        addto!(r, "        - Overall: {:.2}", self.str_comp());
 
         if self.tender_warn() && !self.capsize_warn() {
             addto!(r, "Caution: Poor stability - excessive risk of capsizing");
@@ -2080,15 +2036,10 @@ impl Ship { // {{{3
         if self.hull_strained() {
             addto!(r, "Caution: Hull subject to strain in open-sea");
         }
-        addto!(r, "    {} machinery, storage, compartmentation space",
-            self.hull_room_quality()
-        );
-        addto!(r, "    {} accommodation and workspace room",
-            self.deck_room_quality()
-        );
+        addto!(r, "    {} machinery, storage, compartmentation space", self.hull_room_quality());
+        addto!(r, "    {} accommodation and workspace room", self.deck_room_quality());
         for s in self.seakeeping_desc() {
-            addto!(r, "    {}", s
-            );
+            addto!(r, "    {}", s);
         }
 
         addto!(r);
@@ -2102,7 +2053,7 @@ impl Ship { // {{{3
     }
 }
 
-// Inernals Output {{{2
+// Internals Output {{{2
 #[cfg(debug_assertions)]
 impl Ship {
     // Print internal values {{{3
@@ -2201,12 +2152,11 @@ impl Ship {
 #[cfg(test)]
 mod ship {
     use super::*;
-    use crate::test_support::*;
     use crate::hull::SternType;
+    use crate::test_support::*;
     use crate::weapons::TorpedoMountType;
 
     fn get_hull() -> Hull {
-
         let mut hull = Hull::default();
 
         hull.set_d(7000.0);
@@ -2338,7 +2288,6 @@ mod ship {
         hull_space_8: (0.0064, TorpedoMountType::SubmergedSideTubes),
         hull_space_9: (0.0011, TorpedoMountType::SubmergedReloads),
     }
-
 
     // Test crew_max {{{3
     macro_rules! test_crew_max {

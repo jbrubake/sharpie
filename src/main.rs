@@ -1,6 +1,6 @@
 use clap::{Parser, Subcommand};
 use rfd::FileDialog;
-use sharpie::{Ship, SHIP_FILE_EXT, SS_SHIP_FILE_EXT};
+use sharpie::{SHIP_FILE_EXT, SS_SHIP_FILE_EXT, Ship};
 
 use std::error::Error;
 
@@ -25,7 +25,7 @@ struct Cli {
 #[derive(Subcommand)]
 enum Commands {
     Load {
-        file: String
+        file: String,
     },
 
     Convert {
@@ -44,13 +44,26 @@ enum Commands {
 
 // Load and Convert {{{1
 //
-/// Convert a Springsharp 3b3 file to sharpie format and show the ship report.
+// NOTE: The GUI functions in this section (convert_ship, load_ship, save_ship,
+// and run_gui) are intentionally NOT unit-tested:
+//
+//  - convert_ship, load_ship, and save_ship call rfd::FileDialog
+//    (pick_file()/save_file()), which has no mock/test hook in rfd 0.16 and
+//    blocks on a real native dialog; a test cannot inject a fake path.
+//  - They also take a slint MainWindow, and slint 1.14.1 ships no headless
+//    test backend (no backend-testing/TestingBackend feature), so
+//    MainWindow::new() needs a real display and fails on headless CI.
+//  - run_gui is a blocking slint event loop (ui.run()).
+//  - The logic after the dialog is already exercised by the run_* tests in
+//    the cli module below (Ship::load/convert/save and report()).
+//
+/// Convert a SpringSharp 3b3 file to sharpie format and show the ship report.
 ///
 fn convert_ship(ui: MainWindow) {
     let file = FileDialog::new()
-        .set_title("Springsharp file to convert")
-        .add_filter(SS_SHIP_FILE_EXT, &[SS_SHIP_FILE_EXT,])
-        .add_filter("all", &["*",])
+        .set_title("SpringSharp file to convert")
+        .add_filter(SS_SHIP_FILE_EXT, &[SS_SHIP_FILE_EXT])
+        .add_filter("all", &["*"])
         .pick_file()
         .unwrap_or_default()
         .into_os_string()
@@ -61,7 +74,7 @@ fn convert_ship(ui: MainWindow) {
         Ok(ship) => {
             ui.set_report_str(ship.report().into());
             save_ship(ship);
-        },
+        }
 
         // TODO: Show errors in the GUI
         Err(error) => eprintln!("{}", error),
@@ -73,8 +86,8 @@ fn convert_ship(ui: MainWindow) {
 fn load_ship(ui: MainWindow) {
     let file = FileDialog::new()
         .set_title("Sharpie file to load")
-        .add_filter(SHIP_FILE_EXT, &[SHIP_FILE_EXT,])
-        .add_filter("all", &["*",])
+        .add_filter(SHIP_FILE_EXT, &[SHIP_FILE_EXT])
+        .add_filter("all", &["*"])
         .pick_file()
         .unwrap_or_default()
         .into_os_string()
@@ -82,8 +95,7 @@ fn load_ship(ui: MainWindow) {
         .unwrap();
 
     match Ship::load(file) {
-        Ok(ship) =>
-            ui.set_report_str(ship.report().into()),
+        Ok(ship) => ui.set_report_str(ship.report().into()),
 
         // TODO: Show errors in the GUI
         Err(error) => eprintln!("{}", error),
@@ -96,8 +108,8 @@ fn save_ship(ship: Ship) {
     let file = FileDialog::new()
         .set_title("Sharpie file to save")
         .set_file_name("SHIP.".to_owned() + SHIP_FILE_EXT)
-        .add_filter(SHIP_FILE_EXT, &[SHIP_FILE_EXT,])
-        .add_filter("all", &["*",])
+        .add_filter(SHIP_FILE_EXT, &[SHIP_FILE_EXT])
+        .add_filter("all", &["*"])
         .save_file()
         .unwrap_or_default()
         .into_os_string()

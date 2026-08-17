@@ -1,8 +1,9 @@
 use crate::{Ship, Armor};
 use crate::Hull;
 use crate::units::Units;
+use crate::{Armor, Ship};
 
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 use std::f64::consts::PI;
 use std::fmt;
@@ -29,7 +30,7 @@ pub struct Battery {
     /// Number of shells in the magazine
     pub shells: u32,
     /// Weight of each shell.
-        shell_wgt: Option<f64>,
+    shell_wgt: Option<f64>,
 
     /// Type of gun.
     pub kind: GunType,
@@ -54,7 +55,7 @@ pub struct Battery {
 impl Default for Battery { // {{{2
     fn default() -> Self {
         Self {
-            units: Units::Imperial, 
+            units: Units::Imperial,
 
             num: 0,
             diam: 0.0,
@@ -217,7 +218,6 @@ impl Battery { // {{{2
                  b *
                  2.0 *
                  self.date_factor().sqrt()
-                 
         }
     }
     // armor_wgt {{{3
@@ -253,7 +253,7 @@ impl Battery { // {{{2
     ///
     pub fn set_shell_wgt(&mut self, wgt: f64) -> f64 {
         self.shell_wgt = Some(wgt);
-        
+
         wgt
     }
 
@@ -284,8 +284,8 @@ impl Battery { // {{{2
     pub fn gun_wgt(&self) -> f64 {
         if self.diam == 0.0 { return 0.0; }
 
-        self.shell_wgt_est() * (self.len as f64 / 812.289434917877 *
-            (1.0 + (1.0 / self.diam as f64).powf(2.3297949327695))
+        self.shell_wgt_est() * (self.len / 812.289434917877 *
+            (1.0 + (1.0 / self.diam).powf(2.3297949327695))
             ) * self.num as f64
     }
 
@@ -331,10 +331,10 @@ impl Battery { // {{{2
     }
 }
 
-// Inernals Output {{{2
+// Internals Output {{{2
 #[cfg(debug_assertions)]
 impl Battery {
-    pub fn internals(&self, hull: Hull, wgt_broad: f64) -> () {
+    pub fn internals(&self, hull: Hull, wgt_broad: f64) {
         eprintln!("units = {}", self.units);
         eprintln!("num = {}", self.num);
         eprintln!("diam = {}", self.diam);
@@ -365,7 +365,7 @@ impl Battery {
         eprintln!("mount_wgt() = {}", self.mount_wgt());
         eprintln!("broadside_wgt() = {}", self.broadside_wgt());
         eprintln!("mag_wgt() = {}", self.mag_wgt());
-        eprintln!("");
+        eprintln!();
 
         for (i, g) in self.groups.iter().enumerate() {
             eprintln!("Group {}", i);
@@ -514,9 +514,9 @@ mod battery {
     }
     test_free! {
         // name: (free, group_1_mounts, group_2_mounts)
-        free_test_1: (7.143, 2, 5), 
-        free_test_2: (7.5, 2, 0), 
-        free_test_3: (7.0, 0, 5), 
+        free_test_1: (7.143, 2, 5),
+        free_test_2: (7.5, 2, 0),
+        free_test_3: (7.0, 0, 5),
     }
 
     // Test armor_face_wgt {{{3
@@ -779,7 +779,7 @@ mod battery {
         }
     }
     test_mount_wgt! {
-        // name: (mount_wgt, num)
+        // name: (mount_wgt, mount_kind, diam)
         mount_wgt_cal_eq_0: (0.0, MountType::Broadside, 0.0),
         mount_wgt_sm_mount: (47.19, MountType::Broadside, 10.0),
         mount_wgt_lg_mount: (111.88, MountType::ColesTurret, 10.0),
@@ -830,7 +830,7 @@ mod battery {
     test_mag_wgt! {
         // name: (mag_wgt, num, shells, shell_wgt)
         mag_wgt_test_1: (5.56, 10, 10, 100.0),
-        mag_wgt_test_2: (1.0+Battery::CORDITE_FACTOR, 1, 1, Ship::POUND2TON),
+        mag_wgt_test_2: (1.0 + Battery::CORDITE_FACTOR, 1, 1, Ship::POUND2TON),
     }
 }
 
@@ -887,7 +887,7 @@ impl fmt::Display for GunType { // {{{2
 
 impl GunType { // {{{2
     // armor_face_wgt {{{3
-    /// Multiplier for determing the weight of a mount's face armor.
+    /// Multiplier for determining the weight of a mount's face armor.
     ///
     pub fn armor_face_wgt(&self, armor_back: f64) -> f64 {
         let mut wgt =
@@ -918,7 +918,7 @@ impl GunType { // {{{2
     }
 
     // wgt_sm {{{3
-    /// Multipler to adjust mount weight for small mounts.
+    /// Multiplier to adjust mount weight for small mounts.
     ///
     pub fn wgt_sm(&self) -> f64 {
         match self {
@@ -933,7 +933,7 @@ impl GunType { // {{{2
     }
 
     // wgt_lg {{{3
-    /// Multipler to adjust mount weight for large mounts.
+    /// Multiplier to adjust mount weight for large mounts.
     ///
     pub fn wgt_lg(&self) -> f64 {
         match self {
@@ -1103,33 +1103,31 @@ impl MountType { // {{{2
     }
 
     // armor_face_wgt {{{3
-    /// Multiplier for determing the weight of a mount's face armor.
+    /// Multiplier for determining the weight of a mount's face armor.
     ///
-    pub fn armor_face_wgt(&self, armor_back: f64 ) -> f64 {
+    pub fn armor_face_wgt(&self, armor_back: f64) -> f64 {
         use std::f64::consts::PI;
 
-        let mut wgt = 
-            match self {
-                Self::Broadside      => 1.0,
-                Self::ColesTurret    => PI / 2.0,
-                Self::OpenBarbette   => 0.0,
-                Self::ClosedBarbette => 0.5,
-                Self::DeckAndHoist   => 0.5,
-                Self::Deck           => 0.5,
-                Self::Casemate       => 1.0,
-            };
+        let mut wgt = match self {
+            Self::Broadside      => 1.0,
+            Self::ColesTurret    => PI / 2.0,
+            Self::OpenBarbette   => 0.0,
+            Self::ClosedBarbette => 0.5,
+            Self::DeckAndHoist   => 0.5,
+            Self::Deck           => 0.5,
+            Self::Casemate       => 1.0,
+        };
 
         if armor_back == 0.0 {
-            wgt +=
-                match self {
-                    Self::Broadside      => 0.0,
-                    Self::ColesTurret    => 0.0,
-                    Self::OpenBarbette   => 0.0,
-                    Self::ClosedBarbette => 1.0,
-                    Self::DeckAndHoist   => 1.0,
-                    Self::Deck           => 1.0,
-                    Self::Casemate       => 0.0,
-                }
+            wgt += match self {
+                Self::Broadside      => 0.0,
+                Self::ColesTurret    => 0.0,
+                Self::OpenBarbette   => 0.0,
+                Self::ClosedBarbette => 1.0,
+                Self::DeckAndHoist   => 1.0,
+                Self::Deck           => 1.0,
+                Self::Casemate       => 0.0,
+            }
         }
 
         wgt
@@ -1326,7 +1324,7 @@ pub struct SubBattery {
 // Internals Output {{{2
 #[cfg(debug_assertions)]
 impl SubBattery {
-    pub fn internals(&self, hull: Hull, diam: f64) -> () {
+    pub fn internals(&self, hull: Hull, diam: f64) {
         eprintln!("layout = {}", self.layout);
         eprintln!("distribution = {}", self.distribution);
         eprintln!("above = {}", self.above);
@@ -1339,7 +1337,7 @@ impl SubBattery {
         eprintln!("diameter_calc() = {}", self.diameter_calc(diam));
         eprintln!("wgt_adj() = {}", self.wgt_adj());
         eprintln!("free() = {}", self.free(hull.clone()));
-        eprintln!("");
+        eprintln!();
     }
 }
 
@@ -1370,7 +1368,7 @@ impl SubBattery { // {{{2
 
         let (factor, power) = self.layout.diameter_calc_nums();
 
-        let mut calc = factor * diam * (1.0 + (1.0/diam).powf(power));
+        let mut calc = factor * diam * (1.0 + (1.0 / diam).powf(power));
 
         if diam < 12.0                               { calc += 12.0 / diam; }
         if diam > 1.0 && self.layout.wgt_adj() < 1.0 { calc *= 0.9; }
@@ -1609,7 +1607,7 @@ impl GunDistributionType { // {{{2
     ///
     pub fn desc(&self, mounts: u32, fwd_len: f64) -> String {
         let s = match self {
-            Self::CenterlineEven =>
+            Self::CenterlineEven => {
                 if mounts == 1 {
                     if fwd_len >= 0.5 {
                         "centreline amidships (forward deck)"
@@ -1618,76 +1616,86 @@ impl GunDistributionType { // {{{2
                     }
                 } else {
                     "centreline, evenly spread"
-                },
-            Self::CenterlineEndsFD =>
+                }
+            }
+            Self::CenterlineEndsFD => {
                 if mounts == 1 {
                     "centreline forward"
-                } else if mounts % 2 == 0 {
+                } else if mounts.is_multiple_of(2) {
                     "centreline ends, evenly spread"
                 } else {
                     "centreline ends, majority forward"
-                },
-            Self::CenterlineEndsAD =>
+                }
+            }
+            Self::CenterlineEndsAD => {
                 if mounts == 1 {
                     "centreline aft"
-                } else if mounts % 2 == 0 {
+                } else if mounts.is_multiple_of(2) {
                     "centrelineends, evenly spread"
                 } else {
                     "centreline ends, majority aft"
-                },
+                }
+            }
             Self::CenterlineFDFwd => "centreline, forward deck forward",
-            Self::CenterlineFD =>
+            Self::CenterlineFD => {
                 if mounts == 1 {
                     "centreline, forward deck centre"
                 } else {
                     "centreline, forward evenly spread"
-                },
+                }
+            }
             Self::CenterlineFDAft => "centreline, forward deck aft",
             Self::CenterlineADFwd => "centreline, aft deck forward",
-            Self::CenterlineAD =>
+            Self::CenterlineAD => {
                 if mounts == 1 {
                     "centreline, aft deck centre"
                 } else {
                     "centreline, aft evenly spread"
-                },
+                }
+            }
             Self::CenterlineADAft => "cenreline, aft deck aft",
-            Self::SidesEven =>
+            Self::SidesEven => {
                 if mounts < 3 {
                     "sides amidships"
                 } else {
                     "sides, evenly spread"
-                },
-            Self::SidesEndsFD =>
+                }
+            }
+            Self::SidesEndsFD => {
                 if mounts < 3 {
                     "sides, forward"
-                } else if mounts % 4 == 0 {
+                } else if mounts.is_multiple_of(4) {
                     "side ends, evenly spread"
                 } else {
                     "side ends, majority forward"
-                },
-            Self::SidesEndsAD =>
+                }
+            }
+            Self::SidesEndsAD => {
                 if mounts < 3 {
                     "sides aft"
-                } else if mounts % 4 == 0 {
+                } else if mounts.is_multiple_of(4) {
                     "side ends, evenly spread"
                 } else {
                     "side ends, majority aft"
-                },
+                }
+            }
             Self::SidesFDFwd => "sides, forward deck forward",
-            Self::SidesFD =>
+            Self::SidesFD => {
                 if mounts < 3 {
                     "sides, forward deck centre"
                 } else {
                     "sides, forward evenly spread"
-                },
+                }
+            }
             Self::SidesFDAft => "sides, forward deck aft",
             Self::SidesADFwd => "sides, aft deck forward",
-            Self::SidesAD =>
+            Self::SidesAD => {
                 if mounts < 3 {
                     "sides, aft deck centre"
                 } else {
                     "sides, aft evenly spread"
-                },
+                }
+            }
             Self::SidesADAft => "sides, aft deck aft",
         };
 
@@ -1698,7 +1706,7 @@ impl GunDistributionType { // {{{2
     /// True if the type would place guns aft.
     ///
     pub fn super_aft(&self) -> bool {
-        let s = match self {
+        matches!(self,
             Self::CenterlineEndsAD |
             Self::CenterlineADFwd |
             Self::CenterlineAD |
@@ -1706,12 +1714,8 @@ impl GunDistributionType { // {{{2
             Self::SidesEndsAD |
             Self::SidesADFwd |
             Self::SidesAD |
-            Self::SidesADAft => true,
-
-            _ => false,
-        };
-
-        s.into()
+            Self::SidesADAft
+        )
     }
 
     // mounts_fwd {{{3
@@ -1744,7 +1748,7 @@ impl GunDistributionType { // {{{2
             Self::CenterlineEndsAD | Self::SidesEndsAD =>
                 if tot == 1 { 0 } else { tot - half(tot) },
 
-            Self::CenterlineEven | Self::SidesEven =>
+            Self::CenterlineEven | Self::SidesEven => {
                 if tot == 1 && fwd_len >= 0.5 {
                     tot
                 } else if fwd_len >= 0.5 {
@@ -1753,7 +1757,8 @@ impl GunDistributionType { // {{{2
                     0
                 } else {
                     tot - half(tot)
-                },
+                }
+            }
         }
     }
 
@@ -1761,7 +1766,6 @@ impl GunDistributionType { // {{{2
     /// XXX: I do not know what this does
     ///
     pub fn free(&self, num_mounts: u32, hull: Hull) -> f64 {
-
         if num_mounts == 0 { return 0.0; } // catch divide by zero
 
         // Get these as floats to avoid casts later
@@ -1779,52 +1783,53 @@ impl GunDistributionType { // {{{2
             Self::CenterlineEven | Self::SidesEven =>
                 (fwd * fd + (tot - fwd) * ad) / tot,
 
-            Self::CenterlineEndsFD | Self::CenterlineEndsAD |
-            Self::SidesEndsFD | Self::SidesEndsAD =>
-                (
-                    if fwd > 0.0 {
-                        fwd * ( (fd_fwd - fd) / fwd * 0.5 + (fd_fwd + fd) * 0.5)
-                    } else {
-                        0.0
-                    }
-                    + (tot - fwd) * ((ad_aft - ad) * 1.0 / (tot - fwd) * 0.5 + (ad_aft + ad) * 0.5)
-                ) / tot,
+            Self::CenterlineEndsFD |
+            Self::CenterlineEndsAD |
+            Self::SidesEndsFD |
+            Self::SidesEndsAD => {
+                (if fwd > 0.0 {
+                    fwd * ((fd_fwd - fd) / fwd * 0.5 + (fd_fwd + fd) * 0.5)
+                } else {
+                    0.0
+                } + (tot - fwd) * ((ad_aft - ad) * 1.0 / (tot - fwd) * 0.5 + (ad_aft + ad) * 0.5)) / tot
+            }
 
-            Self::CenterlineFDFwd | Self::SidesFDFwd =>
+            Self::CenterlineFDFwd | Self::SidesFDFwd => {
                 if fwd > 0.0 {
                     (fd_fwd - fd) / fwd * 0.5 + (fd_fwd + fd) * 0.5
                 } else {
                     0.0
-                },
+                }
+            }
 
-            Self::CenterlineFD | Self::SidesFD =>
-                fd,
+            Self::CenterlineFD | Self::SidesFD => fd,
 
-            Self::CenterlineFDAft | Self::SidesFDAft =>
+            Self::CenterlineFDAft | Self::SidesFDAft => {
                 if fwd > 0.0 {
                     (fd_aft - fd) / fwd * 0.5 + (fd_aft + fd) * 0.5
                 } else {
                     0.0
-                },
+                }
+            }
 
-            Self::CenterlineADFwd | Self::SidesADFwd =>
+            Self::CenterlineADFwd | Self::SidesADFwd => {
                 if (tot - fwd) > 0.0 {
                     (ad_fwd - ad) / (tot - fwd) * 0.5 + (ad_fwd + ad) * 0.5
                 } else {
                     0.0
-                },
+                }
+            }
 
-            Self::CenterlineAD | Self::SidesAD =>
-                ad,
+            Self::CenterlineAD | Self::SidesAD => ad,
 
-            Self::CenterlineADAft | Self::SidesADAft =>
+            Self::CenterlineADAft | Self::SidesADAft => {
                 if (tot - fwd) > 0.0 {
                     (ad_aft - ad) / (tot - fwd) * 0.5 + (ad_aft + ad) * 0.5
                 } else {
                     0.0
                 }
+            }
         }
-
     }
 
     // gun_position {{{3
@@ -1902,7 +1907,6 @@ impl GunDistributionType { // {{{2
             Self::SidesADAft       => true,
         }
     }
-
 }
 
 // Testing GunD
@@ -2358,11 +2362,11 @@ impl TorpedoMountType { // {{{2
             },
 
             Self::CenterTubes => {
-                let x = f64::powf(len,2.0);
-                let y = f64::powf((num/mounts)*diam/12.0 + (num/mounts-1.0)*0.5, 2.0);
+                let x = f64::powf(len, 2.0);
+                let y = f64::powf((num / mounts) * diam / 12.0 + (num / mounts-1.0) * 0.5, 2.0);
 
-                f64::sqrt(x + y)*b * mounts
-            },
+                f64::sqrt(x + y) * b * mounts
+            }
 
             Self::DeckReloads => len * 1.5 * (diam + 6.0) / 12.0 * num,
 
@@ -2399,7 +2403,8 @@ impl TorpedoMountType { // {{{2
                     format!("In {} sets of ", mounts)
                 } else {
                     "In a ".into()
-                },
+                }
+            }
 
             _ => "".into(),
         };
@@ -2500,7 +2505,7 @@ mod torpedo_mount_type {
 }
 
 // Mines {{{1
-/// Mines and deployement gear.
+/// Mines and deployment gear.
 ///
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
 pub struct Mines {
@@ -2627,7 +2632,6 @@ mod mine_type {
         side:    (1.0, MineType::SideTubes),
     }
 }
-
 
 // ASW {{{1
 /// ASW weapons and deployment gear.
@@ -2937,7 +2941,7 @@ mod weapons {
         }
     }
     test_torpedo_hull_space! {
-        // name:                             (space, kind, diam, len, num, year)
+        // name:                             (space, kind, diam, len, num)
         test_hull_space_fixed_tubes:         (0.0, TorpedoMountType::FixedTubes,         18.0, 21.0, 4),
         test_hull_space_deck_side_tubes:     (0.0, TorpedoMountType::DeckSideTubes,      18.0, 21.0, 4),
         test_hull_space_center_tubes:        (0.0, TorpedoMountType::CenterTubes,        18.0, 21.0, 4),

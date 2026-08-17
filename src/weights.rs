@@ -1,4 +1,4 @@
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 // MiscWgts {{{1
 /// Miscellaneous weights throughout the ship.
@@ -56,6 +56,5 @@ mod misc_wgts {
         // name: (wgt, vital, hull, on, above, void)
         wgt_sum: (11_111, 1, 10, 100, 1_000, 10_000),
     }
-
 }
 

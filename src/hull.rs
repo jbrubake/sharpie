@@ -1,6 +1,6 @@
 use crate::units::Units;
 
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 use std::f64::consts::PI;
 use std::fmt;
@@ -16,27 +16,27 @@ pub struct Hull {
     /// Block Coefficient at normal displacement.
     ///
     /// This is None if d is set.
-        cb: Option<f64>,
+    cb: Option<f64>,
     /// Normal Displacement (t)
     ///
     /// This is None if cb is set.
-        d: Option<f64>,
+    d: Option<f64>,
 
     /// Overall length including ram and any overhangs
     ///
     /// This is None if lwl is set.
-        loa: Option<f64>,
+    loa: Option<f64>,
     /// Maximum length in the water, including any ram.
     ///
     /// This is None if loa is set.
-        lwl: Option<f64>,
+    lwl: Option<f64>,
 
     /// Beam (hull): Maximum width in the water, excluding torpedo bulges and
     /// above water overhangs.
     pub b: f64,
     /// Beam (bulges): Maximum width in the water including torpedo bulges but
     /// excluding above water overhangs.
-    // TODO: This should be ignored if it is less than b but how does Springsharp do it?
+    // TODO: This should be ignored if it is less than b but how does SpringSharp do it?
     pub bb: f64,
     /// Draft: Maximum hull draft at normal displacement.
     pub t: f64,
@@ -47,7 +47,7 @@ pub struct Hull {
     ///
     // NOTE: Do not serialize as this is a derived value
     #[serde(skip)]
-        boxy: bool,
+    boxy: bool,
 
     /// Type of bow.
     pub bow_type: BowType,
@@ -128,11 +128,7 @@ impl Hull { // {{{2
     /// number of shafts in the engine.
     ///
     pub fn set_shafts(&mut self, shafts: u32) {
-        if shafts < 2 {
-            self.boxy = true;
-        } else {
-            self.boxy = false;
-        }
+        self.boxy = shafts < 2;
     }
 
     // freeboard_desc {{{3
@@ -176,11 +172,11 @@ impl Hull { // {{{2
     pub fn cs(&self) -> f64 {
         if self.lwl() == 0.0 { return 0.0; } // Catch divide by zero
 
-        0.4 * (self.bb / self.lwl() * 6.0).powf(1.0/3.0) * f64::sqrt(self.cb() / 0.52)
+        0.4 * (self.bb / self.lwl() * 6.0).powf(1.0 / 3.0) * f64::sqrt(self.cb() / 0.52)
     }
 
     // cm {{{3
-    /// Misdhip section area Coefficient (Keslen).
+    /// Midship section area Coefficient (Keslen).
     ///
     // XXX: Should this be a method?
     pub fn cm(block: f64) -> f64 {
@@ -212,7 +208,7 @@ impl Hull { // {{{2
     }
 
     // cb_calc {{{3
-    /// Calculate the Block Coefficient for a given displacment.
+    /// Calculate the Block Coefficient for a given displacement.
     ///
     // XXX: Should this only return values between 0.3 and 1.0 (inclusive)?
     pub fn cb_calc(&self, d: f64, t: f64) -> f64 {
@@ -238,7 +234,7 @@ impl Hull { // {{{2
     // d {{{3
     /// Normal Displacement (t).
     ///
-    /// Return a perviously set value or caluculate from cb if unset.
+    /// Return a previously set value or calculate from cb if unset.
     pub fn d(&self) -> f64 {
         match (self.d, self.cb) {
             (None, None)     => 0.0,
@@ -281,10 +277,10 @@ impl Hull { // {{{2
         );
 
         cwp - if self.cb() < 0.4 {
-                0.0281 - (self.cb() - 0.3).powf(1.55)
-            } else {
-                0.0
-            }
+                  0.0281 - (self.cb() - 0.3).powf(1.55)
+              } else {
+                  0.0
+              }
     }
 
     // wp {{{3
@@ -299,7 +295,6 @@ impl Hull { // {{{2
     ///
     pub fn ws(&self) -> f64 {
         if self.t == 0.0 { return 0.0; } // catch divide by zero
-                                         //
         self.lwl() * self.t * 1.7 + (self.d() * Self::FT3_PER_TON_SEA / self.t)
     }
 
@@ -333,12 +328,8 @@ impl Hull { // {{{2
             (None, None)      => 0.0,
             (Some(len), _)    => len,
             (None, Some(loa)) =>
-                loa -
-                f64::max(
-                    self.bow_type.ram_len(),
-                    self.stem_len()
-                ).max(0.0) -
-                self.stern_overhang.max(0.0),
+                loa - f64::max( self.bow_type.ram_len(), self.stem_len()).max(0.0)
+                    - self.stern_overhang.max(0.0),
         }
     }
 
@@ -352,12 +343,8 @@ impl Hull { // {{{2
             (None, None)      => 0.0,
             (Some(len), _)    => len,
             (None, Some(lwl)) =>
-                lwl +
-                f64::max(
-                    self.bow_type.ram_len(),
-                    self.stem_len()
-                ).max(0.0) +
-                self.stern_overhang.max(0.0),
+                lwl + f64::max( self.bow_type.ram_len(), self.stem_len()).max(0.0)
+                    + self.stern_overhang.max(0.0),
         }
     }
 
@@ -370,7 +357,7 @@ impl Hull { // {{{2
     }
 
     // t_calc {{{3
-    /// Draft at given displacment.
+    /// Draft at given displacement.
     ///
     pub fn t_calc(&self, d: f64) -> f64 {
         self.t + (d - self.d()) / (self.wp() / Hull::FT3_PER_TON_SEA)
@@ -395,7 +382,8 @@ impl Hull { // {{{2
     /// Increase or decrease to length due to the angle of the bow.
     ///
     pub fn stem_len(&self) -> f64 {
-        if self.bow_angle.abs() >= 90.0 { // Avoid returning infity
+        if self.bow_angle.abs() >= 90.0 {
+            // Avoid returning infinity
             0.0
         } else {
             self.fc_fwd * f64::tan(self.bow_angle * PI / 180.0)
@@ -416,7 +404,7 @@ impl Hull { // {{{2
     /// XXX: I do not know what this does.
     ///
     pub fn freeboard_dist(&self) -> f64 {
-       (self.fd() * self.fd_len + self.ad() * self.ad_len()) / (self.fd_len + self.ad_len()) 
+        (self.fd() * self.fd_len + self.ad() * self.ad_len()) / (self.fd_len + self.ad_len())
     }
 
     // is_wet_fwd {{{3
@@ -454,7 +442,6 @@ impl Hull { // {{{2
         self.qd_fwd + (self.qd_aft - self.qd_fwd) * 0.5
     }
 
-
     // free_cap {{{3
     /// XXX: I do not know what this does.
     ///
@@ -467,7 +454,6 @@ impl Hull { // {{{2
             self.freeboard()
         }
     }
-
 
     // vn {{{3
     /// Natural speed of the hull.
@@ -484,7 +470,6 @@ impl Hull { // {{{2
 
         self.lwl() / self.bb
     }
-
 }
 
 // Testing Hull {{{2
@@ -1136,7 +1121,6 @@ mod hull {
         len2beam_bb_eq_zero:  (0.0, 0.0),
         len2beam_test:        (5.0, 20.0),
     }
-
 }
 
 // SternType {{{1
@@ -1172,7 +1156,8 @@ impl From<&str> for SternType {
 
 impl fmt::Display for SternType { // {{{2
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", match self {
+        write!(f, "{}",
+            match self {
             SternType::TransomSm => "a small transom stern",
             SternType::TransomLg => "a large transom stern",
             SternType::Cruiser   => "a cruiser stern",
@@ -1259,7 +1244,6 @@ mod stern_type {
     }
 }
 
-
 // BowType {{{1
 #[derive(PartialEq, Serialize, Deserialize, Clone, Debug, Default)]
 pub enum BowType {
@@ -1293,11 +1277,12 @@ impl From<&str> for BowType {
 
 impl fmt::Display for BowType { // {{{2
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", match self {
-            Self::Ram(_)       => "a ram bow",
-            Self::BulbStraight => "a straight bulbous bow",
-            Self::BulbForward  => "an extended bulbous bow",
-            Self::Normal       => "a normal bow",
+        write!(f, "{}",
+            match self {
+                Self::Ram(_)       => "a ram bow",
+                Self::BulbStraight => "a straight bulbous bow",
+                Self::BulbForward  => "an extended bulbous bow",
+                Self::Normal       => "a normal bow",
         })
     }
 }
@@ -1313,5 +1298,4 @@ impl BowType { // {{{2
         }
     }
 }
-
 

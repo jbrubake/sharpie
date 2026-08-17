@@ -1,4 +1,4 @@
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 use std::fmt;
 
 // Units {{{1
@@ -6,7 +6,7 @@ use std::fmt;
 pub enum Units {
     #[default]
     Imperial,
-    Metric
+    Metric,
 }
 
 impl From<String> for Units { // {{{2
@@ -40,7 +40,7 @@ pub enum UnitType { // {{{1
     LengthLong,
     Area,
     Weight,
-    Power, 
+    Power,
     WeightPerArea,
 }
 
