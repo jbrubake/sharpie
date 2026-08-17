@@ -137,49 +137,49 @@ fn run_gui() -> Result<(), Box<dyn Error>> {
     }
 }
 
-// Main {{{1
+// Run the CLI command.
 //
-fn main() -> Result<(), Box<dyn Error>> {
-    let cli = Cli::parse();
+fn run(cli: Cli) -> Result<(), Box<dyn Error>> {
+    match cli.command {
+        Some(Commands::Load { file }) => match Ship::load(file) {
+            Ok(ship) => {
+                println!("{}", ship.report());
+                #[cfg(debug_assertions)]
+                if cli.debug { eprintln!("{}", ship.internals()); }
 
-     match cli.command {
-        Some(Commands::Load { file }) => {
-            match Ship::load(file) {
-                Ok(ship) => {
-                    println!("{}", ship.report());
-                    #[cfg(debug_assertions)]
-                    if cli.debug { eprintln!("{}", ship.internals()); }
-
-                    Ok(())
-                },
-
-                Err(error) => Err(error),
+                Ok(())
             }
+
+            Err(error) => Err(error),
         },
 
-        Some(Commands::Convert { from, to, report }) => {
-            match Ship::convert(from) {
-                Ok(ship) => {
-                    if report    { println!("{}", ship.report()); }
-                    #[cfg(debug_assertions)]
-                    if cli.debug { eprintln!("{}", ship.internals()); }
+        Some(Commands::Convert { from, to, report }) => match Ship::convert(from) {
+            Ok(ship) => {
+                if report { println!("{}", ship.report()); }
+                #[cfg(debug_assertions)]
+                if cli.debug { eprintln!("{}", ship.internals()); }
 
-                    match to {
-                        Some(to) => match ship.save(to) {
-                            Ok(_) => Ok(()),
-                            Err(error) => Err(error),
-                        },
-                        None => Ok(()),
-                    }
-                },
-
-                Err(error) => Err(error),
+                match to {
+                    Some(to) => match ship.save(to) {
+                        Ok(_) => Ok(()),
+                        Err(error) => Err(error),
+                    },
+                    None => Ok(()),
+                }
             }
+
+            Err(error) => Err(error),
         },
 
         // No subcommand means launch the GUI
         None => run_gui(),
     }
+}
+
+// Main {{{1
+//
+fn main() -> Result<(), Box<dyn Error>> {
+    run(Cli::parse())
 }
 
 // Testing {{{1
