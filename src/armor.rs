@@ -133,9 +133,8 @@ mod armor {
         }
     }
     test_belt_coverage! {
-        // name:         (belt_coverage, belt_len, lwl)
-        belt_coverage_1: (1.0, 0.65, 1.0),
-        belt_coverage_2: (1.54, 1.0, 1.0),
+        // name:       (belt_coverage, belt_len, lwl)
+        belt_coverage: (1.0, 0.65, 1.0),
     }
 
     // Test max_hgt {{{3

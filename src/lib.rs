@@ -337,9 +337,9 @@ impl Ship { // {{{2
     ///
     pub fn cost_dollar(&self) -> f64 {
         ((self.hull.d() - self.wgt_load()) * 0.00014 +
-            self.wgt_engine() * 0.00056 + self.wgt_borne() * 8.0) * 0.00042) *
-            if self.year as f64 + 2.0>1914.0 {
-                1.0 + self.year as f64 + 1.5 - 1914.0) / 5.5
+            self.wgt_engine() * 0.00056 + (self.wgt_borne() * 8.0) * 0.00042) *
+            if self.year as f64 + 2.0 > 1914.0 {
+                1.0 + (self.year as f64 + 1.5 - 1914.0) / 5.5
             } else { 1.0 }
     }
 

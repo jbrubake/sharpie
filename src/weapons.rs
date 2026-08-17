@@ -2398,7 +2398,7 @@ impl TorpedoMountType { // {{{2
             Self::FixedTubes |
             Self::DeckSideTubes |
             Self::CenterTubes |
-            Self::DeckReloads =>
+            Self::DeckReloads => {
                 if tubes > 1 {
                     format!("In {} sets of ", mounts)
                 } else {
@@ -2483,7 +2483,7 @@ mod torpedo_mount_type {
                     let (expected, torp) = $value;
 
                     let len = 18.0; let diam = 21.0; let num = 2; let mounts = 2;
-                    let b = 50.0; 
+                    let b = 50.0;
                     assert_eq!(expected, to_place(torp.deck_space(b, num, len, diam, mounts), 2));
                 }
             )*
