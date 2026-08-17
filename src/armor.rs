@@ -503,6 +503,7 @@ mod deck {
 
     test_from_str! {
         // name: (type, index)
+        from_str_default: (DeckType::MultipleArmored, "default"),
         from_str_zero:    (DeckType::MultipleArmored, "0"),
         from_str_one:     (DeckType::SingleArmored, "1"),
         from_str_two:     (DeckType::MultipleProtected, "2"),
