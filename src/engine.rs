@@ -231,7 +231,7 @@ mod engine {
                     let mut eng = Engine::default();
                     eng.year = year;
 
-                    assert!(expected == to_place(eng.hp(v, d, lwl, leff, cs, ws), 2));
+                    assert_eq!(expected, to_place(eng.hp(v, d, lwl, leff, cs, ws), 2));
                 }
             )*
         }
@@ -258,7 +258,7 @@ mod engine {
                     let mut eng = Engine::default();
                     eng.vmax = vmax; eng.year = 1920;
 
-                    assert!(expected == to_place(eng.hp_max(d, lwl, leff, cs, ws), 2));
+                    assert_eq!(expected, to_place(eng.hp_max(d, lwl, leff, cs, ws), 2));
                 }
             )*
         }
@@ -280,7 +280,7 @@ mod engine {
                     let mut eng = Engine::default();
                     eng.vmax = vmax; eng.vcruise = vcruise; eng.year = 1920;
 
-                    assert!(expected == to_place(eng.hp_cruise(d, lwl, leff, cs, ws), 2));
+                    assert_eq!(expected, to_place(eng.hp_cruise(d, lwl, leff, cs, ws), 2));
                 }
             )*
         }
@@ -299,7 +299,7 @@ mod engine {
                 fn $name() {
                     let (expected, v, ws) = $value;
 
-                    assert!(expected == to_place(Engine::rf(v, ws), 2));
+                    assert_eq!(expected, to_place(Engine::rf(v, ws), 2));
                 }
             )*
         }
@@ -320,7 +320,7 @@ mod engine {
                     eng.vmax = vmax;
                     let ws = 3000.0;
 
-                    assert!(expected == to_place(eng.rf_max(ws), 2));
+                    assert_eq!(expected, to_place(eng.rf_max(ws), 2));
                 }
             )*
         }
@@ -341,7 +341,7 @@ mod engine {
                     eng.vcruise = vcruise;
                     let ws = 3000.0;
 
-                    assert!(expected == to_place(eng.rf_cruise(ws), 2));
+                    assert_eq!(expected, to_place(eng.rf_cruise(ws), 2));
                 }
             )*
         }
@@ -360,7 +360,7 @@ mod engine {
                     let (expected, lwl) = $value;
                     let v = 10.0; let d = 1000.0; let cs = 0.1234;
 
-                    assert!(expected == to_place(Engine::rw(v, d, lwl, cs), 2));
+                    assert_eq!(expected, to_place(Engine::rw(v, d, lwl, cs), 2));
                 }
             )*
         }
@@ -382,7 +382,7 @@ mod engine {
                     eng.vmax = vmax;
                     let d = 5000.0; let lwl = 500.0; let cs = 0.4;
 
-                    assert!(expected == to_place(eng.rw_max(d, lwl, cs), 2));
+                    assert_eq!(expected, to_place(eng.rw_max(d, lwl, cs), 2));
                 }
             )*
         }
@@ -403,7 +403,7 @@ mod engine {
                     eng.vcruise = vcruise;
                     let d = 5000.0; let lwl = 500.0; let cs = 0.4;
 
-                    assert!(expected == to_place(eng.rw_cruise(d, lwl, cs), 2));
+                    assert_eq!(expected, to_place(eng.rw_cruise(d, lwl, cs), 2));
                 }
             )*
         }
@@ -421,7 +421,7 @@ mod engine {
                 fn $name() {
                     let (expected, rw, rf) = $value;
 
-                    assert!(expected == to_place(Engine::pw(rw, rf), 2));
+                    assert_eq!(expected, to_place(Engine::pw(rw, rf), 2));
                 }
             )*
         }
@@ -443,7 +443,7 @@ mod engine {
                     eng.vmax = vmax;
                     let d = 5000.0; let lwl = 500.0; let cs = 0.4; let ws = 3000.0;
 
-                    assert!(expected == to_place(eng.pw_max(d, lwl, cs, ws), 2));
+                    assert_eq!(expected, to_place(eng.pw_max(d, lwl, cs, ws), 2));
                 }
             )*
         }
@@ -464,7 +464,7 @@ mod engine {
                     eng.vcruise = vcruise;
                     let d = 5000.0; let lwl = 500.0; let cs = 0.4; let ws = 3000.0;
 
-                    assert!(expected == to_place(eng.pw_cruise(d, lwl, cs, ws), 2));
+                    assert_eq!(expected, to_place(eng.pw_cruise(d, lwl, cs, ws), 2));
                 }
             )*
         }
@@ -492,7 +492,7 @@ mod engine {
                     let lwl = 500.0; let leff = 500.0;
                     let cs = 0.2563; let ws = 12000.0; let d = 1000.0;
 
-                    assert!(expected == to_place(eng.bunker(d, lwl, leff, cs, ws), 2));
+                    assert_eq!(expected, to_place(eng.bunker(d, lwl, leff, cs, ws), 2));
                 }
             )*
         }
@@ -524,7 +524,7 @@ mod engine {
                     let cs = 0.2563; let ws = 12000.0; let d = 1000.0;
 
                     println!("{}", to_place(eng.bunker_max(d, lwl, leff, cs, ws), 2));
-                    assert!(expected == to_place(eng.bunker_max(d, lwl, leff, cs, ws), 2));
+                    assert_eq!(expected, to_place(eng.bunker_max(d, lwl, leff, cs, ws), 2));
                 }
             )*
         }
@@ -552,7 +552,7 @@ mod engine {
                     let cs = 0.2563; let ws = 12000.0; let d = 1000.0;
 
                     println!("{}", to_place(eng.d_engine(d, lwl, leff, cs, ws), 2));
-                    assert!(expected == to_place(eng.d_engine(d, lwl, leff, cs, ws), 2));
+                    assert_eq!(expected, to_place(eng.d_engine(d, lwl, leff, cs, ws), 2));
                 }
             )*
         }

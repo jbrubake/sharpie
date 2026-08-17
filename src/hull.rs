@@ -491,7 +491,7 @@ mod hull {
                     hull.set_cb(0.55);
                     hull.bb = 10.0;
 
-                    assert!(expected == to_place(hull.cs(), 5));
+                    assert_eq!(expected, to_place(hull.cs(), 5));
                 }
             )*
         }
@@ -558,7 +558,7 @@ mod hull {
                     hull.bb = bb;
                     hull.t = t;
 
-                    assert!(expected == to_place(hull.cb(), 5));
+                    assert_eq!(expected, to_place(hull.cb(), 5));
                 }
             )*
         }
@@ -595,7 +595,7 @@ mod hull {
                     hull.bb = bb;
                     hull.t = t;
 
-                    assert!(expected == to_place(hull.d(), 2));
+                    assert_eq!(expected, to_place(hull.d(), 2));
                 }
             )*
         }
@@ -625,7 +625,7 @@ mod hull {
                     hull.boxy = boxy;
 
                     println!("{}", hull.cwp());
-                    assert!(expected == to_place(hull.cwp(), 5));
+                    assert_eq!(expected, to_place(hull.cwp(), 5));
                 }
             )*
         }
@@ -683,7 +683,7 @@ mod hull {
                         hull.bow_type = BowType::Normal;
                     }
 
-                    assert!(expected == to_place(hull.lwl(), 2));
+                    assert_eq!(expected, to_place(hull.lwl(), 2));
                 }
             )*
         }
@@ -719,7 +719,7 @@ mod hull {
                         hull.bow_type = BowType::Normal;
                     }
 
-                    assert!(expected == to_place(hull.loa(), 2));
+                    assert_eq!(expected, to_place(hull.loa(), 2));
                 }
             )*
         }
@@ -750,7 +750,7 @@ mod hull {
                     hull.bb = hull.b;
                     hull.t = 10.0;
 
-                    assert!(expected == to_place(hull.t_calc(hull.d() + d_plus), 2));
+                    assert_eq!(expected, to_place(hull.t_calc(hull.d() + d_plus), 2));
                 }
             )*
         }
@@ -800,7 +800,7 @@ mod hull {
                     hull.fd_len = 0.25;
                     hull.qd_len = 0.25;
 
-                    assert!(expected == to_place(hull.ad_len(), 2));
+                    assert_eq!(expected, to_place(hull.ad_len(), 2));
                 }
             )*
         }
@@ -823,7 +823,7 @@ mod hull {
                     hull.fc_fwd = 10.0;
                     hull.bow_angle = angle;
 
-                    assert!(expected == to_place(hull.stem_len(), 2));
+                    assert_eq!(expected, to_place(hull.stem_len(), 2));
                 }
             )*
         }
@@ -861,7 +861,7 @@ mod hull {
                     hull.qd_fwd = hull.fc_fwd - 5.0;
                     hull.qd_aft = hull.fc_fwd;
 
-                    assert!(expected == to_place(hull.freeboard(), 3));
+                    assert_eq!(expected, to_place(hull.freeboard(), 3));
                 }
             )*
         }
@@ -896,7 +896,7 @@ mod hull {
                     hull.qd_fwd = hull.fc_fwd - 5.0;
                     hull.qd_aft = hull.fc_fwd;
 
-                    assert!(expected == to_place(hull.freeboard_dist(), 2));
+                    assert_eq!(expected, to_place(hull.freeboard_dist(), 2));
                 }
             )*
         }

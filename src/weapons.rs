@@ -392,7 +392,7 @@ mod battery {
                     btry.mount_kind = mount_kind;
                     btry.groups[0].below = guns_below;
 
-                    assert!(expected == btry.broad_and_below());
+                    assert_eq!(expected, btry.broad_and_below());
                 }
             )*
         }
@@ -421,7 +421,7 @@ mod battery {
                     let wgt_broadside = 1000.0;
 
                     println!("{}", btry.concentration(wgt_broadside));
-                    assert!(expected == to_place(btry.concentration(wgt_broadside), 5));
+                    assert_eq!(expected, to_place(btry.concentration(wgt_broadside), 5));
                 }
             )*
         }
@@ -465,7 +465,7 @@ mod battery {
 
                     hull.qd_len = 0.15;
 
-                    assert!(expected == to_place(btry.super_(hull), 5));
+                    assert_eq!(expected, to_place(btry.super_(hull), 5));
                 }
             )*
         }
@@ -506,7 +506,7 @@ mod battery {
 
                     hull.qd_len = 0.15;
 
-                    assert!(expected == to_place(btry.free(hull), 3));
+                    assert_eq!(expected, to_place(btry.free(hull), 3));
                 }
             )*
         }
@@ -539,7 +539,7 @@ mod battery {
 
                     btry.groups[0].layout = GunLayoutType::Single;
 
-                    assert!(expected == to_place(btry.armor_face_wgt(), 2));
+                    assert_eq!(expected, to_place(btry.armor_face_wgt(), 2));
                 }
             )*
         }
@@ -562,7 +562,7 @@ mod battery {
                     btry.diam = diam;
                     btry.mount_kind = MountType::Broadside;
 
-                    assert!(expected == to_place(btry.house_hgt(), 5));
+                    assert_eq!(expected, to_place(btry.house_hgt(), 5));
                 }
             )*
         }
@@ -593,7 +593,7 @@ mod battery {
 
                     btry.groups[0].layout = GunLayoutType::Single;
 
-                    assert!(expected == to_place(btry.armor_back_wgt(), 2));
+                    assert_eq!(expected, to_place(btry.armor_back_wgt(), 2));
                 }
             )*
         }
@@ -639,7 +639,7 @@ mod battery {
 
                     hull.qd_len = 0.15;
 
-                    assert!(expected == to_place(btry.armor_barb_wgt(hull), 2));
+                    assert_eq!(expected, to_place(btry.armor_barb_wgt(hull), 2));
                 }
             )*
         }
@@ -665,7 +665,7 @@ mod battery {
                     btry.groups[0].layout = GunLayoutType::Twin;
                     btry.groups[1].layout = GunLayoutType::Twin;
 
-                    assert!(expected == to_place(btry.wgt_adj(), 5));
+                    assert_eq!(expected, to_place(btry.wgt_adj(), 5));
                 }
             )*
         }
@@ -687,7 +687,7 @@ mod battery {
                     let mut btry = Battery::default();
                     btry.year = year;
 
-                    assert!(expected == to_place(btry.date_factor(), 5));
+                    assert_eq!(expected, to_place(btry.date_factor(), 5));
                 }
             )*
         }
@@ -710,7 +710,7 @@ mod battery {
                     btry.diam = 10.0;
                     btry.year = 1920;
 
-                    assert!(expected == to_place(btry.shell_wgt_est(), 2));
+                    assert_eq!(expected, to_place(btry.shell_wgt_est(), 2));
                 }
             )*
         }
@@ -736,7 +736,7 @@ mod battery {
                     btry.num = 1;
                     btry.year = 1920;
 
-                    assert!(expected == to_place(btry.gun_wgt(), 2));
+                    assert_eq!(expected, to_place(btry.gun_wgt(), 2));
                 }
             )*
         }
@@ -772,7 +772,7 @@ mod battery {
                         btry.groups[1].num_mounts();
 
                     println!("{}", btry.mount_wgt());
-                    assert!(expected == to_place(btry.mount_wgt(), 2));
+                    assert_eq!(expected, to_place(btry.mount_wgt(), 2));
                 }
             )*
         }
@@ -798,7 +798,7 @@ mod battery {
                     btry.set_shell_wgt(10.0);
                     btry.num = num;
 
-                    assert!(expected == btry.broadside_wgt());
+                    assert_eq!(expected, btry.broadside_wgt());
                 }
             )*
         }
@@ -821,7 +821,7 @@ mod battery {
                     btry.shells = shells;
                     btry.set_shell_wgt(shell_wgt);
 
-                    assert!(to_place(expected, 2) == to_place(btry.mag_wgt(), 2));
+                    assert_eq!(to_place(expected, 2), to_place(btry.mag_wgt(), 2));
                 }
             )*
         }
@@ -1518,7 +1518,7 @@ mod sub_battery {
                     sub_btry.two_mounts_up = two_mounts_up;
                     sub_btry.lower_deck = lower_deck;
 
-                    assert!(expected == sub_btry.super_());
+                    assert_eq!(expected, sub_btry.super_());
                 }
             )*
         }
@@ -1546,7 +1546,7 @@ mod sub_battery {
                     let mut sub_btry = SubBattery::default();
                     sub_btry.layout = GunLayoutType::Single;
 
-                    assert!(expected == to_place(sub_btry.diameter_calc(diam), 2));
+                    assert_eq!(expected, to_place(sub_btry.diameter_calc(diam), 2));
                 }
             )*
         }
@@ -1573,7 +1573,7 @@ mod sub_battery {
                     sub_btry.on = 0;
                     sub_btry.below = 0;
 
-                    assert!(expected == to_place(sub_btry.wgt_adj(), 2));
+                    assert_eq!(expected, to_place(sub_btry.wgt_adj(), 2));
                 }
             )*
         }
@@ -1609,7 +1609,7 @@ mod sub_battery {
 
                     hull.qd_len = 0.15;
 
-                    assert!(expected == to_place(sub_btry.free(hull), 2));
+                    assert_eq!(expected, to_place(sub_btry.free(hull), 2));
                 }
             )*
         }
@@ -3009,7 +3009,7 @@ mod weapons {
                     mines.reload = reload;
                     mines.wgt = wgt;
 
-                    assert!(to_place(expected, 3) == to_place(mines.wgt_weaps(), 3));
+                    assert_eq!(to_place(expected, 3), to_place(mines.wgt_weaps(), 3));
                 }
             )*
         }
@@ -3036,7 +3036,7 @@ mod weapons {
                     mines.reload = reload;
                     mines.wgt = wgt;
 
-                    assert!(to_place(expected, 3) == to_place(mines.wgt_mounts(), 3));
+                    assert_eq!(to_place(expected, 3), to_place(mines.wgt_mounts(), 3));
                 }
             )*
         }
@@ -3063,7 +3063,7 @@ mod weapons {
                     mines.reload = reload;
                     mines.wgt = wgt;
 
-                    assert!(to_place(expected, 3) == to_place(mines.wgt(), 3));
+                    assert_eq!(to_place(expected, 3), to_place(mines.wgt(), 3));
                 }
             )*
         }
@@ -3087,7 +3087,7 @@ mod weapons {
                     let mut asw = ASW::default();
                     asw.kind = kind; asw.num = num; asw.reload = reload; asw.wgt = wgt;
 
-                    assert!(expected == to_place(asw.wgt_weaps(), 3));
+                    assert_eq!(expected, to_place(asw.wgt_weaps(), 3));
                 }
             )*
         }
@@ -3111,7 +3111,7 @@ mod weapons {
                     let mut asw = ASW::default();
                     asw.kind = kind; asw.num = num; asw.reload = reload; asw.wgt = wgt;
 
-                    assert!(expected == to_place(asw.wgt_mounts(), 3));
+                    assert_eq!(expected, to_place(asw.wgt_mounts(), 3));
                 }
             )*
         }
@@ -3135,7 +3135,7 @@ mod weapons {
                     let mut asw = ASW::default();
                     asw.kind = kind; asw.num = num; asw.reload = reload; asw.wgt = wgt;
 
-                    assert!(to_place(expected, 3) == to_place(asw.wgt(), 3));
+                    assert_eq!(to_place(expected, 3), to_place(asw.wgt(), 3));
                 }
             )*
         }
@@ -3159,7 +3159,7 @@ mod weapons {
                     let mut torp = Torpedoes::default();
                     torp.kind = kind; torp.diam = diam; torp.len = len; torp.num = num; torp.year = year;
 
-                    assert!(to_place(expected, 3) == to_place(torp.wgt_weaps(), 3));
+                    assert_eq!(to_place(expected, 3), to_place(torp.wgt_weaps(), 3));
                 }
             )*
         }
@@ -3188,7 +3188,7 @@ mod weapons {
                     let mut torp = Torpedoes::default();
                     torp.kind = kind; torp.diam = diam; torp.len = len; torp.num = num; torp.year = year;
 
-                    assert!(to_place(expected, 3) == to_place(torp.wgt_mounts(), 3));
+                    assert_eq!(to_place(expected, 3), to_place(torp.wgt_mounts(), 3));
                 }
             )*
         }
@@ -3217,7 +3217,7 @@ mod weapons {
                     let mut torp = Torpedoes::default();
                     torp.kind = kind; torp.diam = diam; torp.len = len; torp.num = num; torp.year = year;
 
-                    assert!(to_place(expected, 3) == to_place(torp.wgt(), 3));
+                    assert_eq!(to_place(expected, 3), to_place(torp.wgt(), 3));
                 }
             )*
         }
@@ -3245,7 +3245,7 @@ mod weapons {
                     let mut torp = Torpedoes::default();
                     torp.kind = kind; torp.diam = diam; torp.len = len; torp.num = num;
 
-                    assert!(expected == to_place(torp.hull_space(), 3));
+                    assert_eq!(expected, to_place(torp.hull_space(), 3));
                 }
             )*
         }
@@ -3275,7 +3275,7 @@ mod weapons {
                     torp.kind = kind; torp.diam = diam; torp.len = len; torp.num = num; torp.mounts = mounts;
 
                     let b = 10.0;
-                    assert!(expected == to_place(torp.deck_space(b), 3));
+                    assert_eq!(expected, to_place(torp.deck_space(b), 3));
                 }
             )*
         }

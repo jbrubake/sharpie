@@ -1566,7 +1566,7 @@ export component Tester {{
 
         let (is_array, headers, values) = super::map_preview_data_to_property_value_table(&value);
         assert!(!is_array);
-        assert!(headers.len() == 1);
+        assert_eq!(headers.len(), 1);
         assert_eq!(headers[0], header);
         assert_eq!(values.len(), 1);
         assert_eq!(values.first().unwrap().len(), 1);
@@ -1603,7 +1603,7 @@ export component Tester {{
             eprintln!("Header {idx}: \"{h}\"");
         }
         assert_eq!(headers.len(), expected_headers.len());
-        assert!(headers.iter().zip(expected_headers.iter()).all(|(rh, eh)| rh == eh));
+        assert_eq!(headers.iter().zip(expected_headers.iter()).all(|(rh, eh)| rh, eh));
 
         assert_eq!(values.len(), expected_table.len());
         for (rr, er) in values.iter().zip(expected_table.iter()) {

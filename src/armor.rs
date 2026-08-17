@@ -125,7 +125,7 @@ mod armor {
                     let mut armor = Armor::default();
                     armor.main.len = belt_len;
 
-                    assert!(expected == to_place(armor.belt_coverage(lwl), 2));
+                    assert_eq!(expected, to_place(armor.belt_coverage(lwl), 2));
                 }
             )*
         }
@@ -281,7 +281,7 @@ mod belt {
                     let mut belt = Belt::new(kind);
                     belt.thick = thick; belt.len = len; belt.hgt = hgt;
 
-                    assert!(expected == to_place(belt.wgt(lwl, cwp, b), 2));
+                    assert_eq!(expected, to_place(belt.wgt(lwl, cwp, b), 2));
                 }
             )*
         }
@@ -360,7 +360,7 @@ mod ct {
                     let mut ct = CT::default();
                     ct.thick = thick;
 
-                    assert!(expected == to_place(ct.wgt(d), 2));
+                    assert_eq!(expected, to_place(ct.wgt(d), 2));
                 }
             )*
         }
