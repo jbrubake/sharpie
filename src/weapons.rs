@@ -829,7 +829,7 @@ mod battery {
     }
     test_mag_wgt! {
         // name: (mag_wgt, num, shells, shell_wgt)
-        mag_wgt_test_1: (5.56, 10, 10, 100.0),
+        mag_wgt_test_1: ((10 * 10 * 100) as f64 / Ship::POUND2TON * (1.0 + Battery::CORDITE_FACTOR), 10, 10, 100.0),
         mag_wgt_test_2: (1.0 + Battery::CORDITE_FACTOR, 1, 1, Ship::POUND2TON),
     }
 }
@@ -2685,6 +2685,13 @@ mod weapons {
     use super::*;
     use crate::test_support::*;
 
+    // Formula for Torpedoes::wgt_weaps().
+    fn torp_weaps_wgt(diam: f64, len: f64, num: u32, year: u32) -> f64 {
+        (PI * diam.powf(2.0) * len / ((f64::max(1907.0 - year as f64, 0.0) + 25.0) * 937.0)
+            + (year as f64 - 1890.0) * 0.004)
+            * num as f64
+    }
+
     // Test mines_wgt_weaps {{{3
     macro_rules! test_mines_wgt_weaps {
         ($($name:ident: $value:expr,)*) => {
@@ -2699,17 +2706,17 @@ mod weapons {
                     mines.reload = reload;
                     mines.wgt = wgt;
 
-                    assert!(expected == to_place(mines.wgt_weaps(), 3));
+                    assert!(to_place(expected, 3) == to_place(mines.wgt_weaps(), 3));
                 }
             )*
         }
     }
     test_mines_wgt_weaps! {
         // name:                    (expected, kind, num, reload, wgt)
-        wgt_weaps_mines_stern_rails: (0.893, MineType::SternRails, 100, 100, 10.0),
-        wgt_weaps_mines_bow_tubes:   (0.893, MineType::BowTubes, 100, 100, 10.0),
-        wgt_weaps_mines_stern_tubes: (0.893, MineType::SternTubes, 100, 100, 10.0),
-        wgt_weaps_mines_side_tubes:  (0.893, MineType::SideTubes, 100, 100, 10.0),
+        wgt_weaps_mines_stern_rails: (200.0 * 10.0 / Ship::POUND2TON, MineType::SternRails, 100, 100, 10.0),
+        wgt_weaps_mines_bow_tubes:   (200.0 * 10.0 / Ship::POUND2TON, MineType::BowTubes, 100, 100, 10.0),
+        wgt_weaps_mines_stern_tubes: (200.0 * 10.0 / Ship::POUND2TON, MineType::SternTubes, 100, 100, 10.0),
+        wgt_weaps_mines_side_tubes:  (200.0 * 10.0 / Ship::POUND2TON, MineType::SideTubes, 100, 100, 10.0),
     }
 
     // Test mines_wgt_mounts {{{3
@@ -2726,17 +2733,17 @@ mod weapons {
                     mines.reload = reload;
                     mines.wgt = wgt;
 
-                    assert!(expected == to_place(mines.wgt_mounts(), 3));
+                    assert!(to_place(expected, 3) == to_place(mines.wgt_mounts(), 3));
                 }
             )*
         }
     }
     test_mines_wgt_mounts! {
         // name:                    (expected, kind, num, reload, wgt)
-        wgt_mounts_mines_stern_rails: (0.223, MineType::SternRails, 100, 100, 10.0),
-        wgt_mounts_mines_bow_tubes:   (0.893, MineType::BowTubes, 100, 100, 10.0),
-        wgt_mounts_mines_stern_tubes: (0.893, MineType::SternTubes, 100, 100, 10.0),
-        wgt_mounts_mines_side_tubes:  (0.893, MineType::SideTubes, 100, 100, 10.0),
+        wgt_mounts_mines_stern_rails: (200.0 * 10.0 / Ship::POUND2TON * MineType::SternRails.wgt_factor(), MineType::SternRails, 100, 100, 10.0),
+        wgt_mounts_mines_bow_tubes:   (200.0 * 10.0 / Ship::POUND2TON * MineType::BowTubes.wgt_factor(), MineType::BowTubes, 100, 100, 10.0),
+        wgt_mounts_mines_stern_tubes: (200.0 * 10.0 / Ship::POUND2TON * MineType::SternTubes.wgt_factor(), MineType::SternTubes, 100, 100, 10.0),
+        wgt_mounts_mines_side_tubes:  (200.0 * 10.0 / Ship::POUND2TON * MineType::SideTubes.wgt_factor(), MineType::SideTubes, 100, 100, 10.0),
     }
 
     // Test mines_wgt {{{3
@@ -2753,17 +2760,17 @@ mod weapons {
                     mines.reload = reload;
                     mines.wgt = wgt;
 
-                    assert!(expected == to_place(mines.wgt(), 3));
+                    assert!(to_place(expected, 3) == to_place(mines.wgt(), 3));
                 }
             )*
         }
     }
     test_mines_wgt! {
         // name:                    (expected, kind, num, reload, wgt)
-        wgt_mines_stern_rails: (1.116, MineType::SternRails, 100, 100, 10.0),
-        wgt_mines_bow_tubes:   (1.786, MineType::BowTubes, 100, 100, 10.0),
-        wgt_mines_stern_tubes: (1.786, MineType::SternTubes, 100, 100, 10.0),
-        wgt_mines_side_tubes:  (1.786, MineType::SideTubes, 100, 100, 10.0),
+        wgt_mines_stern_rails: (200.0 * 10.0 / Ship::POUND2TON * (1.0 + MineType::SternRails.wgt_factor()), MineType::SternRails, 100, 100, 10.0),
+        wgt_mines_bow_tubes:   (200.0 * 10.0 / Ship::POUND2TON * (1.0 + MineType::BowTubes.wgt_factor()), MineType::BowTubes, 100, 100, 10.0),
+        wgt_mines_stern_tubes: (200.0 * 10.0 / Ship::POUND2TON * (1.0 + MineType::SternTubes.wgt_factor()), MineType::SternTubes, 100, 100, 10.0),
+        wgt_mines_side_tubes:  (200.0 * 10.0 / Ship::POUND2TON * (1.0 + MineType::SideTubes.wgt_factor()), MineType::SideTubes, 100, 100, 10.0),
     }
 
     // Test asw_wgt_weaps {{{3
@@ -2825,17 +2832,17 @@ mod weapons {
                     let mut asw = ASW::default();
                     asw.kind = kind; asw.num = num; asw.reload = reload; asw.wgt = wgt;
 
-                    assert!(expected == to_place(asw.wgt(), 3));
+                    assert!(to_place(expected, 3) == to_place(asw.wgt(), 3));
                 }
             )*
         }
     }
     test_asw_wgt! {
         // name:                      (expected, kind, num, reload, wgt)
-        wgt_asw_stern_racks:   (1.116, ASWType::SternRacks, 100, 100, 10.0),
-        wgt_asw_throwers:      (1.339, ASWType::Throwers, 100, 100, 10.0),
-        wgt_asw_hedgehogs:     (1.339, ASWType::Hedgehogs, 100, 100, 10.0),
-        wgt_asw_squid_mortars: (9.821, ASWType::SquidMortars, 100, 100, 10.0),
+        wgt_asw_stern_racks:   (200.0 * 10.0 / Ship::POUND2TON * (1.0 + ASWType::SternRacks.mount_wgt_factor()), ASWType::SternRacks, 100, 100, 10.0),
+        wgt_asw_throwers:      (200.0 * 10.0 / Ship::POUND2TON * (1.0 + ASWType::Throwers.mount_wgt_factor()), ASWType::Throwers, 100, 100, 10.0),
+        wgt_asw_hedgehogs:     (200.0 * 10.0 / Ship::POUND2TON * (1.0 + ASWType::Hedgehogs.mount_wgt_factor()), ASWType::Hedgehogs, 100, 100, 10.0),
+        wgt_asw_squid_mortars: (200.0 * 10.0 / Ship::POUND2TON * (1.0 + ASWType::SquidMortars.mount_wgt_factor()), ASWType::SquidMortars, 100, 100, 10.0),
     }
 
     // Test torpedo_wgt_weaps {{{3
@@ -2849,22 +2856,22 @@ mod weapons {
                     let mut torp = Torpedoes::default();
                     torp.kind = kind; torp.diam = diam; torp.len = len; torp.num = num; torp.year = year;
 
-                    assert!(expected == to_place(torp.wgt_weaps(), 3));
+                    assert!(to_place(expected, 3) == to_place(torp.wgt_weaps(), 3));
                 }
             )*
         }
     }
     test_torpedo_wgt_weaps! {
         // name:                       (wgt, kind, diam, len, num, year)
-        wgt_weaps_torps_fixed_tubes:         (4.450, TorpedoMountType::FixedTubes,         18.0, 21.0, 4, 1940),
-        wgt_weaps_torps_deck_side_tubes:     (4.450, TorpedoMountType::DeckSideTubes,      18.0, 21.0, 4, 1940),
-        wgt_weaps_torps_center_tubes:        (4.450, TorpedoMountType::CenterTubes,        18.0, 21.0, 4, 1940),
-        wgt_weaps_torps_deck_reloads:        (4.450, TorpedoMountType::DeckReloads,        18.0, 21.0, 4, 1940),
-        wgt_weaps_torps_bow_tubes:           (4.450, TorpedoMountType::BowTubes,           18.0, 21.0, 4, 1940),
-        wgt_weaps_torps_stern_tubes:         (4.450, TorpedoMountType::SternTubes,         18.0, 21.0, 4, 1940),
-        wgt_weaps_torps_bow_and_stern_tubes: (4.450, TorpedoMountType::BowAndSternTubes,   18.0, 21.0, 4, 1940),
-        wgt_weaps_torps_submerged_tubes:     (4.450, TorpedoMountType::SubmergedSideTubes, 18.0, 21.0, 4, 1940),
-        wgt_weaps_torps_submerged_reloads:   (4.450, TorpedoMountType::SubmergedReloads,   18.0, 21.0, 4, 1940),
+        wgt_weaps_torps_fixed_tubes:         (torp_weaps_wgt(18.0, 21.0, 4, 1940), TorpedoMountType::FixedTubes,         18.0, 21.0, 4, 1940),
+        wgt_weaps_torps_deck_side_tubes:     (torp_weaps_wgt(18.0, 21.0, 4, 1940), TorpedoMountType::DeckSideTubes,      18.0, 21.0, 4, 1940),
+        wgt_weaps_torps_center_tubes:        (torp_weaps_wgt(18.0, 21.0, 4, 1940), TorpedoMountType::CenterTubes,        18.0, 21.0, 4, 1940),
+        wgt_weaps_torps_deck_reloads:        (torp_weaps_wgt(18.0, 21.0, 4, 1940), TorpedoMountType::DeckReloads,        18.0, 21.0, 4, 1940),
+        wgt_weaps_torps_bow_tubes:           (torp_weaps_wgt(18.0, 21.0, 4, 1940), TorpedoMountType::BowTubes,           18.0, 21.0, 4, 1940),
+        wgt_weaps_torps_stern_tubes:         (torp_weaps_wgt(18.0, 21.0, 4, 1940), TorpedoMountType::SternTubes,         18.0, 21.0, 4, 1940),
+        wgt_weaps_torps_bow_and_stern_tubes: (torp_weaps_wgt(18.0, 21.0, 4, 1940), TorpedoMountType::BowAndSternTubes,   18.0, 21.0, 4, 1940),
+        wgt_weaps_torps_submerged_tubes:     (torp_weaps_wgt(18.0, 21.0, 4, 1940), TorpedoMountType::SubmergedSideTubes, 18.0, 21.0, 4, 1940),
+        wgt_weaps_torps_submerged_reloads:   (torp_weaps_wgt(18.0, 21.0, 4, 1940), TorpedoMountType::SubmergedReloads,   18.0, 21.0, 4, 1940),
     }
 
     // Test torpedo_wgt_mounts {{{3
@@ -2878,22 +2885,22 @@ mod weapons {
                     let mut torp = Torpedoes::default();
                     torp.kind = kind; torp.diam = diam; torp.len = len; torp.num = num; torp.year = year;
 
-                    assert!(expected == to_place(torp.wgt_mounts(), 3));
+                    assert!(to_place(expected, 3) == to_place(torp.wgt_mounts(), 3));
                 }
             )*
         }
     }
     test_torpedo_wgt_mounts! {
         // name:                       (wgt, kind, diam, len, num, year)
-        wgt_mounts_torps_fixed_tubes:         (1.113, TorpedoMountType::FixedTubes,         18.0, 21.0, 4, 1940),
-        wgt_mounts_torps_deck_side_tubes:     (4.450, TorpedoMountType::DeckSideTubes,      18.0, 21.0, 4, 1940),
-        wgt_mounts_torps_center_tubes:        (4.450, TorpedoMountType::CenterTubes,        18.0, 21.0, 4, 1940),
-        wgt_mounts_torps_deck_reloads:        (1.113, TorpedoMountType::DeckReloads,        18.0, 21.0, 4, 1940),
-        wgt_mounts_torps_bow_tubes:           (4.450, TorpedoMountType::BowTubes,           18.0, 21.0, 4, 1940),
-        wgt_mounts_torps_stern_tubes:         (4.450, TorpedoMountType::SternTubes,         18.0, 21.0, 4, 1940),
-        wgt_mounts_torps_bow_and_stern_tubes: (4.450, TorpedoMountType::BowAndSternTubes,   18.0, 21.0, 4, 1940),
-        wgt_mounts_torps_submerged_tubes:     (4.450, TorpedoMountType::SubmergedSideTubes, 18.0, 21.0, 4, 1940),
-        wgt_mounts_torps_submerged_reloads:   (1.113, TorpedoMountType::SubmergedReloads,   18.0, 21.0, 4, 1940),
+        wgt_mounts_torps_fixed_tubes:         (torp_weaps_wgt(18.0, 21.0, 4, 1940) * TorpedoMountType::FixedTubes.wgt_factor(),         TorpedoMountType::FixedTubes,         18.0, 21.0, 4, 1940),
+        wgt_mounts_torps_deck_side_tubes:     (torp_weaps_wgt(18.0, 21.0, 4, 1940) * TorpedoMountType::DeckSideTubes.wgt_factor(),       TorpedoMountType::DeckSideTubes,      18.0, 21.0, 4, 1940),
+        wgt_mounts_torps_center_tubes:        (torp_weaps_wgt(18.0, 21.0, 4, 1940) * TorpedoMountType::CenterTubes.wgt_factor(),         TorpedoMountType::CenterTubes,        18.0, 21.0, 4, 1940),
+        wgt_mounts_torps_deck_reloads:        (torp_weaps_wgt(18.0, 21.0, 4, 1940) * TorpedoMountType::DeckReloads.wgt_factor(),         TorpedoMountType::DeckReloads,        18.0, 21.0, 4, 1940),
+        wgt_mounts_torps_bow_tubes:           (torp_weaps_wgt(18.0, 21.0, 4, 1940) * TorpedoMountType::BowTubes.wgt_factor(),            TorpedoMountType::BowTubes,           18.0, 21.0, 4, 1940),
+        wgt_mounts_torps_stern_tubes:         (torp_weaps_wgt(18.0, 21.0, 4, 1940) * TorpedoMountType::SternTubes.wgt_factor(),          TorpedoMountType::SternTubes,         18.0, 21.0, 4, 1940),
+        wgt_mounts_torps_bow_and_stern_tubes: (torp_weaps_wgt(18.0, 21.0, 4, 1940) * TorpedoMountType::BowAndSternTubes.wgt_factor(),    TorpedoMountType::BowAndSternTubes,   18.0, 21.0, 4, 1940),
+        wgt_mounts_torps_submerged_tubes:     (torp_weaps_wgt(18.0, 21.0, 4, 1940) * TorpedoMountType::SubmergedSideTubes.wgt_factor(),  TorpedoMountType::SubmergedSideTubes, 18.0, 21.0, 4, 1940),
+        wgt_mounts_torps_submerged_reloads:   (torp_weaps_wgt(18.0, 21.0, 4, 1940) * TorpedoMountType::SubmergedReloads.wgt_factor(),    TorpedoMountType::SubmergedReloads,   18.0, 21.0, 4, 1940),
     }
 
     // Test torpedo_wgt {{{3
@@ -2907,22 +2914,22 @@ mod weapons {
                     let mut torp = Torpedoes::default();
                     torp.kind = kind; torp.diam = diam; torp.len = len; torp.num = num; torp.year = year;
 
-                    assert!(expected == to_place(torp.wgt(), 3));
+                    assert!(to_place(expected, 3) == to_place(torp.wgt(), 3));
                 }
             )*
         }
     }
     test_torpedo_wgt! {
         // name:                       (wgt, kind, diam, len, num, year)
-        wgt_torps_fixed_tubes:         (5.563, TorpedoMountType::FixedTubes,         18.0, 21.0, 4, 1940),
-        wgt_torps_deck_side_tubes:     (8.900, TorpedoMountType::DeckSideTubes,      18.0, 21.0, 4, 1940),
-        wgt_torps_center_tubes:        (8.900, TorpedoMountType::CenterTubes,        18.0, 21.0, 4, 1940),
-        wgt_torps_deck_reloads:        (5.563, TorpedoMountType::DeckReloads,        18.0, 21.0, 4, 1940),
-        wgt_torps_bow_tubes:           (8.900, TorpedoMountType::BowTubes,           18.0, 21.0, 4, 1940),
-        wgt_torps_stern_tubes:         (8.900, TorpedoMountType::SternTubes,         18.0, 21.0, 4, 1940),
-        wgt_torps_bow_and_stern_tubes: (8.900, TorpedoMountType::BowAndSternTubes,   18.0, 21.0, 4, 1940),
-        wgt_torps_submerged_tubes:     (8.900, TorpedoMountType::SubmergedSideTubes, 18.0, 21.0, 4, 1940),
-        wgt_torps_submerged_reloads:   (5.563, TorpedoMountType::SubmergedReloads,   18.0, 21.0, 4, 1940),
+        wgt_torps_fixed_tubes:         (torp_weaps_wgt(18.0, 21.0, 4, 1940) * (1.0 + TorpedoMountType::FixedTubes.wgt_factor()),         TorpedoMountType::FixedTubes,         18.0, 21.0, 4, 1940),
+        wgt_torps_deck_side_tubes:     (torp_weaps_wgt(18.0, 21.0, 4, 1940) * (1.0 + TorpedoMountType::DeckSideTubes.wgt_factor()),       TorpedoMountType::DeckSideTubes,      18.0, 21.0, 4, 1940),
+        wgt_torps_center_tubes:        (torp_weaps_wgt(18.0, 21.0, 4, 1940) * (1.0 + TorpedoMountType::CenterTubes.wgt_factor()),         TorpedoMountType::CenterTubes,        18.0, 21.0, 4, 1940),
+        wgt_torps_deck_reloads:        (torp_weaps_wgt(18.0, 21.0, 4, 1940) * (1.0 + TorpedoMountType::DeckReloads.wgt_factor()),         TorpedoMountType::DeckReloads,        18.0, 21.0, 4, 1940),
+        wgt_torps_bow_tubes:           (torp_weaps_wgt(18.0, 21.0, 4, 1940) * (1.0 + TorpedoMountType::BowTubes.wgt_factor()),            TorpedoMountType::BowTubes,           18.0, 21.0, 4, 1940),
+        wgt_torps_stern_tubes:         (torp_weaps_wgt(18.0, 21.0, 4, 1940) * (1.0 + TorpedoMountType::SternTubes.wgt_factor()),          TorpedoMountType::SternTubes,         18.0, 21.0, 4, 1940),
+        wgt_torps_bow_and_stern_tubes: (torp_weaps_wgt(18.0, 21.0, 4, 1940) * (1.0 + TorpedoMountType::BowAndSternTubes.wgt_factor()),    TorpedoMountType::BowAndSternTubes,   18.0, 21.0, 4, 1940),
+        wgt_torps_submerged_tubes:     (torp_weaps_wgt(18.0, 21.0, 4, 1940) * (1.0 + TorpedoMountType::SubmergedSideTubes.wgt_factor()),  TorpedoMountType::SubmergedSideTubes, 18.0, 21.0, 4, 1940),
+        wgt_torps_submerged_reloads:   (torp_weaps_wgt(18.0, 21.0, 4, 1940) * (1.0 + TorpedoMountType::SubmergedReloads.wgt_factor()),    TorpedoMountType::SubmergedReloads,   18.0, 21.0, 4, 1940),
     }
 
     // Test torpedo_hull_space {{{3
