@@ -209,6 +209,47 @@ mod armor {
 
         assert!(0.0 == to_place(armor.wgt(test_hull(), 100.0, 100.0), 2));
     }
+
+    // The aggregate wgt() is the sum of every belt, the deck and both
+    // conning towers.
+    #[test]
+    fn wgt_all() {
+        let mut armor = Armor::default();
+
+        armor.main = Belt::new(BeltType::Main);
+        armor.main.thick = 1.0;
+        armor.main.len = 20.0;
+        armor.main.hgt = 5.0;
+
+        armor.end = Belt::new(BeltType::End);
+        armor.end.thick = 1.0;
+        armor.end.len = 20.0;
+        armor.end.hgt = 5.0;
+
+        armor.upper = Belt::new(BeltType::Upper);
+        armor.upper.thick = 1.0;
+        armor.upper.len = 20.0;
+        armor.upper.hgt = 5.0;
+
+        armor.bulge = Belt::new(BeltType::Bulge);
+        armor.bulge.thick = 1.0;
+        armor.bulge.len = 20.0;
+        armor.bulge.hgt = 5.0;
+
+        armor.bulkhead = Belt::new(BeltType::Bulkhead);
+        armor.bulkhead.thick = 1.0;
+        armor.bulkhead.len = 20.0;
+        armor.bulkhead.hgt = 5.0;
+
+        armor.deck.fc = 0.5;
+        armor.deck.md = 1.0;
+        armor.deck.qd = 0.5;
+
+        armor.ct_fwd.thick = 1.0;
+        armor.ct_aft.thick = 2.0;
+
+        assert!(110.32 == to_place(armor.wgt(test_hull(), 100.0, 100.0), 2));
+    }
 }
 
 // Belt {{{1
