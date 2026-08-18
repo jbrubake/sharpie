@@ -45,9 +45,6 @@ launch the GUI), `make preview` (preview the UI with `slint-viewer`),
 - Metric units are not supported in either `sharpie` or `SpringSharp` files.
   Files using them will load but all values are interpreted as Imperial so
   they will not work properly.
-- **Box over Machinery** and **Box over Machinery & Magazines** deck types
-  are not fully implemented and will generate values different than
-  `SpringSharp`.
 
 # Comparing Sharpie reports to SpringSharp reports
 

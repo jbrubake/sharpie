@@ -24,6 +24,7 @@ use format_num::format_num;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
+use std::cell::Cell;
 use std::error::Error;
 use std::fs;
 use std::fs::{File, OpenOptions};
@@ -136,6 +137,10 @@ pub struct Ship {
 
     /// Custom notes
     pub notes: Vec<String>,
+
+    /// Cache engine weight due to circular dependencies
+    #[serde(skip)]
+    cached_wgt_engine: Cell<Option<f64>>,
 }
 
 impl Default for Ship { // {{{2
@@ -164,6 +169,7 @@ impl Default for Ship { // {{{2
             ],
 
             notes: Vec::new(),
+            cached_wgt_engine: Cell::new(None),
         }
     }
 }
@@ -571,9 +577,7 @@ impl Ship { // {{{2
             self.armor.upper.wgt(self.hull.d(), self.hull.cwp(), self.hull.b) * 2.0 +
             self.armor.main.wgt(self.hull.d(), self.hull.cwp(), self.hull.b) +
             self.armor.end.wgt(self.hull.d(), self.hull.cwp(), self.hull.b) +
-            // TODO: Replace with the following once the circular references are fixed:
-            // self.armor.deck.wgt(self.hull.clone(), self.wgt_mag(), self.wgt_engine()) +
-            self.armor.deck.wgt(self.hull.clone(), self.wgt_mag(), 0.0) +
+            self.deck_wgt() +
             (self.wgt_hull_plus() + self.wgt_guns() + self.wgt_gun_mounts() - self.wgt_borne()) * 1.5 * self.hull.freeboard() / self.hull.t;
 
         let b = a +
@@ -767,24 +771,59 @@ impl Ship { // {{{2
     // wgt_engine {{{3
     /// Weight of the engine, adjusted by the displacement factor (d_factor()).
     ///
+    // There is a circular dependency involving engine weight when DeckType::BoxOverMachinery or
+    // DeckType::BoxOverBoth is used:
+    //
+    // wgt_engine() -> d_factor() -> wgt_armor() -> deck_wgt() -> wgt_engine()
+    //
+    // Fortunately, wgt_engine() an iterative calculation converges to a stable value. Once the
+    // value converges it is cached so future calls to wgt_engine() can retrieve the cached value
+    //
+    // The cached value is **required** because of the call to d_factor() **inside** wgt_engine().
+    // Without caching a value, the wgt_engine() -> d_factor() chain would eventually overflow the
+    // stack
+    //
+    // Solving this problem revealed a bug in SpringSharp as you have to "force" the GUI to do the
+    // iterative calculations. If you don't, it will still report values but they will be incorrect
+    //
     pub fn wgt_engine(&self) -> f64 {
-        let p =
-            if (self.hull.d() < 5000.0) && (self.hull.d() >= 600.0) && (self.d_factor() < 1.0) {
-                1.0 - self.hull.d() / 5000.0
-            } else if (self.hull.d() < 600.0) && (self.d_factor() < 1.0) {
-                0.88
-            } else {
-                0.0
-            };
+        if let Some(wgt) = self.cached_wgt_engine.get() { return wgt; }
 
-        (self.engine.d_engine(
-            self.hull.d(),
-            self.hull.lwl(),
-            self.hull.leff(),
-            self.hull.cs(),
-            self.hull.ws(),
-        ) / 2.0)
-            * self.d_factor().powf(p)
+        const TOLERANCE: f64 = 0.05;
+        const MAX_ITER: usize = 50;
+
+        let mut prev = 0.0;
+
+        for _ in 0..MAX_ITER {
+            self.cached_wgt_engine.set(Some(prev));
+
+            let p =
+                if (self.hull.d() < 5000.0) && (self.hull.d() >= 600.0) && (self.d_factor() < 1.0) {
+                    1.0 - self.hull.d() / 5000.0
+                } else if (self.hull.d() < 600.0) && (self.d_factor() < 1.0) {
+                    0.88
+                } else {
+                    0.0
+                };
+
+            let new = (self.engine.d_engine(
+                self.hull.d(),
+                self.hull.lwl(),
+                self.hull.leff(),
+                self.hull.cs(),
+                self.hull.ws(),
+            ) / 2.0)
+                * self.d_factor().powf(p);
+
+            if (new - prev).abs() < TOLERANCE {
+                self.cached_wgt_engine.set(Some(prev));
+                return new;
+            }
+            prev = new;
+        }
+
+        self.cached_wgt_engine.set(Some(prev));
+        prev
     }
 
     // wgt_struct {{{3
@@ -912,9 +951,7 @@ impl Ship { // {{{2
     /// Weight of ship and battery armor.
     ///
     pub fn wgt_armor(&self) -> f64 {
-        // TODO: Replace with the following once the circular references are fixed:
-        // self.armor.wgt(self.hull.clone(), self.wgt_mag(), self.wgt_engine()) + self.wgt_gun_armor()
-        self.armor.wgt(self.hull.clone(), self.wgt_mag(), 0.0) + self.wgt_gun_armor()
+        self.armor.wgt(self.hull.clone(), self.wgt_mag(), self.wgt_engine()) + self.wgt_gun_armor()
     }
 
     // gun_wtf {{{3
@@ -1371,9 +1408,7 @@ impl Ship { // Convenience wrappers {{{2
     }
 
     pub fn deck_wgt(&self) -> f64 { // {{{3
-        // TODO: Replace with the following once the circular references are fixed:
-        // self.armor.deck.wgt(hull.clone(), self.wgt_mag(), self.wgt_engine())
-        self.armor.deck.wgt(self.hull.clone(), self.wgt_mag(), 0.0)
+        self.armor.deck.wgt(self.hull.clone(), self.wgt_mag(), self.wgt_engine())
     }
 
     pub fn battery_armor_wgt(&self, btry: &Battery) -> f64 { // {{{3
