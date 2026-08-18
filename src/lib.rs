@@ -2343,6 +2343,31 @@ mod ship {
         crew_min_d_eq_zero: (0, 0.0),
         crew_min_d_eq_1000: (88, 1000.0),
     }
+
+    // Test wgt_engine {{{3
+    macro_rules! test_wgt_engine {
+        ($($name:ident: $value:expr,)*) => {
+            $(
+                #[test]
+                fn $name() {
+                    let (expected, d) = $value;
+
+                    let mut ship = test_ship();
+                    ship.hull.set_d(d);
+
+                    assert_eq!(expected, to_place(ship.wgt_engine(), 2));
+                }
+            )*
+        }
+    }
+
+    test_wgt_engine! {
+        // name:           (wgt_engine, d)
+        wgt_engine_d_599:  (371.6,      599.0),
+        wgt_engine_d_600:  (372.23,     600.0),
+        wgt_engine_d_4999: (11_339.23,  4999.0),
+        wgt_engine_d_5000: (11_344.2,   5_000.0),
+    }   
 }
 
 // SeaType {{{1
