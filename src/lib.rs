@@ -48,8 +48,10 @@ struct Version {
 // Testing support {{{1
 #[cfg(test)]
 mod test_support {
+    use crate::Ship;
     use crate::Hull;
-    use crate::hull::SternType;
+    use crate::Engine;
+    use crate::engine::{BoilerType, DriveType, FuelType};
 
     // Round a float to a given number of digits
     //
@@ -61,34 +63,37 @@ mod test_support {
         (n * mult).round() / mult
     }
 
-    // A Hull with reasonable defaults for testing.
-    //
-    pub fn test_hull() -> Hull {
+    pub fn test_ship() -> Ship {
         let mut hull = Hull::default();
+
         hull.set_lwl(100.0);
         hull.set_d(1000.0);
-        hull.set_shafts(2); // hull.boxy == false
-        hull.b = 50.0;
-        hull.bb = hull.b;
-        hull.t = 10.0;
-        hull.stern_type = SternType::Cruiser;
 
-        hull.fc_len = 0.2;
-        hull.fc_fwd = 10.0;
-        hull.fc_aft = 10.0;
+        hull.b      = 50.0;
+        hull.bb     = hull.b;
+        hull.t      = 10.0;
 
-        hull.fd_len = 0.3;
-        hull.fd_fwd = hull.fc_fwd;
-        hull.fd_aft = hull.fc_fwd;
+        hull.fc_len = 0.2;  hull.fc_fwd = 10.0;        hull.fc_aft = hull.fc_fwd;
+        hull.fd_len = 0.3;  hull.fd_fwd = hull.fc_fwd; hull.fd_aft = hull.fc_fwd;
+                            hull.ad_fwd = hull.fc_fwd; hull.ad_aft = hull.fc_fwd;
+        hull.qd_len = 0.15; hull.qd_fwd = hull.fc_fwd; hull.qd_aft = hull.fc_fwd;
 
-        hull.ad_fwd = hull.fc_fwd;
-        hull.ad_aft = hull.fc_fwd;
+        let mut engine = Engine::default();
+        engine.set_shafts(2, &mut hull);
+        engine.year     = 1920;
+        engine.fuel     = FuelType::Oil;
+        engine.boiler   = BoilerType::Turbine;
+        engine.drive    = DriveType::Geared;
+        engine.vmax     = 30.0;
+        engine.vcruise  = 20.0;
+        engine.range    = 10000;
 
-        hull.qd_len = 0.15;
-        hull.qd_fwd = hull.fc_fwd;
-        hull.qd_aft = hull.fc_fwd;
+        let mut ship = Ship::default();
 
-        hull
+        ship.hull = hull;
+        ship.engine = engine;
+
+        ship
     }
 }
 
@@ -2185,41 +2190,8 @@ impl Ship {
 #[cfg(test)]
 mod ship {
     use super::*;
-    use crate::hull::SternType;
     use crate::test_support::*;
     use crate::weapons::TorpedoMountType;
-
-    fn get_hull() -> Hull {
-        let mut hull = Hull::default();
-
-        hull.set_d(7000.0);
-        hull.set_lwl(500.0);
-        hull.b = 50.0;
-        hull.bb = hull.b;
-        hull.t = 10.0;
-        hull.bow_angle = 0.0;
-        hull.stern_overhang = 0.0;
-
-        hull.fc_len = 0.20;
-        hull.fc_fwd = 10.0;
-        hull.fc_aft = 10.0;
-
-        hull.fd_len = 0.30;
-        hull.fd_fwd = hull.fc_len;
-        hull.fd_aft = hull.fc_len;
-
-        hull.ad_fwd = hull.fc_len;
-        hull.ad_aft = hull.fc_len;
-
-        hull.qd_len = 0.15;
-        hull.qd_fwd = hull.fc_len;
-        hull.qd_aft = hull.fc_len;
-
-        hull.bow_type = BowType::Normal;
-        hull.stern_type = SternType::Cruiser;
-
-        hull
-    }
 
     // Test year_adj {{{3
     macro_rules! test_year_adj {
@@ -2252,8 +2224,10 @@ mod ship {
                 fn $name() {
                     let (expected, kind) = $value;
 
-                    let mut ship = Ship::default();
-                    ship.hull = get_hull().clone();
+                    let mut ship = test_ship();
+
+                    ship.hull.set_d(7000.0);
+                    ship.hull.set_lwl(500.0);
 
                     ship.torps[0].year = 1920;
                     ship.torps[0].num = 3;
@@ -2291,8 +2265,10 @@ mod ship {
                 fn $name() {
                     let (expected, kind) = $value;
 
-                    let mut ship = Ship::default();
-                    ship.hull = get_hull().clone();
+                    let mut ship = test_ship();
+
+                    ship.hull.set_d(7000.0);
+                    ship.hull.set_lwl(500.0);
 
                     ship.torps[0].year = 1920;
                     ship.torps[0].num = 3;

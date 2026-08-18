@@ -145,11 +145,11 @@ mod armor {
 
                     let t = 10.0;
 
-                    let mut armor = Armor::default();
-                    armor.incline = incline;
+                    let mut ship = test_ship();
+                    ship.armor.incline = incline;
 
                     assert_eq!(
-                        to_place(armor.max_belt_hgt(t, test_hull().freeboard_dist()), 2),
+                        to_place(ship.armor.max_belt_hgt(t, ship.hull.freeboard_dist()), 2),
                         expected
                     );
                 }
@@ -168,16 +168,17 @@ mod armor {
     // All-zero armor weighs nothing.
     #[test]
     fn wgt_zero() {
-        let armor = Armor::default();
+        let ship = test_ship();
 
-        assert_eq!(to_place(armor.wgt(test_hull(), 100.0, 100.0), 2), 0.0);
+        assert_eq!(to_place(ship.armor.wgt(ship.hull, 100.0, 100.0), 2), 0.0);
     }
 
     // The aggregate wgt() is the sum of every belt, the deck and both
     // conning towers.
     #[test]
     fn wgt_all() {
-        let mut armor = Armor::default();
+        let ship = test_ship();
+        let mut armor = ship.armor;
 
         armor.main.thick = 1.0;
         armor.main.len = 20.0;
@@ -206,7 +207,7 @@ mod armor {
         armor.ct_fwd.thick = 1.0;
         armor.ct_aft.thick = 2.0;
 
-        assert_eq!(to_place(armor.wgt(test_hull(), 100.0, 100.0), 2), 110.32);
+        assert_eq!(to_place(armor.wgt(ship.hull, 100.0, 100.0), 2), 110.32);
     }
 }
 
@@ -432,14 +433,15 @@ mod deck {
                     let wgt_mag = 100.0;
                     let wgt_engine = 100.0;
 
-                    let mut deck = Deck::default();
-                    deck.kind = kind;
-                    deck.fc = fc;
-                    deck.md = md;
-                    deck.qd = qd;
+                    let mut ship = test_ship();
+
+                    ship.armor.deck.kind = kind;
+                    ship.armor.deck.fc = fc;
+                    ship.armor.deck.md = md;
+                    ship.armor.deck.qd = qd;
 
                     assert_eq!(
-                        to_place(deck.wgt(test_hull(), wgt_mag, wgt_engine), 2),
+                        to_place(ship.armor.deck.wgt(ship.hull, wgt_mag, wgt_engine), 2),
                         expected
                     );
                 }
