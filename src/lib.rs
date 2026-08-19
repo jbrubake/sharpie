@@ -1225,8 +1225,10 @@ impl Ship { // {{{2
         ship.asw[1].num    = lines.next().unwrap().parse()?;
         ship.asw[0].reload = lines.next().unwrap().parse()?;
         ship.asw[1].reload = lines.next().unwrap().parse()?;
-        ship.asw[0].wgt    = lines.next().unwrap().parse()?;
-        ship.asw[1].wgt    = lines.next().unwrap().parse()?;
+        let asw0_wgt: f64  = lines.next().unwrap().parse()?;
+        ship.asw[0].wgt    = Measurement::new(asw0_wgt, Weight, ship.asw[0].units);
+        let asw1_wgt: f64  = lines.next().unwrap().parse()?;
+        ship.asw[1].wgt    = Measurement::new(asw1_wgt, Weight, ship.asw[1].units);
         ship.asw[0].kind   = lines.next().unwrap().into();
         ship.asw[1].kind   = lines.next().unwrap().into();
 
@@ -1724,8 +1726,8 @@ impl Ship { // {{{3
             );
             addto!(r, "{} - {:.2} lbs / {:.2} kg {}{} - {:.3} t total",
                 asw.num,
-                asw.wgt,
-                metric(asw.wgt, Weight, asw.units),
+                asw.wgt.imp(),
+                asw.wgt.metric(),
                 asw.kind.desc(),
                 addif!(asw.reload > 0, " + {} reloads", asw.reload),
                 asw.wgt_weaps()

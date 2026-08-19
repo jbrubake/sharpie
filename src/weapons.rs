@@ -2954,7 +2954,7 @@ pub struct ASW {
     pub reload: u32,
 
     /// Weight of a single weapon.
-    pub wgt: f64,
+    pub wgt: Measurement,
 
     /// Type of weapon.
     pub kind: ASWType,
@@ -2972,7 +2972,7 @@ impl ASW { // {{{2
     /// Weight of weapons and reloads.
     ///
     pub fn wgt_weaps(&self) -> f64 {
-        (self.num + self.reload) as f64 * self.wgt / Ship::POUND2TON
+        (self.num + self.reload) as f64 * self.wgt.imp() / Ship::POUND2TON
     }
 
     // wgt_mounts {{{3
@@ -3087,7 +3087,8 @@ mod weapons {
                     let (expected, kind, num, reload, wgt) = $value;
 
                     let mut asw = ASW::default();
-                    asw.kind = kind; asw.num = num; asw.reload = reload; asw.wgt = wgt;
+                    asw.kind = kind; asw.num = num; asw.reload = reload;
+                    asw.wgt = Measurement::new(wgt, UnitType::Weight, Units::Imperial);
 
                     assert_eq!(expected, to_place(asw.wgt_weaps(), 3));
                 }
@@ -3111,7 +3112,8 @@ mod weapons {
                     let (expected, kind, num, reload, wgt) = $value;
 
                     let mut asw = ASW::default();
-                    asw.kind = kind; asw.num = num; asw.reload = reload; asw.wgt = wgt;
+                    asw.kind = kind; asw.num = num; asw.reload = reload;
+                    asw.wgt = Measurement::new(wgt, UnitType::Weight, Units::Imperial);
 
                     assert_eq!(expected, to_place(asw.wgt_mounts(), 3));
                 }
@@ -3135,7 +3137,8 @@ mod weapons {
                     let (expected, kind, num, reload, wgt) = $value;
 
                     let mut asw = ASW::default();
-                    asw.kind = kind; asw.num = num; asw.reload = reload; asw.wgt = wgt;
+                    asw.kind = kind; asw.num = num; asw.reload = reload;
+                    asw.wgt = Measurement::new(wgt, UnitType::Weight, Units::Imperial);
 
                     assert_eq!(to_place(expected, 3), to_place(asw.wgt(), 3));
                 }
