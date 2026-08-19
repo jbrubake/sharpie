@@ -2522,9 +2522,9 @@ pub struct Torpedoes {
     pub num: u32,
 
     /// Torpedo diameter.
-    pub diam: f64,
+    pub diam: Measurement,
     /// Torpedo length.
-    pub len: f64,
+    pub len: Measurement,
 }
 
 impl Torpedoes { // {{{2
@@ -2540,7 +2540,7 @@ impl Torpedoes { // {{{2
     ///
     pub fn wgt_weaps(&self) -> f64 {
         (
-            PI * self.diam.powf(2.0) * self.len /
+            PI * self.diam.imp().powf(2.0) * self.len.imp() /
             (
                 (f64::max(1907.0 - self.year as f64, 0.0) + 25.0) * 937.0
             ) + (self.year as f64 - 1890.0) * 0.004
@@ -2558,14 +2558,14 @@ impl Torpedoes { // {{{2
     /// Hull space taken up by the set.
     ///
     pub fn hull_space(&self) -> f64 {
-        self.kind.hull_space(self.len, self.diam) * self.num as f64
+        self.kind.hull_space(self.len.imp(), self.diam.imp()) * self.num as f64
     }
 
     // deck_space {{{3
     /// Deck space taken up by the set.
     ///
     pub fn deck_space(&self, b: f64) -> f64 {
-        self.kind.deck_space(b, self.num, self.len, self.diam, self.mounts)
+        self.kind.deck_space(b, self.num, self.len.imp(), self.diam.imp(), self.mounts)
     }
 }
 
@@ -3162,7 +3162,10 @@ mod weapons {
                     let (expected, kind, diam, len, num, year) = $value;
 
                     let mut torp = Torpedoes::default();
-                    torp.kind = kind; torp.diam = diam; torp.len = len; torp.num = num; torp.year = year;
+                    torp.kind = kind;
+                    torp.diam = Measurement::new(diam, UnitType::LengthSmall, Units::Imperial);
+                    torp.len  = Measurement::new(len,  UnitType::LengthLong,  Units::Imperial);
+                    torp.num = num; torp.year = year;
 
                     assert_eq!(to_place(expected, 3), to_place(torp.wgt_weaps(), 3));
                 }
@@ -3191,7 +3194,10 @@ mod weapons {
                     let (expected, kind, diam, len, num, year) = $value;
 
                     let mut torp = Torpedoes::default();
-                    torp.kind = kind; torp.diam = diam; torp.len = len; torp.num = num; torp.year = year;
+                    torp.kind = kind;
+                    torp.diam = Measurement::new(diam, UnitType::LengthSmall, Units::Imperial);
+                    torp.len  = Measurement::new(len,  UnitType::LengthLong,  Units::Imperial);
+                    torp.num = num; torp.year = year;
 
                     assert_eq!(to_place(expected, 3), to_place(torp.wgt_mounts(), 3));
                 }
@@ -3220,7 +3226,10 @@ mod weapons {
                     let (expected, kind, diam, len, num, year) = $value;
 
                     let mut torp = Torpedoes::default();
-                    torp.kind = kind; torp.diam = diam; torp.len = len; torp.num = num; torp.year = year;
+                    torp.kind = kind;
+                    torp.diam = Measurement::new(diam, UnitType::LengthSmall, Units::Imperial);
+                    torp.len  = Measurement::new(len,  UnitType::LengthLong,  Units::Imperial);
+                    torp.num = num; torp.year = year;
 
                     assert_eq!(to_place(expected, 3), to_place(torp.wgt(), 3));
                 }
@@ -3248,7 +3257,10 @@ mod weapons {
                 fn $name() {
                     let (expected, kind, diam, len, num) = $value;
                     let mut torp = Torpedoes::default();
-                    torp.kind = kind; torp.diam = diam; torp.len = len; torp.num = num;
+                    torp.kind = kind;
+                    torp.diam = Measurement::new(diam, UnitType::LengthSmall, Units::Imperial);
+                    torp.len  = Measurement::new(len,  UnitType::LengthLong,  Units::Imperial);
+                    torp.num = num;
 
                     assert_eq!(expected, to_place(torp.hull_space(), 3));
                 }
@@ -3277,7 +3289,10 @@ mod weapons {
                     let (expected,kind, diam, len, num, mounts) = $value;
 
                     let mut torp = Torpedoes::default();
-                    torp.kind = kind; torp.diam = diam; torp.len = len; torp.num = num; torp.mounts = mounts;
+                    torp.kind = kind;
+                    torp.diam = Measurement::new(diam, UnitType::LengthSmall, Units::Imperial);
+                    torp.len  = Measurement::new(len,  UnitType::LengthLong,  Units::Imperial);
+                    torp.num = num; torp.mounts = mounts;
 
                     let b = 10.0;
                     assert_eq!(expected, to_place(torp.deck_space(b), 3));

@@ -1124,7 +1124,8 @@ impl Ship { // {{{2
 
         ship.torps[0].num  = lines.next().unwrap().parse()?;
         ship.torps[1].num  = lines.next().unwrap().parse()?;
-        ship.torps[0].diam = lines.next().unwrap().parse()?;
+        let diam_val: f64  = lines.next().unwrap().parse()?;
+        ship.torps[0].diam = Measurement::new(diam_val, LengthSmall, ship.torps[0].units);
 
         ship.armor.main.thick = lines.next().unwrap().parse()?;
         ship.armor.main.len   = lines.next().unwrap().parse()?;
@@ -1209,9 +1210,12 @@ impl Ship { // {{{2
 
         ship.torps[0].mounts = lines.next().unwrap().parse()?;
         ship.torps[1].mounts = lines.next().unwrap().parse()?;
-        ship.torps[1].diam   = lines.next().unwrap().parse()?;
-        ship.torps[0].len    = lines.next().unwrap().parse()?;
-        ship.torps[1].len    = lines.next().unwrap().parse()?;
+        let diam_val: f64    = lines.next().unwrap().parse()?;
+        ship.torps[1].diam   = Measurement::new(diam_val, LengthSmall, ship.torps[1].units);
+        let len_val: f64     = lines.next().unwrap().parse()?;
+        ship.torps[0].len    = Measurement::new(len_val, LengthLong, ship.torps[0].units);
+        let len_val: f64     = lines.next().unwrap().parse()?;
+        ship.torps[1].len    = Measurement::new(len_val, LengthLong, ship.torps[1].units);
         ship.torps[0].kind   = lines.next().unwrap().into();
         ship.torps[1].kind   = lines.next().unwrap().into();
 
@@ -1689,10 +1693,10 @@ impl Ship { // {{{3
             );
             addto!(r, "{} - {:.1}\" / {:.0} mm, {:.2} ft / {:.2} m torpedo{} {:.3} t total",
                 torp.num,
-                torp.diam,
-                metric(torp.diam, LengthSmall, torp.units),
-                torp.len,
-                metric(torp.len, LengthLong, torp.units),
+                torp.diam.imp(),
+                torp.diam.metric(),
+                torp.len.imp(),
+                torp.len.metric(),
                 match torp.num {
                     1 => " -".to_string(),
                     _ => format!("es - {:.3} t each,", torp.wgt_weaps() / torp.num as f64),
@@ -2269,8 +2273,8 @@ mod ship {
                     ship.torps[0].year = 1920;
                     ship.torps[0].num = 3;
                     ship.torps[0].mounts = 2;
-                    ship.torps[0].diam = 20.0;
-                    ship.torps[0].len = 10.0;
+                    ship.torps[0].diam = Measurement::new(20.0, LengthSmall, ship.torps[0].units);
+                    ship.torps[0].len  = Measurement::new(10.0, LengthLong,  ship.torps[0].units);
                     ship.torps[0].kind = kind;
 
                     ship.torps[1].num = 0;
@@ -2310,8 +2314,8 @@ mod ship {
                     ship.torps[0].year = 1920;
                     ship.torps[0].num = 3;
                     ship.torps[0].mounts = 2;
-                    ship.torps[0].diam = 20.0;
-                    ship.torps[0].len = 10.0;
+                    ship.torps[0].diam = Measurement::new(20.0, LengthSmall, ship.torps[0].units);
+                    ship.torps[0].len  = Measurement::new(10.0, LengthLong,  ship.torps[0].units);
                     ship.torps[0].kind = kind;
 
                     ship.torps[1].num = 0;
