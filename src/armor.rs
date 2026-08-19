@@ -30,7 +30,7 @@ pub struct Armor {
     /// What it says on the tin.
     pub bh_kind: BulkheadType,
     /// Beam between outer and inner bulkheads.
-    pub bh_beam: f64,
+    pub bh_beam: Measurement,
 
     /// Deck armor.
     pub deck: Deck,
@@ -54,7 +54,7 @@ impl Default for Armor { // {{{2
 
             bh_kind: BulkheadType::Additional,
             incline: 0.0,
-            bh_beam: 0.0,
+            bh_beam: Measurement::new(0.0, LengthLong, Units::Imperial),
 
             deck: Deck::default(),
 

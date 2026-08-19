@@ -341,7 +341,7 @@ impl Ship { // {{{2
                 .armor
                 .bulkhead
                 .wgt(self.hull.lwl().imp(), self.hull.cwp(), self.hull.b.imp()) > 0.1 {
-                self.hull.b.imp() / self.armor.bh_beam
+                self.hull.b.imp() / self.armor.bh_beam.imp()
             } else { 1.0 }
     }
 
@@ -1284,7 +1284,7 @@ impl Ship { // {{{2
                 1 | _ => BulkheadType::Strengthened,
             };
 
-        ship.armor.bh_beam      = lines.next().unwrap().parse()?;
+        ship.armor.bh_beam      = Measurement::new(lines.next().unwrap().parse()?, LengthLong, ship.armor.units);
         let val: f64 = lines.next().unwrap().parse()?;
         ship.armor.deck.fc = Measurement::new(val, LengthSmall, ship.armor.units);
         let val: f64 = lines.next().unwrap().parse()?;
@@ -1856,8 +1856,8 @@ impl Ship { // {{{3
                     self.armor.bulkhead.hgt.metric(),
                 );
                 addto!(r, "    Beam between torpedo bulkheads {:.2} ft / {:.2} m",
-                    self.armor.bh_beam,
-                    metric(self.armor.bh_beam, LengthLong, self.armor.units)
+                    self.armor.bh_beam.imp(),
+                    self.armor.bh_beam.metric()
                 );
                 addto!(r);
             }
