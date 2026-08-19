@@ -73,15 +73,15 @@ mod units {
     use super::*;
     use crate::test_support::*;
 
-    // Test metric {{{3
+    // Test metric {{{2
     macro_rules! test_metric {
         ($($name:ident: $value:expr,)*) => {
             $(
                 #[test]
                 fn $name() {
-                    let (expected, imperial, unit_type, units) = $value;
+                    let (expected, value, unit_type, units) = $value;
 
-                    assert_eq!(expected, to_place(metric(imperial, unit_type, units), 6));
+                    assert_eq!(to_place(expected, 6), to_place(metric(value, unit_type, units), 6));
                 }
             )*
         }
@@ -89,12 +89,12 @@ mod units {
 
     test_metric! {
         // name:                  (metric, imperial, unit_type, units)
-        metric_len_small:        (25.4, 1.0, UnitType::LengthSmall, Units::Imperial),
-        metric_len_long:         (0.3048, 1.0, UnitType::LengthLong, Units::Imperial),
-        metric_area:             (0.092903, 1.0, UnitType::Area, Units::Imperial),
-        metric_weight:           (0.453592, 1.0, UnitType::Weight, Units::Imperial),
-        metric_power:            (0.746, 1.0, UnitType::Power, Units::Imperial),
-        metric_wgt_per_area:     (4.88243, 1.0, UnitType::WeightPerArea, Units::Imperial),
+        metric_len_small:        (1.0 * INCH2MM, 1.0, UnitType::LengthSmall, Units::Imperial),
+        metric_len_long:         (1.0 * FEET2METERS, 1.0, UnitType::LengthLong, Units::Imperial),
+        metric_area:             (1.0 * SQFEET2SQMETERS, 1.0, UnitType::Area, Units::Imperial),
+        metric_weight:           (1.0 * POUND2KG, 1.0, UnitType::Weight, Units::Imperial),
+        metric_power:            (1.0 * HP2KW, 1.0, UnitType::Power, Units::Imperial),
+        metric_wgt_per_area:     (1.0 / SQFEET2SQMETERS * POUND2KG, 1.0, UnitType::WeightPerArea, Units::Imperial),
         metric_len_small_metric: (1.0, 1.0, UnitType::LengthSmall, Units::Metric),
         metric_len_long_metric:  (1.0, 1.0, UnitType::LengthLong, Units::Metric),
         metric_area_metric:      (1.0, 1.0, UnitType::Area, Units::Metric),
@@ -103,7 +103,7 @@ mod units {
         metric_wgt_area_metric:  (1.0, 1.0, UnitType::WeightPerArea, Units::Metric),
     }
 
-    // Test from {{{3
+    // Test from {{{2
     macro_rules! test_from {
         ($($name:ident: $value:expr,)*) => {
             $(
@@ -126,7 +126,7 @@ mod units {
         from_empty:    (Units::Imperial, ""),
     }
 
-    // Test display {{{3
+    // Test display {{{2
     macro_rules! test_display {
         ($($name:ident: $value:expr,)*) => {
             $(
@@ -146,7 +146,7 @@ mod units {
         display_metric:    ("metric", Units::Metric),
     }
 
-    // Test default {{{3
+    // Test default {{{2
     #[test]
     fn default_imperial() {
         assert_eq!(Units::Imperial, Units::default());
