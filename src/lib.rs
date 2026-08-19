@@ -18,6 +18,7 @@ pub mod units;
 use units::UnitType::*;
 use units::Units::*;
 use units::metric;
+use units::Measurement;
 
 use format_num::format_num;
 
@@ -1216,7 +1217,8 @@ impl Ship { // {{{2
 
         ship.mines.num    = lines.next().unwrap().parse()?;
         ship.mines.reload = lines.next().unwrap().parse()?;
-        ship.mines.wgt    = lines.next().unwrap().parse()?;
+        let wgt_val: f64  = lines.next().unwrap().parse()?;
+        ship.mines.wgt    = Measurement::new(wgt_val, Weight, ship.mines.units);
         ship.mines.kind   = lines.next().unwrap().into();
 
         ship.asw[0].num    = lines.next().unwrap().parse()?;
@@ -1704,8 +1706,8 @@ impl Ship { // {{{3
             addto!(r, "Mines");
             addto!(r, "{} - {:.2} lbs / {:.2} kg mines{} - {:.3} t total",
                 self.mines.num,
-                self.mines.wgt,
-                metric(self.mines.wgt, Weight, self.mines.units),
+                self.mines.wgt.imp(),
+                self.mines.wgt.metric(),
                 addif!(self.mines.reload > 0, " + {} reloads", self.mines.reload),
                 self.mines.wgt_weaps()
             );

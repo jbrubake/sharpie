@@ -1,5 +1,6 @@
 use crate::Hull;
 use crate::units::Units;
+use crate::units::Measurement;
 use crate::{Armor, Ship};
 
 use serde::{Deserialize, Serialize};
@@ -2824,7 +2825,7 @@ pub struct Mines {
     pub reload: u32,
 
     /// Weight of a single mine.
-    pub wgt: f64,
+    pub wgt: Measurement,
 
     /// Type of mine deployment system.
     pub kind: MineType,
@@ -2842,7 +2843,7 @@ impl Mines { // {{{2
     /// Weight of mines and reloads.
     ///
     pub fn wgt_weaps(&self) -> f64 {
-        (self.num + self.reload) as f64 * self.wgt / Ship::POUND2TON
+        (self.num + self.reload) as f64 * self.wgt.imp() / Ship::POUND2TON
     }
 
     // wgt_mounts {{{3
@@ -2987,6 +2988,7 @@ impl ASW { // {{{2
 mod weapons {
     use super::*;
     use crate::test_support::*;
+    use crate::units::UnitType;
 
     // Formula for Torpedoes::wgt_weaps().
     fn torp_weaps_wgt(diam: f64, len: f64, num: u32, year: u32) -> f64 {
@@ -3007,7 +3009,7 @@ mod weapons {
                     mines.kind = kind;
                     mines.num = num;
                     mines.reload = reload;
-                    mines.wgt = wgt;
+                    mines.wgt = Measurement::new(wgt, UnitType::Weight, Units::Imperial);
 
                     assert_eq!(to_place(expected, 3), to_place(mines.wgt_weaps(), 3));
                 }
@@ -3034,7 +3036,7 @@ mod weapons {
                     mines.kind = kind;
                     mines.num = num;
                     mines.reload = reload;
-                    mines.wgt = wgt;
+                    mines.wgt = Measurement::new(wgt, UnitType::Weight, Units::Imperial);
 
                     assert_eq!(to_place(expected, 3), to_place(mines.wgt_mounts(), 3));
                 }
@@ -3061,7 +3063,7 @@ mod weapons {
                     mines.kind = kind;
                     mines.num = num;
                     mines.reload = reload;
-                    mines.wgt = wgt;
+                    mines.wgt = Measurement::new(wgt, UnitType::Weight, Units::Imperial);
 
                     assert_eq!(to_place(expected, 3), to_place(mines.wgt(), 3));
                 }
