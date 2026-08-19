@@ -412,7 +412,7 @@ impl Ship { // {{{2
     ///
     pub fn recoil(&self) -> f64 {
         (
-            (self.wgt_broad()/self.hull.d() * self.hull.freeboard_dist() * self.gun_super_factor() / self.hull.bb.imp()) *
+            (self.wgt_broad().imp()/self.hull.d() * self.hull.freeboard_dist() * self.gun_super_factor() / self.hull.bb.imp()) *
 
             ( self.hull.d().powf(1.0 / 3.0) / self.hull.bb.imp() * 3.0 ).powf(2.0) * 7.0
         ) /
@@ -671,12 +671,12 @@ impl Ship { // {{{2
     pub fn str_cross(&self) -> f64 {
         let mut concentration: f64 = 1.0;
 
-        if self.wgt_broad() > 0.0 {
+        if self.wgt_broad().imp() > 0.0 {
             concentration = 1.0 + self.gun_concentration();
         }
 
         let mut str_cross = self.wgt_struct() / f64::sqrt(self.hull.bb.imp() * (self.hull.t.imp() + self.hull.freeboard_dist())) /
-            ((self.hull.d() + ((self.wgt_broad() + self.wgt_borne() + self.wgt_gun_armor() + self.armor.ct_fwd.wgt(self.hull.d()) + self.armor.ct_aft.wgt(self.hull.d())) * (concentration * self.gun_super_factor()) + f64::max(self.hp_max(), 0.0) / 100.0)) / self.hull.d()) * 0.6;
+            ((self.hull.d() + ((self.wgt_broad().imp() + self.wgt_borne() + self.wgt_gun_armor() + self.armor.ct_fwd.wgt(self.hull.d()) + self.armor.ct_aft.wgt(self.hull.d())) * (concentration * self.gun_super_factor()) + f64::max(self.hp_max(), 0.0) / 100.0)) / self.hull.d()) * 0.6;
 
         if self.year < 1900 {
             str_cross *= 1.0 - (1900.0 - self.year as f64) / 100.0;
@@ -727,7 +727,7 @@ impl Ship { // {{{2
     fn gun_concentration(&self) -> f64 {
         let mut concentration = 0.0;
         for b in self.batteries.iter() {
-            concentration += b.concentration(self.wgt_broad());
+            concentration += b.concentration(self.wgt_broad().imp());
         }
         concentration
     }
@@ -952,12 +952,12 @@ impl Ship { // {{{2
     // wgt_broad {{{3
     /// Sum of the broadside weights of all batteries.
     ///
-    pub fn wgt_broad(&self) -> f64 {
+    pub fn wgt_broad(&self) -> Measurement {
         let mut broad = 0.0;
         for b in self.batteries.iter() {
             broad += b.broadside_wgt();
         }
-        broad
+        Measurement::new(broad, Weight, Imperial)
     }
 
     // wgt_armor {{{3
@@ -1584,7 +1584,7 @@ impl Ship { // {{{3
         // Warnings {{{5
         if self.hull.cb() <= 0.0 || self.hull.cb() > 1.0
             { addto!(r, "DESIGN FAILURE: Displacement impossible with given dimensions"); }
-        if self.hull.d() < (self.wgt_broad() / 4.0)
+        if self.hull.d() < (self.wgt_broad().imp() / 4.0)
             { addto!(r, "DESIGN FAILURE: Gun weight too much for hull"); }
         if self.wgt_armor() > self.hull.d()
             { addto!(r, "DESIGN FAILURE: Armour weight too much for hull"); }
@@ -1716,8 +1716,8 @@ impl Ship { // {{{3
             }
         }
         addto!(r, "    Weight of broadside {} lbs / {} kg",
-            num!(self.wgt_broad(), 0),
-            num!(metric(self.wgt_broad(), Weight, Imperial), 0),
+            num!(self.wgt_broad().imp(), 0),
+            num!(self.wgt_broad().metric(), 0),
         );
 
         // Weapons {{{5
@@ -2192,7 +2192,7 @@ impl Ship {
         for (i, b) in self.batteries.iter().enumerate() {
             s.push(format!("battery[{}]", i));
             s.push("-----------".to_string());
-            b.internals(self.hull.clone(), self.wgt_broad());
+            b.internals(self.hull.clone(), self.wgt_broad().imp());
             s.push("".to_string());
         }
 
