@@ -1166,7 +1166,8 @@ impl Ship { // {{{2
         }
 
         ship.armor.deck.md      = lines.next().unwrap().parse()?;
-        ship.armor.ct_fwd.thick = lines.next().unwrap().parse()?;
+        let val: f64 = lines.next().unwrap().parse()?;
+        ship.armor.ct_fwd.thick = Measurement::new(val, LengthSmall, ship.armor.units);
         ship.engine.vmax        = lines.next().unwrap().parse()?;
         ship.engine.vcruise     = lines.next().unwrap().parse()?;
         ship.engine.range       = lines.next().unwrap().parse()?;
@@ -1274,7 +1275,8 @@ impl Ship { // {{{2
         ship.armor.deck.fc      = lines.next().unwrap().parse()?;
         ship.armor.deck.qd      = lines.next().unwrap().parse()?;
         ship.armor.deck.kind    = lines.next().unwrap().into();
-        ship.armor.ct_aft.thick = lines.next().unwrap().parse()?;
+        let val: f64 = lines.next().unwrap().parse()?;
+        ship.armor.ct_aft.thick = Measurement::new(val, LengthSmall, ship.armor.units);
 
         for b in ship.batteries.iter_mut() { b.groups[0].above = lines.next().unwrap().parse()?; }
         for b in ship.batteries.iter_mut() { b.groups[0].below = lines.next().unwrap().parse()?; }
@@ -1896,13 +1898,13 @@ impl Ship { // {{{3
             addto!(r);
         }
 
-        if self.armor.ct_fwd.thick + self.armor.ct_aft.thick > 0.0 {
+        if self.armor.ct_fwd.thick.imp() + self.armor.ct_aft.thick.imp() > 0.0 {
             // TODO: Remove stray space before comma (required to match SpringSharp reports)
             addto!(r, "- Conning towers: Forward {:.2}\" / {:.0} mm, Aft {:.2}\" / {:.0} mm",
-                self.armor.ct_fwd.thick,
-                metric(self.armor.ct_fwd.thick, LengthSmall, self.armor.units),
-                self.armor.ct_aft.thick,
-                metric(self.armor.ct_aft.thick, LengthSmall, self.armor.units)
+                self.armor.ct_fwd.thick.imp(),
+                self.armor.ct_fwd.thick.metric(),
+                self.armor.ct_aft.thick.imp(),
+                self.armor.ct_aft.thick.metric()
             );
             addto!(r);
         }
@@ -2008,9 +2010,9 @@ impl Ship { // {{{3
                 );
             }
 
-            if self.armor.ct_fwd.thick + self.armor.ct_aft.thick > 0.0 {
+            if self.armor.ct_fwd.thick.imp() + self.armor.ct_aft.thick.imp() > 0.0 {
                 addto!(r, "    - Conning Tower{}: {}",
-                    if self.armor.ct_fwd.thick > 0.0 && self.armor.ct_aft.thick > 0.0 {
+                    if self.armor.ct_fwd.thick.imp() > 0.0 && self.armor.ct_aft.thick.imp() > 0.0 {
                         "s"
                     } else { "" },
                     self.percent_calc(self.armor.ct_fwd.wgt(self.hull.d()) + self.armor.ct_aft.wgt(self.hull.d())),

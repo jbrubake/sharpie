@@ -204,8 +204,8 @@ mod armor {
         armor.deck.md = 1.0;
         armor.deck.qd = 0.5;
 
-        armor.ct_fwd.thick = 1.0;
-        armor.ct_aft.thick = 2.0;
+        armor.ct_fwd.thick = Measurement::new(1.0, LengthSmall, Units::Imperial);
+        armor.ct_aft.thick = Measurement::new(2.0, LengthSmall, Units::Imperial);
 
         assert_eq!(to_place(armor.wgt(ship.hull, 100.0, 100.0), 2), 110.32);
     }
@@ -335,10 +335,18 @@ pub enum BeltType {
 // CT {{{1
 /// Conning tower armor.
 ///
-#[derive(Serialize, Deserialize, Clone, Debug, Default)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct CT {
     /// Armor thickness.
-    pub thick: f64,
+    pub thick: Measurement,
+}
+
+impl Default for CT {
+    fn default() -> Self {
+        CT {
+            thick: Measurement::new(0.0, LengthSmall, Units::Imperial),
+        }
+    }
 }
 
 impl CT { // {{{2
@@ -346,7 +354,7 @@ impl CT { // {{{2
     /// Weight of armor.
     ///
     pub fn wgt(&self, d: f64) -> f64 {
-        10.0 * (d / 10_000.0).powf(2.0 / 3.0) * self.thick
+        10.0 * (d / 10_000.0).powf(2.0 / 3.0) * self.thick.imp()
     }
 }
 
@@ -365,7 +373,7 @@ mod ct {
                     let d = 1000.0;
                     let (expected, thick) = $value;
                     let mut ct = CT::default();
-                    ct.thick = thick;
+                    ct.thick = Measurement::new(thick, LengthSmall, Units::Imperial);
 
                     assert_eq!(expected, to_place(ct.wgt(d), 2));
                 }
