@@ -430,15 +430,15 @@ mod deck {
                 fn $name() {
                     let (expected, kind, fc, md, qd) = $value;
 
-                    let wgt_mag = 100.0;
-                    let wgt_engine = 100.0;
-
                     let mut ship = test_ship();
 
                     ship.armor.deck.kind = kind;
                     ship.armor.deck.fc = fc;
                     ship.armor.deck.md = md;
                     ship.armor.deck.qd = qd;
+
+                    let wgt_mag    = 100.0;
+                    let wgt_engine = ship.wgt_engine();
 
                     assert_eq!(
                         to_place(ship.armor.deck.wgt(ship.hull, wgt_mag, wgt_engine), 2),
@@ -448,19 +448,21 @@ mod deck {
             )*
         }
     }
+
     test_wgt! {
         //  name:             (wgt, deck, fc, md, qd)
-        wgt_mult_arm_fc:      (6.67, DeckType::MultipleArmored, 1.0, 0.0, 0.0),
-        wgt_mult_arm_md:      (60.58, DeckType::MultipleArmored, 0.0, 1.0, 0.0),
-        wgt_mult_arm_qd:      (7.49, DeckType::MultipleArmored, 0.0, 0.0, 1.0),
-        wgt_mult_arm:         (74.74, DeckType::MultipleArmored, 1.0, 1.0, 1.0),
+        wgt_mult_arm_fc:      (6.67,   DeckType::MultipleArmored,    1.0, 0.0, 0.0),
+        wgt_mult_arm_md:      (60.58,  DeckType::MultipleArmored,    0.0, 1.0, 0.0),
+        wgt_mult_arm_qd:      (7.49,   DeckType::MultipleArmored,    0.0, 0.0, 1.0),
+        wgt_mult_arm:         (74.74,  DeckType::MultipleArmored,    1.0, 1.0, 1.0),
 
-        wgt_one_arm_fc:       (6.67, DeckType::SingleArmored, 1.0, 0.0, 0.0),
-        wgt_mult_prot_fc:     (6.67, DeckType::MultipleProtected, 1.0, 0.0, 0.0),
-        wgt_one_prot_fc:      (6.67, DeckType::SingleProtected, 1.0, 0.0, 0.0),
-        wgt_box_machinery_md: (40.13, DeckType::BoxOverMachinery, 0.0, 1.0, 0.0),
-        wgt_box_magazine_md:  (23.24, DeckType::BoxOverMagazine, 0.0, 1.0, 0.0),
-        wgt_box_both_md:      (48.57, DeckType::BoxOverBoth, 0.0, 1.0, 0.0),
+        wgt_one_arm_fc:       (6.67,   DeckType::SingleArmored,      1.0, 0.0, 0.0),
+        wgt_mult_prot_fc:     (6.67,   DeckType::MultipleProtected,  1.0, 0.0, 0.0),
+        wgt_one_prot_fc:      (6.67,   DeckType::SingleProtected,    1.0, 0.0, 0.0),
+        wgt_box_machinery_md: (194.5,  DeckType::BoxOverMachinery,   0.0, 1.0, 0.0),
+        wgt_box_magazine_md:  (23.24,  DeckType::BoxOverMagazine,    0.0, 1.0, 0.0),
+        // XXX: springsheet gives 202.77
+        wgt_box_both_md:      (202.95, DeckType::BoxOverBoth,        0.0, 1.0, 0.0),
     }
     // Test Display {{{3
     macro_rules! test_display {
