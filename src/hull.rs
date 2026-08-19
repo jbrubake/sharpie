@@ -55,7 +55,7 @@ pub struct Hull {
     pub stern_type: SternType,
 
     /// Length of stern overhang
-    pub stern_overhang: f64,
+    pub stern_overhang: Measurement,
 
     /// Forecastle length as a fraction of the total deck.
     pub fc_len: f64,
@@ -107,7 +107,7 @@ impl Default for Hull { // {{{2
 
             bow_type: BowType::Normal,
             stern_type: SternType::Cruiser,
-            stern_overhang: 0.0,
+            stern_overhang: Measurement::new(0.0, LengthLong, Units::Imperial),
 
             fc_len: 0.0,
             fc_fwd: Measurement::new(0.0, LengthLong, Units::Imperial),
@@ -340,7 +340,7 @@ impl Hull { // {{{2
             (None, Some(loa)) =>
                 Measurement::new(
                     loa.imp() - f64::max( self.bow_type.ram_len(), self.stem_len()).max(0.0)
-                        - self.stern_overhang.max(0.0),
+                        - self.stern_overhang.imp().max(0.0),
                     LengthLong, Units::Imperial
                 ),
         }
@@ -358,7 +358,7 @@ impl Hull { // {{{2
             (None, Some(lwl)) =>
                 Measurement::new(
                     lwl.imp() + f64::max( self.bow_type.ram_len(), self.stem_len()).max(0.0)
-                        + self.stern_overhang.max(0.0),
+                        + self.stern_overhang.imp().max(0.0),
                     LengthLong, Units::Imperial
                 ),
         }
@@ -691,7 +691,7 @@ mod hull {
                     hull.set_loa(100.0, Units::Imperial);
                     hull.fc_fwd = Measurement::new(10.0, LengthLong, Units::Imperial);
                     hull.bow_angle = angle;
-                    hull.stern_overhang = stern;
+                    hull.stern_overhang = Measurement::new(stern, LengthLong, Units::Imperial);
 
                     if ram != 0.0 {
                         hull.bow_type = BowType::Ram(ram);
@@ -727,7 +727,7 @@ mod hull {
                     hull.set_lwl(100.0, Units::Imperial);
                     hull.fc_fwd = Measurement::new(10.0, LengthLong, Units::Imperial);
                     hull.bow_angle = angle;
-                    hull.stern_overhang = stern;
+                    hull.stern_overhang = Measurement::new(stern, LengthLong, Units::Imperial);
 
                     if ram != 0.0 {
                         hull.bow_type = BowType::Ram(ram);

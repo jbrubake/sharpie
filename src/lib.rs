@@ -1085,7 +1085,7 @@ impl Ship { // {{{2
         ship.hull.set_cb(lines.next().unwrap().parse()?);
 
         ship.hull.qd_aft         = Measurement::new(lines.next().unwrap().parse()?, LengthLong, ship.hull.units);
-        ship.hull.stern_overhang = lines.next().unwrap().parse()?;
+        ship.hull.stern_overhang = Measurement::new(lines.next().unwrap().parse()?, LengthLong, ship.hull.units);
         ship.hull.qd_len         = lines.next().unwrap().parse()?;
         ship.hull.qd_len /= 100.0; // convert from % to decimal
         ship.hull.qd_fwd         = Measurement::new(lines.next().unwrap().parse()?, LengthLong, ship.hull.units);
@@ -2097,8 +2097,8 @@ impl Ship { // {{{3
         addto!(r, "    Trim (Max stability = 0, Max steadiness = 100): {}", self.trim);
         addto!(r, "    Bow angle (Positive = bow angles forward): {:.2} degrees", self.hull.bow_angle);
         addto!(r, "    Stern overhang: {:.2} ft / {:.2} m",
-            self.hull.stern_overhang,
-            metric(self.hull.stern_overhang, LengthLong, self.hull.units)
+            self.hull.stern_overhang.imp(),
+            self.hull.stern_overhang.metric()
         );
         addto!(r, "    Freeboard (% = length of deck as a percentage of waterline length):");
         addto!(r, "            Fore end, Aft end");

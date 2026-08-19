@@ -311,7 +311,7 @@ mod cli {
         ship.hull.bb = Measurement::new(ship.hull.b.imp(), LengthLong, Units::Imperial);
         ship.hull.t  = Measurement::new(10.0, LengthLong, Units::Imperial);
         ship.hull.bow_angle = 0.0;
-        ship.hull.stern_overhang = 0.0;
+        ship.hull.stern_overhang = Measurement::new(0.0, LengthLong, Units::Imperial);
 
         ship.hull.fc_len = 0.20;
         ship.hull.fc_fwd = Measurement::new(10.0, LengthLong, Units::Imperial);
