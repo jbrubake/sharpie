@@ -66,6 +66,19 @@ pub fn metric(value: f64, unit_type: UnitType, units: Units) -> f64 { // {{{3
     }
 }
 
+pub fn imperial(value: f64, unit_type: UnitType, units: Units) -> f64 { // {{{3
+    if units == Units::Imperial { return value; }
+
+    match unit_type {
+        UnitType::LengthSmall => value / INCH2MM,
+        UnitType::LengthLong => value / FEET2METERS,
+        UnitType::Area => value / SQFEET2SQMETERS,
+        UnitType::Weight => value / POUND2KG,
+        UnitType::Power => value / HP2KW,
+        UnitType::WeightPerArea => value / POUND2KG *  SQFEET2SQMETERS,
+    }
+}
+
 // Testing {{{1
 //
 #[cfg(test)]
@@ -101,6 +114,36 @@ mod units {
         metric_weight_metric:    (1.0, 1.0, UnitType::Weight, Units::Metric),
         metric_power_metric:     (1.0, 1.0, UnitType::Power, Units::Metric),
         metric_wgt_area_metric:  (1.0, 1.0, UnitType::WeightPerArea, Units::Metric),
+    }
+
+    // Test imperial {{{2
+    macro_rules! test_imperial {
+        ($($name:ident: $value:expr,)*) => {
+            $(
+                #[test]
+                fn $name() {
+                    let (expected, value, unit_type, units) = $value;
+
+                    assert_eq!(to_place(expected, 6), to_place(imperial(value, unit_type, units), 6));
+                }
+            )*
+        }
+    }
+
+    test_imperial! {
+        // name:                    (imperial, imperial, unit_type, units)
+        imperial_len_small:          (1.0 / INCH2MM, 1.0, UnitType::LengthSmall, Units::Metric),
+        imperial_len_long:           (1.0 / FEET2METERS, 1.0, UnitType::LengthLong, Units::Metric),
+        imperial_area:               (1.0 / SQFEET2SQMETERS, 1.0, UnitType::Area, Units::Metric),
+        imperial_weight:             (1.0 / POUND2KG, 1.0, UnitType::Weight, Units::Metric),
+        imperial_power:              (1.0 / HP2KW, 1.0, UnitType::Power, Units::Metric),
+        imperial_wgt_per_area:       (1.0 / POUND2KG * SQFEET2SQMETERS, 1.0, UnitType::WeightPerArea, Units::Metric),
+        imperial_len_small_imperial: (1.0, 1.0, UnitType::LengthSmall, Units::Imperial),
+        imperial_len_long_imperial:  (1.0, 1.0, UnitType::LengthLong, Units::Imperial),
+        imperial_area_imperial:      (1.0, 1.0, UnitType::Area, Units::Imperial),
+        imperial_weight_imperial:    (1.0, 1.0, UnitType::Weight, Units::Imperial),
+        imperial_power_imperial:     (1.0, 1.0, UnitType::Power, Units::Imperial),
+        imperial_wgt_area_imperial:  (1.0, 1.0, UnitType::WeightPerArea, Units::Imperial),
     }
 
     // Test from {{{2
