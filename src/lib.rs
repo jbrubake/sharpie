@@ -644,7 +644,7 @@ impl Ship { // {{{2
     /// Estimate of the pounds of non-critical shell
     /// hits required to sink or destroy the ship.
     ///
-    pub fn flotation(&self) -> f64 {
+    pub fn flotation(&self) -> Measurement {
         let a =
             if self.cap_calc_broadside() {
                 self.hull.free_cap(self.cap_calc_broadside())
@@ -662,7 +662,7 @@ impl Ship { // {{{2
 
         let e = d / self.room().powf(if self.room() > 1.0 { 2.0 } else { 1.0 });
 
-        f64::max(e * Self::year_adj(self.year), 0.0)
+        Measurement::new(f64::max(e * Self::year_adj(self.year), 0.0), Weight, Imperial)
     }
 
     // str_cross {{{3
@@ -748,7 +748,7 @@ impl Ship { // {{{2
     /// main battery or 6" shells if the ship has no main battery.
     ///
     pub fn damage_shell_num(&self) -> f64 {
-        self.flotation() / (
+        self.flotation().imp() / (
             self.damage_shell_size().powf(3.0) /
             2.0 * Self::year_adj(self.year)
             )
@@ -761,13 +761,13 @@ impl Ship { // {{{2
         (
             (
                 (
-                    (self.flotation() / 10_000.0).powf(1.0/3.0) +
+                    (self.flotation().imp() / 10_000.0).powf(1.0/3.0) +
                     (self.hull.bb.imp() / 75.0).powf(2.0) +
                     (
                         (self.armor.bulkhead.thick.imp() / 2.0 * self.armor.bulkhead.len.imp() / self.hull.lwl().imp()) /
                         0.65 * self.armor.bulkhead.hgt.imp() / self.hull.t.imp()
                     ).powf(1.0/3.0) *
-                    self.flotation() / 35_000.0 * self.hull.bb.imp() / 50.0
+                    self.flotation().imp() / 35_000.0 * self.hull.bb.imp() / 50.0
                 ) / self.room() * self.hull.lwl().imp() / (self.hull.lwl().imp() + self.hull.bb.imp())
             ) * if self.stability_adj() < 1.0 {
                     self.stability_adj().powf(4.0)
@@ -2065,8 +2065,8 @@ impl Ship { // {{{3
         addto!(r, "Overall survivability and seakeeping ability:"); // {{{5
         addto!(r, "    Survivability (Non-critical penetrating hits needed to sink ship):");
         addto!(r, "    {} lbs / {} Kg = {:.1} x {:.1} \" / {:.0} mm shells or {:.1} torpedoes",
-            num!(self.flotation(), 0),
-            num!(metric(self.flotation(), Weight, Imperial), 0),
+            num!(self.flotation().imp(), 0),
+            num!(self.flotation().metric(), 0),
             self.damage_shell_num(),
             self.damage_shell_size(),
             metric(self.damage_shell_size(), LengthSmall, Imperial),
@@ -2257,7 +2257,7 @@ impl Ship {
         s.push(format!("str_cross = {}", self.str_cross()));
         s.push(format!("str_long = {}", self.str_long()));
         s.push(format!("str_comp = {}", self.str_comp()));
-        s.push(format!("flotation = {}", self.flotation()));
+        s.push(format!("flotation = {}", self.flotation().imp()));
 
         s.join("\n")
     }
