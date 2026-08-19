@@ -1165,7 +1165,8 @@ impl Ship { // {{{2
             b.armor_barb = Measurement::new(val, LengthSmall, ship.armor.units);
         }
 
-        ship.armor.deck.md      = lines.next().unwrap().parse()?;
+        let val: f64 = lines.next().unwrap().parse()?;
+        ship.armor.deck.md = Measurement::new(val, LengthSmall, ship.armor.units);
         let val: f64 = lines.next().unwrap().parse()?;
         ship.armor.ct_fwd.thick = Measurement::new(val, LengthSmall, ship.armor.units);
         ship.engine.vmax        = lines.next().unwrap().parse()?;
@@ -1272,8 +1273,10 @@ impl Ship { // {{{2
             };
 
         ship.armor.bh_beam      = lines.next().unwrap().parse()?;
-        ship.armor.deck.fc      = lines.next().unwrap().parse()?;
-        ship.armor.deck.qd      = lines.next().unwrap().parse()?;
+        let val: f64 = lines.next().unwrap().parse()?;
+        ship.armor.deck.fc = Measurement::new(val, LengthSmall, ship.armor.units);
+        let val: f64 = lines.next().unwrap().parse()?;
+        ship.armor.deck.qd = Measurement::new(val, LengthSmall, ship.armor.units);
         ship.armor.deck.kind    = lines.next().unwrap().into();
         let val: f64 = lines.next().unwrap().parse()?;
         ship.armor.ct_aft.thick = Measurement::new(val, LengthSmall, ship.armor.units);
@@ -1881,19 +1884,19 @@ impl Ship { // {{{3
             addto!(r);
         }
 
-        if self.armor.deck.fc + self.armor.deck.md + self.armor.deck.qd > 0.0 {
+        if self.armor.deck.fc.imp() + self.armor.deck.md.imp() + self.armor.deck.qd.imp() > 0.0 {
             addto!(r, "- {}:", self.armor.deck.kind);
             // TODO: Change spelling to Fore (required to match SpringSharp reports)
             addto!(r, "    For and Aft decks: {:.2}\" / {:.0} mm",
-                self.armor.deck.md,
-                metric(self.armor.deck.md, LengthSmall, self.armor.units)
+                self.armor.deck.md.imp(),
+                self.armor.deck.md.metric()
             );
             // TODO: Change spelling to Quarterdeck (required to match SpringSharp reports)
             addto!(r, "    Forecastle: {:.2}\" / {:.0} mm    Quarter deck: {:.2}\" / {:.0} mm",
-                self.armor.deck.fc,
-                metric(self.armor.deck.fc, LengthSmall, self.armor.units),
-                self.armor.deck.qd,
-                metric(self.armor.deck.qd, LengthSmall, self.armor.units)
+                self.armor.deck.fc.imp(),
+                self.armor.deck.fc.metric(),
+                self.armor.deck.qd.imp(),
+                self.armor.deck.qd.metric()
             );
             addto!(r);
         }
@@ -2002,7 +2005,7 @@ impl Ship { // {{{3
                 );
             }
 
-            if self.armor.deck.fc + self.armor.deck.md + self.armor.deck.qd > 0.0 {
+            if self.armor.deck.fc.imp() + self.armor.deck.md.imp() + self.armor.deck.qd.imp() > 0.0 {
                 addto!(r, "    - Armour Deck: {}",
                     // TODO: Replace with the following once the circular references are fixed:
                     // self.percent_calc(self.deck.wgt()),

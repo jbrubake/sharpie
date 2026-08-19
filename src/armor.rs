@@ -200,9 +200,9 @@ mod armor {
         armor.bulkhead.len   = Measurement::new(20.0, LengthLong, Units::Imperial);
         armor.bulkhead.hgt   = Measurement::new(5.0, LengthLong, Units::Imperial);
 
-        armor.deck.fc = 0.5;
-        armor.deck.md = 1.0;
-        armor.deck.qd = 0.5;
+        armor.deck.fc = Measurement::new(0.5, LengthSmall, Units::Imperial);
+        armor.deck.md = Measurement::new(1.0, LengthSmall, Units::Imperial);
+        armor.deck.qd = Measurement::new(0.5, LengthSmall, Units::Imperial);
 
         armor.ct_fwd.thick = Measurement::new(1.0, LengthSmall, Units::Imperial);
         armor.ct_aft.thick = Measurement::new(2.0, LengthSmall, Units::Imperial);
@@ -390,17 +390,28 @@ mod ct {
 // Deck {{{1
 /// Deck armor.
 ///
-#[derive(Serialize, Deserialize, Clone, Debug, Default)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Deck {
     /// Forecastle deck thickness.
-    pub fc: f64,
+    pub fc: Measurement,
     /// Main deck thickness.
-    pub md: f64,
+    pub md: Measurement,
     /// Quarterdeck deck thickness.
-    pub qd: f64,
+    pub qd: Measurement,
 
     /// Deck armor configuration.
     pub kind: DeckType,
+}
+
+impl Default for Deck {
+    fn default() -> Self {
+        Deck {
+            fc:   Measurement::new(0.0, LengthSmall, Units::Imperial),
+            md:   Measurement::new(0.0, LengthSmall, Units::Imperial),
+            qd:   Measurement::new(0.0, LengthSmall, Units::Imperial),
+            kind: DeckType::MultipleArmored,
+        }
+    }
 }
 
 impl Deck { // {{{2
@@ -426,7 +437,7 @@ impl Deck { // {{{2
         let qd_deck = qd_len.powf(1.0 - cwp) * b * lwl * qd_len / 4.0 *
             (2.0 + 2.0_f64.powf(1.0 - cwp));
 
-        (main_deck * self.md + fc_deck * self.fc + qd_deck * self.qd) * Armor::INCH
+        (main_deck * self.md.imp() + fc_deck * self.fc.imp() + qd_deck * self.qd.imp()) * Armor::INCH
     }
 }
 
@@ -447,9 +458,9 @@ mod deck {
                     let mut ship = test_ship();
 
                     ship.armor.deck.kind = kind;
-                    ship.armor.deck.fc = fc;
-                    ship.armor.deck.md = md;
-                    ship.armor.deck.qd = qd;
+                    ship.armor.deck.fc = Measurement::new(fc, LengthSmall, Units::Imperial);
+                    ship.armor.deck.md = Measurement::new(md, LengthSmall, Units::Imperial);
+                    ship.armor.deck.qd = Measurement::new(qd, LengthSmall, Units::Imperial);
 
                     let wgt_mag    = 100.0;
                     let wgt_engine = ship.wgt_engine();
