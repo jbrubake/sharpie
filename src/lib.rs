@@ -17,7 +17,6 @@ use weights::MiscWgts;
 pub mod units;
 use units::UnitType::*;
 use units::Units::*;
-use units::metric;
 use units::Measurement;
 
 use format_num::format_num;
