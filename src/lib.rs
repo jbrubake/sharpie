@@ -735,11 +735,11 @@ impl Ship { // {{{2
     // damage_shell_size {{{3
     /// Size of shells used to calculate flotation().
     ///
-    pub fn damage_shell_size(&self) -> f64 {
+    pub fn damage_shell_size(&self) -> Measurement {
         if self.batteries[0].diam.imp() > 0.0 {
-            self.batteries[0].diam.imp()
+            self.batteries[0].diam
         } else {
-            6.0
+            Measurement::new(6.0, LengthSmall, Imperial)
         }
     }
 
@@ -749,7 +749,7 @@ impl Ship { // {{{2
     ///
     pub fn damage_shell_num(&self) -> f64 {
         self.flotation().imp() / (
-            self.damage_shell_size().powf(3.0) /
+            self.damage_shell_size().imp().powf(3.0) /
             2.0 * Self::year_adj(self.year)
             )
     }
@@ -2068,8 +2068,8 @@ impl Ship { // {{{3
             num!(self.flotation().imp(), 0),
             num!(self.flotation().metric(), 0),
             self.damage_shell_num(),
-            self.damage_shell_size(),
-            metric(self.damage_shell_size(), LengthSmall, Imperial),
+            self.damage_shell_size().imp(),
+            self.damage_shell_size().metric(),
             self.damage_torp_num()
         );
         addto!(r, "    Stability (Unstable if below 1.00): {:.2}",
