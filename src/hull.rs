@@ -1,4 +1,4 @@
-use crate::units::{Measurement, UnitType::LengthLong, Units};
+use crate::units::{Measurement, UnitType::{Area, LengthLong}, Units};
 
 use serde::{Deserialize, Serialize};
 
@@ -296,8 +296,8 @@ impl Hull { // {{{2
     // wp {{{3
     /// Waterplane Area.
     ///
-    pub fn wp(&self) -> f64 {
-        self.cwp() * self.lwl().imp() * self.b.imp()
+    pub fn wp(&self) -> Measurement {
+        Measurement::new(self.cwp() * self.lwl().imp() * self.b.imp(), Area, Units::Imperial)
     }
 
     // ws {{{3
@@ -376,7 +376,7 @@ impl Hull { // {{{2
     /// Draft at given displacement.
     ///
     pub fn t_calc(&self, d: f64) -> f64 {
-        self.t.imp() + (d - self.d()) / (self.wp() / Hull::FT3_PER_TON_SEA)
+        self.t.imp() + (d - self.d()) / (self.wp().imp() / Hull::FT3_PER_TON_SEA)
     }
 
     // ts {{{3

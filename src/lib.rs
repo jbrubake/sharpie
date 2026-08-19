@@ -210,7 +210,7 @@ impl Ship { // {{{2
             space += w.deck_space(self.hull.b.imp());
         }
 
-        space / self.hull.wp()
+        space / self.hull.wp().imp()
     }
 
     // hull_space {{{3
@@ -349,7 +349,7 @@ impl Ship { // {{{2
     /// XXX: Deck analog of hull_room()
     ///
     pub fn deck_room(&self) -> f64 {
-        self.hull.wp() /
+        self.hull.wp().imp() /
             Hull::FT3_PER_TON_SEA /
             15.0 * (1.0 - self.deck_space()) /
             self.crew_min() as f64 * self.hull.freeboard_dist()
@@ -652,7 +652,7 @@ impl Ship { // {{{2
                 self.hull.freeboard_dist()
             };
 
-        let b = (a * self.hull.wp() / Hull::FT3_PER_TON_SEA + self.hull.d()) / 2.0;
+        let b = (a * self.hull.wp().imp() / Hull::FT3_PER_TON_SEA + self.hull.d()) / 2.0;
 
         let c = b * self.stability_adj().powf(
             if self.stability_adj() > 1.0 { 0.5 } else { 4.0 }
@@ -854,7 +854,7 @@ impl Ship { // {{{2
             ) * Self::POUND2TON / (
                 self.hull.ws() +
                 2.0 * self.hull.lwl().imp() * self.hull.free_cap(self.cap_calc_broadside()) +
-                self.hull.wp()
+                self.hull.wp().imp()
             ),
             WeightPerArea, Imperial
         )
@@ -2133,8 +2133,8 @@ impl Ship { // {{{3
             self.deck_room() * 100.0
         );
         addto!(r, "    Waterplane Area: {} Square feet or {} Square metres",
-            num!(self.hull.wp(), 0),
-            num!(metric(self.hull.wp(), Area, Imperial), 0)
+            num!(self.hull.wp().imp(), 0),
+            num!(self.hull.wp().metric(), 0)
         );
         addto!(r, "    Displacement factor (Displacement / loading): {:.0} %",
             self.d_factor() * 100.0
@@ -2203,7 +2203,7 @@ impl Ship {
         s.push(format!("Cm = {}", Hull::cm(self.hull.cb())));
         s.push(format!("Cp = {}", Hull::cp(self.hull.cb())));
         s.push(format!("Cwp = {}", self.hull.cwp()));
-        s.push(format!("WP = {}", self.hull.wp()));
+        s.push(format!("WP = {}", self.hull.wp().imp()));
         s.push(format!("WS = {}", self.hull.ws()));
         s.push(format!("Ts = {}", self.hull.ts()));
         s.push("".to_string());

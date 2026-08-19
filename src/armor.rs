@@ -425,7 +425,7 @@ impl Deck { // {{{2
         let fc_len = hull.fc_len;
         let qd_len = hull.qd_len;
         let cwp    = hull.cwp();
-        let wp     = hull.wp();
+        let wp     = hull.wp().imp();
 
         let main_deck = self.kind.wgt_factor(
             d, lwl, b, fc_len, qd_len, wp, cwp, wgt_engine, wgt_mag
