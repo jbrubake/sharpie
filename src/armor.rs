@@ -74,7 +74,7 @@ impl Armor { // {{{2
     pub fn wgt(&self, hull: Hull, wgt_mag: f64, wgt_engine: f64) -> f64 {
         let lwl = hull.lwl().imp();
         let cwp = hull.cwp();
-        let b   = hull.b;
+        let b   = hull.b.imp();
         let d   = hull.d();
 
         self.main    .wgt(lwl, cwp, b) +
@@ -421,7 +421,7 @@ impl Deck { // {{{2
     pub fn wgt(&self, hull: Hull, wgt_mag: f64, wgt_engine: f64) -> f64 {
         let d      = hull.d();
         let lwl    = hull.lwl().imp();
-        let b      = hull.b;
+        let b      = hull.b.imp();
         let fc_len = hull.fc_len;
         let qd_len = hull.qd_len;
         let cwp    = hull.cwp();

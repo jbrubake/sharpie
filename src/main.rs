@@ -190,6 +190,8 @@ mod cli {
     use super::*;
     use clap::CommandFactory;
     use clap::Parser;
+    use sharpie::units::Measurement;
+    use sharpie::units::UnitType::*;
 
     // Test verify_cli {{{3
     #[test]
@@ -284,6 +286,7 @@ mod cli {
 
     // Test run {{{3
     use sharpie::hull::{BowType, SternType};
+    use sharpie::units::Units;
 
     static TMP_COUNTER: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
 
@@ -304,9 +307,9 @@ mod cli {
         ship.year = 1890;
 
         ship.hull.set_lwl(500.0, Units::Imperial);
-        ship.hull.b = 50.0;
-        ship.hull.bb = ship.hull.b;
-        ship.hull.t = 10.0;
+        ship.hull.b  = Measurement::new(50.0, LengthLong, Units::Imperial);
+        ship.hull.bb = Measurement::new(ship.hull.b.imp(), LengthLong, Units::Imperial);
+        ship.hull.t  = Measurement::new(10.0, LengthLong, Units::Imperial);
         ship.hull.bow_angle = 0.0;
         ship.hull.stern_overhang = 0.0;
 

@@ -33,13 +33,13 @@ pub struct Hull {
 
     /// Beam (hull): Maximum width in the water, excluding torpedo bulges and
     /// above water overhangs.
-    pub b: f64,
+    pub b: Measurement,
     /// Beam (bulges): Maximum width in the water including torpedo bulges but
     /// excluding above water overhangs.
     // TODO: This should be ignored if it is less than b but how does SpringSharp do it?
-    pub bb: f64,
+    pub bb: Measurement,
     /// Draft: Maximum hull draft at normal displacement.
-    pub t: f64,
+    pub t: Measurement,
 
     /// The Waterplane Coefficient is calculated differently if the engine has
     /// less than two shafts. Set this to true if the engine has less than two
@@ -99,9 +99,9 @@ impl Default for Hull { // {{{2
             lwl: None,
             loa: None,
 
-            b: 0.0,
-            bb: 0.0,
-            t: 0.0,
+            b: Measurement::new(0.0, LengthLong, Units::Imperial),
+            bb: Measurement::new(0.0, LengthLong, Units::Imperial),
+            t: Measurement::new(0.0, LengthLong, Units::Imperial),
 
             boxy: false,
 
@@ -172,7 +172,7 @@ impl Hull { // {{{2
     pub fn cs(&self) -> f64 {
         if self.lwl().imp() == 0.0 { return 0.0; } // Catch divide by zero
 
-        0.4 * (self.bb / self.lwl().imp() * 6.0).powf(1.0 / 3.0) * f64::sqrt(self.cb() / 0.52)
+        0.4 * (self.bb.imp() / self.lwl().imp() * 6.0).powf(1.0 / 3.0) * f64::sqrt(self.cb() / 0.52)
     }
 
     // cm {{{3
@@ -203,7 +203,7 @@ impl Hull { // {{{2
         match (self.cb, self.d) {
             (None, None)    => 0.0,
             (Some(cb), _)   => cb,
-            (None, Some(d)) => self.cb_calc(d, self.t),
+            (None, Some(d)) => self.cb_calc(d, self.t.imp()),
         }
     }
 
@@ -212,7 +212,7 @@ impl Hull { // {{{2
     ///
     // XXX: Should this only return values between 0.3 and 1.0 (inclusive)?
     pub fn cb_calc(&self, d: f64, t: f64) -> f64 {
-        let volume = self.lwl().imp() * self.bb * t;
+        let volume = self.lwl().imp() * self.bb.imp() * t;
 
         if volume == 0.0 {
             0.0
@@ -247,7 +247,7 @@ impl Hull { // {{{2
     /// Calculate the displacement for a given Block Coefficient.
     ///
     pub fn d_calc(&self, cb: f64) -> f64 {
-        cb * self.lwl().imp() * self.bb * self.t / Self::FT3_PER_TON_SEA
+        cb * self.lwl().imp() * self.bb.imp() * self.t.imp() / Self::FT3_PER_TON_SEA
     }
 
     // set_d {{{3
@@ -287,15 +287,15 @@ impl Hull { // {{{2
     /// Waterplane Area.
     ///
     pub fn wp(&self) -> f64 {
-        self.cwp() * self.lwl().imp() * self.b
+        self.cwp() * self.lwl().imp() * self.b.imp()
     }
 
     // ws {{{3
     /// Wetted Surface Area (Mumford).
     ///
     pub fn ws(&self) -> f64 {
-        if self.t == 0.0 { return 0.0; } // catch divide by zero
-        self.lwl().imp() * self.t * 1.7 + (self.d() * Self::FT3_PER_TON_SEA / self.t)
+        if self.t.imp() == 0.0 { return 0.0; } // catch divide by zero
+        self.lwl().imp() * self.t.imp() * 1.7 + (self.d() * Self::FT3_PER_TON_SEA / self.t.imp())
     }
 
     // set_lwl {{{3
@@ -359,21 +359,21 @@ impl Hull { // {{{2
     /// coefficient and stern type.
     ///
     pub fn leff(&self) -> f64 {
-        self.stern_type.leff(self.lwl().imp(), self.bb, self.cs())
+        self.stern_type.leff(self.lwl().imp(), self.bb.imp(), self.cs())
     }
 
     // t_calc {{{3
     /// Draft at given displacement.
     ///
     pub fn t_calc(&self, d: f64) -> f64 {
-        self.t + (d - self.d()) / (self.wp() / Hull::FT3_PER_TON_SEA)
+        self.t.imp() + (d - self.d()) / (self.wp() / Hull::FT3_PER_TON_SEA)
     }
 
     // ts {{{3
     /// Draft at side.
     ///
     pub fn ts(&self) -> f64 {
-        (Hull::cm(self.cb()) * 2.0 - 1.0) * self.t
+        (Hull::cm(self.cb()) * 2.0 - 1.0) * self.t.imp()
     }
 
     // ad_len {{{3
@@ -452,8 +452,8 @@ impl Hull { // {{{2
     /// XXX: I do not know what this does.
     ///
     pub fn free_cap(&self, cap_calc_broadside: bool) -> f64 {
-        if self.freeboard() > (self.b / 3.0) {
-            self.freeboard().powf(2.0) * 3.0 / self.b
+        if self.freeboard() > (self.b.imp() / 3.0) {
+            self.freeboard().powf(2.0) * 3.0 / self.b.imp()
         } else if cap_calc_broadside {
             self.freeboard() - 6.0
         } else {
@@ -472,9 +472,9 @@ impl Hull { // {{{2
     /// Length to beam ratio.
     ///
     pub fn len2beam(&self) -> f64 {
-        if self.bb == 0.0 { return 0.0; } // Catch divide by zero.
+        if self.bb.imp() == 0.0 { return 0.0; } // Catch divide by zero.
 
-        self.lwl().imp() / self.bb
+        self.lwl().imp() / self.bb.imp()
     }
 }
 
@@ -495,7 +495,7 @@ mod hull {
                     let (expected, lwl) = $value;
                     hull.set_lwl(lwl, Units::Imperial);
                     hull.set_cb(0.55);
-                    hull.bb = 10.0;
+                    hull.bb = Measurement::new(10.0, LengthLong, Units::Imperial);
 
                     assert_eq!(expected, to_place(hull.cs(), 5));
                 }
@@ -561,8 +561,8 @@ mod hull {
                     let mut hull = Hull::default();
                     hull.set_d(d);
                     hull.set_lwl(lwl, Units::Imperial);
-                    hull.bb = bb;
-                    hull.t = t;
+                    hull.bb = Measurement::new(bb, LengthLong, Units::Imperial);
+                    hull.t  = Measurement::new(t, LengthLong, Units::Imperial);
 
                     assert_eq!(expected, to_place(hull.cb(), 5));
                 }
@@ -598,8 +598,8 @@ mod hull {
                     let mut hull = Hull::default();
                     hull.set_cb(cb);
                     hull.set_lwl(lwl, Units::Imperial);
-                    hull.bb = bb;
-                    hull.t = t;
+                    hull.bb = Measurement::new(bb, LengthLong, Units::Imperial);
+                    hull.t  = Measurement::new(t, LengthLong, Units::Imperial);
 
                     assert_eq!(expected, to_place(hull.d(), 2));
                 }
@@ -655,7 +655,7 @@ mod hull {
                     let (expected, t) = $value;
                     hull.set_d(1000.0);
                     hull.set_lwl(100.0, Units::Imperial);
-                    hull.t = t;
+                    hull.t = Measurement::new(t, LengthLong, Units::Imperial);
 
                     assert_eq!(expected, to_place(hull.ws(), 2));
                 }
@@ -752,9 +752,9 @@ mod hull {
                     let mut hull = Hull::default();
                     hull.set_d(5000.0);
                     hull.set_lwl(500.0, Units::Imperial);
-                    hull.b = 50.0;
-                    hull.bb = hull.b;
-                    hull.t = 10.0;
+                    hull.b  = Measurement::new(50.0, LengthLong, Units::Imperial);
+                    hull.bb = Measurement::new(hull.b.imp(), LengthLong, Units::Imperial);
+                    hull.t  = Measurement::new(10.0, LengthLong, Units::Imperial);
 
                     assert_eq!(expected, to_place(hull.t_calc(hull.d() + d_plus), 2));
                 }
@@ -777,9 +777,9 @@ mod hull {
                     let mut hull = Hull::default();
                     hull.set_d(5000.0);
                     hull.set_lwl(500.0, Units::Imperial);
-                    hull.t = t;
-                    hull.b = 50.0;
-                    hull.bb = hull.b;
+                    hull.t  = Measurement::new(t, LengthLong, Units::Imperial);
+                    hull.b  = Measurement::new(50.0, LengthLong, Units::Imperial);
+                    hull.bb = Measurement::new(hull.b.imp(), LengthLong, Units::Imperial);
 
                     assert_eq!(expected, to_place(hull.ts(), 2));
                 }
@@ -1048,7 +1048,7 @@ mod hull {
 
                     let mut hull = Hull::default();
 
-                    hull.b = b;
+                    hull.b = Measurement::new(b, LengthLong, Units::Imperial);
 
                     hull.fc_len = 0.25;
                     hull.fc_fwd = 10.0;
@@ -1088,7 +1088,7 @@ mod hull {
 
                     let (expected, lwl) = $value;
                     hull.set_lwl(lwl, Units::Imperial);
-                    hull.bb = 10.0;
+                    hull.bb = Measurement::new(10.0, LengthLong, Units::Imperial);
                     hull.set_cb(0.55);
                     hull.stern_type = SternType::Cruiser;
 
@@ -1114,7 +1114,7 @@ mod hull {
 
                     let (expected, bb) = $value;
                     hull.set_lwl(100.0, Units::Imperial);
-                    hull.bb = bb;
+                    hull.bb = Measurement::new(bb, LengthLong, Units::Imperial);
 
                     assert_eq!(expected, to_place(hull.len2beam(), 2));
                 }
