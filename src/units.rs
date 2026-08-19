@@ -79,6 +79,40 @@ pub fn imperial(value: f64, unit_type: UnitType, units: Units) -> f64 { // {{{3
     }
 }
 
+// Measurement {{{1
+//
+#[derive(PartialEq, Serialize, Deserialize, Clone, Copy, Debug, Default)]
+pub struct Measurement {
+    pub v: f64,
+    units: Units,
+    factor: f64,
+}
+
+impl Measurement { // {{{2
+    pub fn new(v: f64, unit_type: UnitType, units: Units) -> Self {
+        Self { v, units, factor: Self::factor_for(unit_type) }
+    }
+
+    fn factor_for(unit_type: UnitType) -> f64 {
+        match unit_type {
+            UnitType::LengthSmall   => INCH2MM,
+            UnitType::LengthLong    => FEET2METERS,
+            UnitType::Area          => SQFEET2SQMETERS,
+            UnitType::Weight        => POUND2KG,
+            UnitType::Power         => HP2KW,
+            UnitType::WeightPerArea => POUND2KG / SQFEET2SQMETERS,
+        }
+    }
+
+    pub fn metric(&self) -> f64 {
+        if self.units == Units::Imperial { self.v * self.factor } else { self.v }
+    }
+
+    pub fn imp(&self) -> f64 {
+        if self.units == Units::Metric { self.v / self.factor } else { self.v }
+    }
+}
+
 // Testing {{{1
 //
 #[cfg(test)]
@@ -193,5 +227,65 @@ mod units {
     #[test]
     fn default_imperial() {
         assert_eq!(Units::Imperial, Units::default());
+    }
+
+    // Test measurement metric {{{2
+    macro_rules! test_measurement_metric {
+        ($($name:ident: $value:expr,)*) => {
+            $(
+                #[test]
+                fn $name() {
+                    let (expected, value, unit_type, units) = $value;
+                    let m = Measurement::new(value, unit_type, units);
+
+                    assert_eq!(to_place(expected, 6), to_place(m.metric(), 6));
+                }
+            )*
+        }
+    }
+
+    test_measurement_metric! {
+        mm_len_small:   (1.0 * INCH2MM,                    1.0, UnitType::LengthSmall,   Units::Imperial),
+        mm_len_long:    (1.0 * FEET2METERS,                1.0, UnitType::LengthLong,    Units::Imperial),
+        mm_area:        (1.0 * SQFEET2SQMETERS,            1.0, UnitType::Area,          Units::Imperial),
+        mm_weight:      (1.0 * POUND2KG,                   1.0, UnitType::Weight,        Units::Imperial),
+        mm_power:       (1.0 * HP2KW,                      1.0, UnitType::Power,         Units::Imperial),
+        mm_wgt_area:    (1.0 / SQFEET2SQMETERS * POUND2KG, 1.0, UnitType::WeightPerArea, Units::Imperial),
+        mm_len_small_m: (1.0,                              1.0, UnitType::LengthSmall,   Units::Metric),
+        mm_len_long_m:  (1.0,                              1.0, UnitType::LengthLong,    Units::Metric),
+        mm_area_m:      (1.0,                              1.0, UnitType::Area,          Units::Metric),
+        mm_weight_m:    (1.0,                              1.0, UnitType::Weight,        Units::Metric),
+        mm_power_m:     (1.0,                              1.0, UnitType::Power,         Units::Metric),
+        mm_wgt_area_m:  (1.0,                              1.0, UnitType::WeightPerArea, Units::Metric),
+    }
+
+    // Test measurement imp {{{2
+    macro_rules! test_measurement_imp {
+        ($($name:ident: $value:expr,)*) => {
+            $(
+                #[test]
+                fn $name() {
+                    let (expected, value, unit_type, units) = $value;
+                    let m = Measurement::new(value, unit_type, units);
+
+                    assert_eq!(to_place(expected, 6), to_place(m.imp(), 6));
+                }
+            )*
+        }
+    }
+
+    test_measurement_imp! {
+        imp_len_small:  (1.0 / INCH2MM, 1.0, UnitType::LengthSmall, Units::Metric),
+        imp_len_long:   (1.0 / FEET2METERS, 1.0, UnitType::LengthLong, Units::Metric),
+        imp_area:       (1.0 / SQFEET2SQMETERS, 1.0, UnitType::Area, Units::Metric),
+        imp_weight:     (1.0 / POUND2KG, 1.0, UnitType::Weight, Units::Metric),
+        imp_power:      (1.0 / HP2KW, 1.0, UnitType::Power, Units::Metric),
+        imp_wgt_area:   (1.0 / POUND2KG * SQFEET2SQMETERS, 1.0, UnitType::WeightPerArea, Units::Metric),
+        imp_len_small_i: (1.0, 1.0, UnitType::LengthSmall, Units::Imperial),
+        imp_len_long_i:  (1.0, 1.0, UnitType::LengthLong, Units::Imperial),
+        imp_area_i:      (1.0, 1.0, UnitType::Area, Units::Imperial),
+        imp_weight_i:    (1.0, 1.0, UnitType::Weight, Units::Imperial),
+        imp_power_i:     (1.0, 1.0, UnitType::Power, Units::Imperial),
+        imp_wgt_area_i:  (1.0, 1.0, UnitType::WeightPerArea, Units::Imperial),
     }
 }
