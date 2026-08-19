@@ -315,15 +315,15 @@ mod cli {
         ship.hull.fc_aft = 10.0;
 
         ship.hull.fd_len = 0.30;
-        ship.hull.fd_fwd = ship.hull.fc_len;
-        ship.hull.fd_aft = ship.hull.fc_len;
+        ship.hull.fd_fwd = ship.hull.fc_fwd;
+        ship.hull.fd_aft = ship.hull.fc_fwd;
 
-        ship.hull.ad_fwd = ship.hull.fc_len;
-        ship.hull.ad_aft = ship.hull.fc_len;
+        ship.hull.ad_fwd = ship.hull.fc_fwd;
+        ship.hull.ad_aft = ship.hull.fc_fwd;
 
         ship.hull.qd_len = 0.15;
-        ship.hull.qd_fwd = ship.hull.fc_len;
-        ship.hull.qd_aft = ship.hull.fc_len;
+        ship.hull.qd_fwd = ship.hull.fc_fwd;
+        ship.hull.qd_aft = ship.hull.fc_fwd;
 
         ship.hull.bow_type = BowType::Normal;
         ship.hull.stern_type = SternType::Cruiser;
