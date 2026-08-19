@@ -339,7 +339,7 @@ impl Hull { // {{{2
             (Some(len), _)    => len.clone(),
             (None, Some(loa)) =>
                 Measurement::new(
-                    loa.imp() - f64::max( self.bow_type.ram_len(), self.stem_len()).max(0.0)
+                    loa.imp() - f64::max( self.bow_type.ram_len().imp(), self.stem_len()).max(0.0)
                         - self.stern_overhang.imp().max(0.0),
                     LengthLong, Units::Imperial
                 ),
@@ -357,7 +357,7 @@ impl Hull { // {{{2
             (Some(len), _)    => len.clone(),
             (None, Some(lwl)) =>
                 Measurement::new(
-                    lwl.imp() + f64::max( self.bow_type.ram_len(), self.stem_len()).max(0.0)
+                    lwl.imp() + f64::max( self.bow_type.ram_len().imp(), self.stem_len()).max(0.0)
                         + self.stern_overhang.imp().max(0.0),
                     LengthLong, Units::Imperial
                 ),
@@ -694,7 +694,7 @@ mod hull {
                     hull.stern_overhang = Measurement::new(stern, LengthLong, Units::Imperial);
 
                     if ram != 0.0 {
-                        hull.bow_type = BowType::Ram(ram);
+                        hull.bow_type = BowType::Ram(Measurement::new(ram, LengthLong, Units::Imperial));
                     } else {
                         hull.bow_type = BowType::Normal;
                     }
@@ -730,7 +730,7 @@ mod hull {
                     hull.stern_overhang = Measurement::new(stern, LengthLong, Units::Imperial);
 
                     if ram != 0.0 {
-                        hull.bow_type = BowType::Ram(ram);
+                        hull.bow_type = BowType::Ram(Measurement::new(ram, LengthLong, Units::Imperial));
                     } else {
                         hull.bow_type = BowType::Normal;
                     }
@@ -1264,7 +1264,7 @@ mod stern_type {
 #[derive(PartialEq, Serialize, Deserialize, Clone, Debug, Default)]
 pub enum BowType {
     /// Ram bow, including length.
-    Ram(f64),
+    Ram(Measurement),
     /// Bulbous, straight bow.
     BulbStraight,
     /// Bulbous, forward bow.
@@ -1285,7 +1285,7 @@ impl From<&str> for BowType {
         match index {
             "1" => Self::BulbStraight,
             "2" => Self::BulbForward,
-            "3" => Self::Ram(0.0),
+            "3" => Self::Ram(Measurement::new(0.0, LengthLong, Units::Imperial)),
             "0" | _ => Self::Normal,
         }
     }
@@ -1307,10 +1307,10 @@ impl BowType { // {{{2
     // ram_len {{{3
     /// Return length of the ram.
     ///
-    pub fn ram_len(&self) -> f64 {
+    pub fn ram_len(&self) -> Measurement {
         match self {
             Self::Ram(len) => *len,
-            _              => 0.0,
+            _              => Measurement::new(0.0, LengthLong, Units::Imperial),
         }
     }
 }
