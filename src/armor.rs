@@ -1,5 +1,5 @@
 use crate::Hull;
-use crate::units::Units;
+use crate::units::{Measurement, UnitType::{LengthSmall, LengthLong}, Units};
 
 use serde::{Deserialize, Serialize};
 
@@ -93,7 +93,7 @@ impl Armor { // {{{2
     /// Percentage of the "vital areas" covered by the main belt.
     ///
     pub fn belt_coverage(&self, lwl: f64) -> f64 {
-        self.main.len / (lwl * 0.65)
+        self.main.len.imp() / (lwl * 0.65)
     }
 
     // max_hgt {{{3
@@ -123,7 +123,7 @@ mod armor {
                     let (expected, belt_len, lwl) = $value;
 
                     let mut armor = Armor::default();
-                    armor.main.len = belt_len;
+                    armor.main.len = Measurement::new(belt_len, LengthLong, Units::Imperial);
 
                     assert_eq!(expected, to_place(armor.belt_coverage(lwl), 2));
                 }
@@ -180,25 +180,25 @@ mod armor {
         let ship = test_ship();
         let mut armor = ship.armor;
 
-        armor.main.thick = 1.0;
-        armor.main.len = 20.0;
-        armor.main.hgt = 5.0;
+        armor.main.thick = Measurement::new(1.0, LengthSmall, Units::Imperial);
+        armor.main.len   = Measurement::new(20.0, LengthLong, Units::Imperial);
+        armor.main.hgt   = Measurement::new(5.0, LengthLong, Units::Imperial);
 
-        armor.end.thick = 1.0;
-        armor.end.len = 20.0;
-        armor.end.hgt = 5.0;
+        armor.end.thick = Measurement::new(1.0, LengthSmall, Units::Imperial);
+        armor.end.len   = Measurement::new(20.0, LengthLong, Units::Imperial);
+        armor.end.hgt   = Measurement::new(5.0, LengthLong, Units::Imperial);
 
-        armor.upper.thick = 1.0;
-        armor.upper.len = 20.0;
-        armor.upper.hgt = 5.0;
+        armor.upper.thick = Measurement::new(1.0, LengthSmall, Units::Imperial);
+        armor.upper.len   = Measurement::new(20.0, LengthLong, Units::Imperial);
+        armor.upper.hgt   = Measurement::new(5.0, LengthLong, Units::Imperial);
 
-        armor.bulge.thick = 1.0;
-        armor.bulge.len = 20.0;
-        armor.bulge.hgt = 5.0;
+        armor.bulge.thick = Measurement::new(1.0, LengthSmall, Units::Imperial);
+        armor.bulge.len   = Measurement::new(20.0, LengthLong, Units::Imperial);
+        armor.bulge.hgt   = Measurement::new(5.0, LengthLong, Units::Imperial);
 
-        armor.bulkhead.thick = 1.0;
-        armor.bulkhead.len = 20.0;
-        armor.bulkhead.hgt = 5.0;
+        armor.bulkhead.thick = Measurement::new(1.0, LengthSmall, Units::Imperial);
+        armor.bulkhead.len   = Measurement::new(20.0, LengthLong, Units::Imperial);
+        armor.bulkhead.hgt   = Measurement::new(5.0, LengthLong, Units::Imperial);
 
         armor.deck.fc = 0.5;
         armor.deck.md = 1.0;
@@ -217,11 +217,11 @@ mod armor {
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Belt {
     /// Belt thickness.
-    pub thick: f64,
+    pub thick: Measurement,
     /// Belt length.
-    pub len: f64,
+    pub len: Measurement,
     /// Belt height.
-    pub hgt: f64,
+    pub hgt: Measurement,
 
     /// Type of belt.
     ///
@@ -235,15 +235,19 @@ impl Belt { // {{{2
     /// Belt weight.
     ///
     pub fn wgt(&self, lwl: f64, cwp: f64, b: f64) -> f64 {
+        let len   = self.len.imp();
+        let hgt   = self.hgt.imp();
+        let thick = self.thick.imp();
+
         // Calculate the area of one bulkhead across the beam
         let beam_bulkhead = match self.kind {
             BeltType::Main | BeltType::Upper =>
-                (1.0 - self.len / lwl).powf(1.0 - cwp) * b,
+                (1.0 - len / lwl).powf(1.0 - cwp) * b,
             _ => 0.0
         };
 
         // Calculate the weight of one belt and one bulkhead across the beam
-        let wgt = (self.len + beam_bulkhead) * self.hgt * self.thick * Armor::INCH;
+        let wgt = (len + beam_bulkhead) * hgt * thick * Armor::INCH;
 
         // Double the weight to account for two belts and two beam bulkheads
         wgt * 2.0
@@ -254,9 +258,9 @@ impl Belt { // {{{2
     ///
     pub fn new(kind: BeltType) -> Belt {
         Belt {
-            thick: 0.0,
-            len: 0.0,
-            hgt: 0.0,
+            thick: Measurement::new(0.0, LengthSmall, Units::Imperial),
+            len:   Measurement::new(0.0, LengthLong, Units::Imperial),
+            hgt:   Measurement::new(0.0, LengthLong, Units::Imperial),
             kind,
         }
     }
@@ -280,7 +284,9 @@ mod belt {
 
                     let (expected, thick, len, hgt, kind) = $value;
                     let mut belt = Belt::new(kind);
-                    belt.thick = thick; belt.len = len; belt.hgt = hgt;
+                    belt.thick = Measurement::new(thick, LengthSmall, Units::Imperial);
+                    belt.len   = Measurement::new(len, LengthLong, Units::Imperial);
+                    belt.hgt   = Measurement::new(hgt, LengthLong, Units::Imperial);
 
                     assert_eq!(expected, to_place(belt.wgt(lwl, cwp, b), 2));
                 }

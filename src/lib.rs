@@ -752,8 +752,8 @@ impl Ship { // {{{2
                     (self.flotation() / 10_000.0).powf(1.0/3.0) +
                     (self.hull.bb / 75.0).powf(2.0) +
                     (
-                        (self.armor.bulkhead.thick / 2.0 * self.armor.bulkhead.len / self.hull.lwl()) /
-                        0.65 * self.armor.bulkhead.hgt / self.hull.t
+                        (self.armor.bulkhead.thick.imp() / 2.0 * self.armor.bulkhead.len.imp() / self.hull.lwl()) /
+                        0.65 * self.armor.bulkhead.hgt.imp() / self.hull.t
                     ).powf(1.0/3.0) *
                     self.flotation() / 35_000.0 * self.hull.bb / 50.0
                 ) / self.room() * self.hull.lwl() / (self.hull.lwl() + self.hull.bb)
@@ -1128,21 +1128,33 @@ impl Ship { // {{{2
         let diam_val: f64  = lines.next().unwrap().parse()?;
         ship.torps[0].diam = Measurement::new(diam_val, LengthSmall, ship.torps[0].units);
 
-        ship.armor.main.thick = lines.next().unwrap().parse()?;
-        ship.armor.main.len   = lines.next().unwrap().parse()?;
-        ship.armor.main.hgt   = lines.next().unwrap().parse()?;
+        let val: f64 = lines.next().unwrap().parse()?;
+        ship.armor.main.thick = Measurement::new(val, LengthSmall, ship.armor.units);
+        let val: f64 = lines.next().unwrap().parse()?;
+        ship.armor.main.len   = Measurement::new(val, LengthLong, ship.armor.units);
+        let val: f64 = lines.next().unwrap().parse()?;
+        ship.armor.main.hgt   = Measurement::new(val, LengthLong, ship.armor.units);
 
-        ship.armor.end.thick = lines.next().unwrap().parse()?;
-        ship.armor.end.len   = lines.next().unwrap().parse()?;
-        ship.armor.end.hgt   = lines.next().unwrap().parse()?;
+        let val: f64 = lines.next().unwrap().parse()?;
+        ship.armor.end.thick = Measurement::new(val, LengthSmall, ship.armor.units);
+        let val: f64 = lines.next().unwrap().parse()?;
+        ship.armor.end.len   = Measurement::new(val, LengthLong, ship.armor.units);
+        let val: f64 = lines.next().unwrap().parse()?;
+        ship.armor.end.hgt   = Measurement::new(val, LengthLong, ship.armor.units);
 
-        ship.armor.upper.thick = lines.next().unwrap().parse()?;
-        ship.armor.upper.len   = lines.next().unwrap().parse()?;
-        ship.armor.upper.hgt   = lines.next().unwrap().parse()?;
+        let val: f64 = lines.next().unwrap().parse()?;
+        ship.armor.upper.thick = Measurement::new(val, LengthSmall, ship.armor.units);
+        let val: f64 = lines.next().unwrap().parse()?;
+        ship.armor.upper.len   = Measurement::new(val, LengthLong, ship.armor.units);
+        let val: f64 = lines.next().unwrap().parse()?;
+        ship.armor.upper.hgt   = Measurement::new(val, LengthLong, ship.armor.units);
 
-        ship.armor.bulkhead.thick = lines.next().unwrap().parse()?;
-        ship.armor.bulkhead.len   = lines.next().unwrap().parse()?;
-        ship.armor.bulkhead.hgt   = lines.next().unwrap().parse()?;
+        let val: f64 = lines.next().unwrap().parse()?;
+        ship.armor.bulkhead.thick = Measurement::new(val, LengthSmall, ship.armor.units);
+        let val: f64 = lines.next().unwrap().parse()?;
+        ship.armor.bulkhead.len   = Measurement::new(val, LengthLong, ship.armor.units);
+        let val: f64 = lines.next().unwrap().parse()?;
+        ship.armor.bulkhead.hgt   = Measurement::new(val, LengthLong, ship.armor.units);
 
         for b in ship.batteries.iter_mut() {
             let val: f64 = lines.next().unwrap().parse()?;
@@ -1245,9 +1257,12 @@ impl Ship { // {{{2
         ship.wgts.above = lines.next().unwrap().parse()?;
 
         ship.armor.incline     = lines.next().unwrap().parse()?;
-        ship.armor.bulge.thick = lines.next().unwrap().parse()?;
-        ship.armor.bulge.len   = lines.next().unwrap().parse()?;
-        ship.armor.bulge.hgt   = lines.next().unwrap().parse()?;
+        let val: f64 = lines.next().unwrap().parse()?;
+        ship.armor.bulge.thick = Measurement::new(val, LengthSmall, ship.armor.units);
+        let val: f64 = lines.next().unwrap().parse()?;
+        ship.armor.bulge.len   = Measurement::new(val, LengthLong, ship.armor.units);
+        let val: f64 = lines.next().unwrap().parse()?;
+        ship.armor.bulge.hgt   = Measurement::new(val, LengthLong, ship.armor.units);
 
         ship.armor.bh_kind =
             match lines.next().unwrap().parse()? {
@@ -1749,50 +1764,50 @@ impl Ship { // {{{3
         addto!(r);
         addto!(r, "Armour:");
 
-        if self.armor.main.thick + self.armor.end.thick + self.armor.upper.thick + self.armor.bulkhead.thick > 0.0 {
+        if self.armor.main.thick.imp() + self.armor.end.thick.imp() + self.armor.upper.thick.imp() + self.armor.bulkhead.thick.imp() > 0.0 {
             addto!(r, " - Belts:    Width (max)    Length (avg)    Height (avg)");
-            if self.armor.main.thick > 0.0 {
+            if self.armor.main.thick.imp() > 0.0 {
                 addto!(r, "    Main:    {}\" / {:.0} mm    {:.2} ft / {:.2} m    {:.2} ft / {:.2} m",
-                    num!(self.armor.main.thick, if self.armor.main.thick < 10.0 { 2 } else { 1 }),
-                    metric(self.armor.main.thick, LengthSmall, self.armor.units),
-                    self.armor.main.len,
-                    metric(self.armor.main.len, LengthLong, self.armor.units),
-                    self.armor.main.hgt,
-                    metric(self.armor.main.hgt, LengthLong, self.armor.units),
+                    num!(self.armor.main.thick.imp(), if self.armor.main.thick.imp() < 10.0 { 2 } else { 1 }),
+                    self.armor.main.thick.metric(),
+                    self.armor.main.len.imp(),
+                    self.armor.main.len.metric(),
+                    self.armor.main.hgt.imp(),
+                    self.armor.main.hgt.metric(),
                 );
             }
 
-            if self.armor.end.thick > 0.0 {
+            if self.armor.end.thick.imp() > 0.0 {
                 addto!(r, "    Ends:    {}\" / {:.0} mm    {:.2} ft / {:.2} m    {:.2} ft / {:.2} m",
-                    num!(self.armor.end.thick, if self.armor.end.thick < 10.0 { 2 } else { 1 }),
-                    metric(self.armor.end.thick, LengthSmall, self.armor.units),
-                    self.armor.end.len,
-                    metric(self.armor.end.len, LengthLong, self.armor.units),
-                    self.armor.end.hgt,
-                    metric(self.armor.end.hgt, LengthLong, self.armor.units),
+                    num!(self.armor.end.thick.imp(), if self.armor.end.thick.imp() < 10.0 { 2 } else { 1 }),
+                    self.armor.end.thick.metric(),
+                    self.armor.end.len.imp(),
+                    self.armor.end.len.metric(),
+                    self.armor.end.hgt.imp(),
+                    self.armor.end.hgt.metric(),
                 );
-                if self.armor.main.len + self.armor.end.len < self.hull.lwl() {
+                if self.armor.main.len.imp() + self.armor.end.len.imp() < self.hull.lwl() {
                     addto!(r, "    {:.2} ft / {:.2} m Unarmoured ends",
-                        self.hull.lwl() - self.armor.main.len - self.armor.end.len,
-                        metric(self.hull.lwl() - self.armor.main.len - self.armor.end.len, LengthLong, self.armor.units)
+                        self.hull.lwl() - self.armor.main.len.imp() - self.armor.end.len.imp(),
+                        metric(self.hull.lwl() - self.armor.main.len.imp() - self.armor.end.len.imp(), LengthLong, self.armor.units)
                     );
                 }
-            } else if self.armor.main.len < self.hull.lwl() {
+            } else if self.armor.main.len.imp() < self.hull.lwl() {
                 addto!(r, "    Ends:    Unarmoured");
             }
 
-            if self.armor.upper.thick > 0.0 {
+            if self.armor.upper.thick.imp() > 0.0 {
                 addto!(r, "    Upper:    {}\" / {:.0} mm    {:.2} ft / {:.2} m    {:.2} ft / {:.2} m",
-                    num!(self.armor.upper.thick, if self.armor.upper.thick < 10.0 { 2 } else { 1 }),
-                    metric(self.armor.upper.thick, LengthSmall, self.armor.units),
-                    self.armor.upper.len,
-                    metric(self.armor.upper.len, LengthLong, self.armor.units),
-                    self.armor.upper.hgt,
-                    metric(self.armor.upper.hgt, LengthLong, self.armor.units),
+                    num!(self.armor.upper.thick.imp(), if self.armor.upper.thick.imp() < 10.0 { 2 } else { 1 }),
+                    self.armor.upper.thick.metric(),
+                    self.armor.upper.len.imp(),
+                    self.armor.upper.len.metric(),
+                    self.armor.upper.hgt.imp(),
+                    self.armor.upper.hgt.metric(),
                 );
             }
 
-            if self.armor.main.thick > 0.0 {
+            if self.armor.main.thick.imp() > 0.0 {
                 addto!(r, "    Main Belt covers {:.0} % of normal length",
                     self.armor.belt_coverage(self.hull.lwl())*100.0
                 );
@@ -1807,7 +1822,7 @@ impl Ship { // {{{3
                 );
             }
 
-            if self.armor.bulkhead.thick > 0.0 {
+            if self.armor.bulkhead.thick.imp() > 0.0 {
                 addto!(r);
                 addto!(r, "- Torpedo Bulkhead - {} bulkheads:",
                     match self.armor.bh_kind {
@@ -1816,12 +1831,12 @@ impl Ship { // {{{3
                     }
                 );
                 addto!(r, "        {}\" / {:.0} mm    {:.2} ft / {:.2} m    {:.2} ft / {:.2} m",
-                    num!(self.armor.bulkhead.thick, if self.armor.bulkhead.thick < 10.0 { 2 } else { 1 }),
-                    metric(self.armor.bulkhead.thick, LengthSmall, self.armor.units),
-                    self.armor.bulkhead.len,
-                    metric(self.armor.bulkhead.len, LengthLong, self.armor.units),
-                    self.armor.bulkhead.hgt,
-                    metric(self.armor.bulkhead.hgt, LengthLong, self.armor.units),
+                    num!(self.armor.bulkhead.thick.imp(), if self.armor.bulkhead.thick.imp() < 10.0 { 2 } else { 1 }),
+                    self.armor.bulkhead.thick.metric(),
+                    self.armor.bulkhead.len.imp(),
+                    self.armor.bulkhead.len.metric(),
+                    self.armor.bulkhead.hgt.imp(),
+                    self.armor.bulkhead.hgt.metric(),
                 );
                 addto!(r, "    Beam between torpedo bulkheads {:.2} ft / {:.2} m",
                     self.armor.bh_beam,
@@ -1830,18 +1845,18 @@ impl Ship { // {{{3
                 addto!(r);
             }
 
-            if self.armor.bulge.thick > 0.0 || self.wgts.void > 0 {
+            if self.armor.bulge.thick.imp() > 0.0 || self.wgts.void > 0 {
                 addto!(r, "- Hull {}:",
                     if self.hull.b == self.hull.bb { "void" }
                     else { "Bulges" }
                 );
                 addto!(r, "        {}\" / {:.0} mm    {:.2} ft / {:.2} m    {:.2} ft / {:.2} m",
-                    num!(self.armor.bulge.thick, if self.armor.bulge.thick < 10.0 { 2 } else { 1 }),
-                    metric(self.armor.bulge.thick, LengthSmall, self.armor.units),
-                    self.armor.bulge.len,
-                    metric(self.armor.bulge.len, LengthLong, self.armor.units),
-                    self.armor.bulge.hgt,
-                    metric(self.armor.bulge.hgt, LengthLong, self.armor.units),
+                    num!(self.armor.bulge.thick.imp(), if self.armor.bulge.thick.imp() < 10.0 { 2 } else { 1 }),
+                    self.armor.bulge.thick.metric(),
+                    self.armor.bulge.len.imp(),
+                    self.armor.bulge.len.metric(),
+                    self.armor.bulge.hgt.imp(),
+                    self.armor.bulge.hgt.metric(),
                 );
                 addto!(r);
             }
@@ -1958,7 +1973,7 @@ impl Ship { // {{{3
         if self.wgt_armor() > 0.0 {
             addto!(r, "    Armour: {}", self.percent_calc(self.wgt_armor()),);
 
-            if self.armor.main.thick + self.armor.end.thick + self.armor.upper.thick > 0.0 {
+            if self.armor.main.thick.imp() + self.armor.end.thick.imp() + self.armor.upper.thick.imp() > 0.0 {
                 addto!(r, "    - Belts: {}",
                     self.percent_calc(self.armor.main.wgt(self.hull.lwl(), self.hull.cwp(), self.hull.b) +
                         self.armor.end.wgt(self.hull.lwl(), self.hull.cwp(), self.hull.b) +
@@ -1966,7 +1981,7 @@ impl Ship { // {{{3
                 );
             }
 
-            if self.armor.bulkhead.thick > 0.0 {
+            if self.armor.bulkhead.thick.imp() > 0.0 {
                 addto!(r, "    - Torpedo bulkhead: {}",
                     self.percent_calc(self.armor.bulkhead.wgt(self.hull.lwl(), self.hull.cwp(), self.hull.b)),
                 );
