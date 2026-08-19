@@ -1,5 +1,6 @@
 use crate::Hull;
 use crate::units::Units;
+use crate::units::UnitType;
 use crate::units::Measurement;
 use crate::{Armor, Ship};
 
@@ -20,7 +21,7 @@ pub struct Battery {
     pub num: u32,
 
     /// Gun barrel diameter in inches.
-    pub diam: f64,
+    pub diam: Measurement,
     /// Gun barrel length in calibers.
     pub len: f64,
 
@@ -58,7 +59,7 @@ impl Default for Battery { // {{{2
             units: Units::Imperial,
 
             num: 0,
-            diam: 0.0,
+            diam: Measurement::new(0.0, UnitType::LengthSmall, Units::Imperial),
             len: 0.0,
             year: 1920,
             shells: 0,
@@ -125,7 +126,7 @@ impl Battery { // {{{2
 
         match self.free(hull) {
             0.0 => 0.0, // Catch divide by zero
-            free => ((super_ as f64 / self.num as f64) * (self.diam * 0.6).max(7.5) + free) / free,
+            free => ((super_ as f64 / self.num as f64) * (self.diam.imp() * 0.6).max(7.5) + free) / free,
         }
     }
 
@@ -151,7 +152,7 @@ impl Battery { // {{{2
 
         let mut diameter_calc = 0.0;
         for g in self.groups.iter() {
-            diameter_calc += g.diameter_calc(self.diam) * g.num_mounts() as f64;
+            diameter_calc += g.diameter_calc(self.diam.imp()) * g.num_mounts() as f64;
         }
 
         let wgt = wgt * diameter_calc * self.house_hgt() * self.armor_face * Armor::INCH;
@@ -165,7 +166,7 @@ impl Battery { // {{{2
     fn house_hgt(&self) -> f64 {
         f64::max(
             7.5,
-            0.625 * self.diam * self.mount_kind.gunhouse_hgt_factor(),
+            0.625 * self.diam.imp() * self.mount_kind.gunhouse_hgt_factor(),
         )
     }
 
@@ -177,12 +178,12 @@ impl Battery { // {{{2
 
         let mut a = 0.0;
         for g in self.groups.iter() {
-            a += g.diameter_calc(self.diam) * g.num_mounts() as f64;
+            a += g.diameter_calc(self.diam.imp()) * g.num_mounts() as f64;
         }
 
         let mut b = 0.0;
         for g in self.groups.iter() {
-            b += (g.diameter_calc(self.diam) / 2.0).powf(2.0) * g.num_mounts() as f64;
+            b += (g.diameter_calc(self.diam.imp()) / 2.0).powf(2.0) * g.num_mounts() as f64;
         }
 
         (bw1 * a * self.house_hgt() + PI * bw2 * b) * self.armor_back * Armor::INCH
@@ -211,7 +212,7 @@ impl Battery { // {{{2
             (1.0 - (a as f64 - 2.0) / 6.0) *
                 self.armor_barb *
                  self.num as f64 *
-                 self.diam.powf(1.2) *
+                 self.diam.imp().powf(1.2) *
                  b *
                  self.free(hull.clone()) / 16.0 *
                  self.super_(hull.clone()) *
@@ -274,7 +275,7 @@ impl Battery { // {{{2
     /// Estimated shell weight.
     ///
     pub fn shell_wgt_est(&self) -> f64 {
-        self.diam.powf(3.0) / 1.9830943211886 * self.date_factor() *
+        self.diam.imp().powf(3.0) / 1.9830943211886 * self.date_factor() *
             ( 1.0 + if self.len < 45.0 { -1.0 } else { 1.0 } * (45.0 - self.len).abs().sqrt() / 45.0 )
     }
 
@@ -282,10 +283,10 @@ impl Battery { // {{{2
     /// Weight of the barrels in the battery.
     ///
     pub fn gun_wgt(&self) -> f64 {
-        if self.diam == 0.0 { return 0.0; }
+        if self.diam.imp() == 0.0 { return 0.0; }
 
         self.shell_wgt_est() * (self.len / 812.289434917877 *
-            (1.0 + (1.0 / self.diam).powf(2.3297949327695))
+            (1.0 + (1.0 / self.diam.imp()).powf(2.3297949327695))
             ) * self.num as f64
     }
 
@@ -293,7 +294,7 @@ impl Battery { // {{{2
     /// Weight of a single gun mount.
     ///
     pub fn mount_wgt(&self) -> f64 {
-        if self.diam == 0.0 { return 0.0; } // Catch divide by zero
+        if self.diam.imp() == 0.0 { return 0.0; } // Catch divide by zero
 
         let wgt = self.mount_kind.wgt() *
             if self.mount_kind.wgt_adj() < 0.6 {
@@ -302,12 +303,12 @@ impl Battery { // {{{2
                 self.kind.wgt_lg()
             };
 
-        let wgt = (wgt + 1.0 / self.diam.powf(0.313068808543972)) * self.gun_wgt();
+        let wgt = (wgt + 1.0 / self.diam.imp().powf(0.313068808543972)) * self.gun_wgt();
 
         let wgt =
-            if self.diam > 10.0 {
-                wgt * (1.0 - 2.1623769 * self.diam / 100.0)
-            } else if self.diam <= 1.0 {
+            if self.diam.imp() > 10.0 {
+                wgt * (1.0 - 2.1623769 * self.diam.imp() / 100.0)
+            } else if self.diam.imp() <= 1.0 {
                 self.gun_wgt()
             } else {
                 wgt
@@ -337,7 +338,7 @@ impl Battery {
     pub fn internals(&self, hull: Hull, wgt_broad: f64) {
         eprintln!("units = {}", self.units);
         eprintln!("num = {}", self.num);
-        eprintln!("diam = {}", self.diam);
+        eprintln!("diam = {}", self.diam.imp());
         eprintln!("len = {}", self.len);
         eprintln!("year = {}", self.year);
         eprintln!("shells = {}", self.shells);
@@ -370,7 +371,7 @@ impl Battery {
         for (i, g) in self.groups.iter().enumerate() {
             eprintln!("Group {}", i);
             eprintln!("--------");
-            g.internals(hull.clone(), self.diam);
+            g.internals(hull.clone(), self.diam.imp());
         }
     }
 }
@@ -533,7 +534,7 @@ mod battery {
                     btry.mount_kind = mount_kind;
                     btry.armor_face = armor_face;
                     btry.armor_back = armor_back;
-                    btry.diam = 10.0;
+                    btry.diam = Measurement::new(10.0, UnitType::LengthSmall, Units::Imperial);
 
                     btry.groups[0].on = 2;
                     btry.groups[1].on = 0;
@@ -560,7 +561,7 @@ mod battery {
                     let (expected, diam) = $value;
 
                     let mut btry = Battery::default();
-                    btry.diam = diam;
+                    btry.diam = Measurement::new(diam, UnitType::LengthSmall, Units::Imperial);
                     btry.mount_kind = MountType::Broadside;
 
                     assert_eq!(expected, to_place(btry.house_hgt(), 5));
@@ -587,7 +588,7 @@ mod battery {
                     btry.kind = gun_kind;
                     btry.mount_kind = mount_kind;
                     btry.armor_back = armor_back;
-                    btry.diam = 10.0;
+                    btry.diam = Measurement::new(10.0, UnitType::LengthSmall, Units::Imperial);
 
                     btry.groups[0].on = 2;
                     btry.groups[1].on = 0;
@@ -617,7 +618,7 @@ mod battery {
                     btry.kind = gun_kind;
                     btry.mount_kind = mount_kind;
                     btry.armor_barb = armor_barb;
-                    btry.diam = 10.0;
+                    btry.diam = Measurement::new(10.0, UnitType::LengthSmall, Units::Imperial);
                     btry.year = 1920;
                     btry.num = 2;
 
@@ -708,7 +709,7 @@ mod battery {
 
                     let mut btry = Battery::default();
                     btry.len = len;
-                    btry.diam = 10.0;
+                    btry.diam = Measurement::new(10.0, UnitType::LengthSmall, Units::Imperial);
                     btry.year = 1920;
 
                     assert_eq!(expected, to_place(btry.shell_wgt_est(), 2));
@@ -733,7 +734,7 @@ mod battery {
 
                     let mut btry = Battery::default();
                     btry.len = len;
-                    btry.diam = diam;
+                    btry.diam = Measurement::new(diam, UnitType::LengthSmall, Units::Imperial);
                     btry.num = 1;
                     btry.year = 1920;
 
@@ -758,7 +759,7 @@ mod battery {
 
                     let mut btry = Battery::default();
                     btry.mount_kind = mount_kind;
-                    btry.diam = diam;
+                    btry.diam = Measurement::new(diam, UnitType::LengthSmall, Units::Imperial);
                     btry.len = 45.0;
                     btry.num = 1;
                     btry.year = 1920;
