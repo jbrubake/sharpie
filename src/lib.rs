@@ -424,8 +424,8 @@ impl Ship { // {{{2
     // metacenter {{{3
     /// A measure of vertical equilibrium.
     ///
-    pub fn metacenter(&self) -> f64 {
-        self.hull.b.imp().powf(1.5) * (self.stability_adj() - 0.5) / 0.5 / 200.0
+    pub fn metacenter(&self) -> Measurement {
+        Measurement::new(self.hull.b.imp().powf(1.5) * (self.stability_adj() - 0.5) / 0.5 / 200.0, LengthLong, Imperial)
     }
 
     // seaboat {{{3
@@ -487,7 +487,7 @@ impl Ship { // {{{2
     /// If ship will capsize.
     ///
     fn capsize_warn(&self) -> bool {
-        self.metacenter() <= 0.0
+        self.metacenter().imp() <= 0.0
     }
 
     // hull_strained {{{3
@@ -565,7 +565,7 @@ impl Ship { // {{{2
     /// Roll period of the ship.
     ///
     pub fn roll_period(&self) -> f64 {
-        0.42 * self.hull.bb.imp() / self.metacenter().sqrt()
+        0.42 * self.hull.bb.imp() / self.metacenter().imp().sqrt()
     }
 
     // steadiness {{{3
@@ -2076,8 +2076,8 @@ impl Ship { // {{{3
             self.stability_adj()
         );
         addto!(r, "    Metacentric height {:.1} ft / {:.1} m",
-            self.metacenter(),
-            metric(self.metacenter(), LengthLong, Imperial)
+            self.metacenter().imp(),
+            self.metacenter().metric()
         );
         addto!(r, "    Roll period: {:.1} seconds", self.roll_period());
         addto!(r, "    Steadiness    - As gun platform (Average = 50 %): {:.0} %", self.steadiness());
