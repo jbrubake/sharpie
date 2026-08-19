@@ -53,16 +53,16 @@ const HP2KW: f64           = 0.746;
 
 // Functions {{{2
 //
-pub fn metric(imperial: f64, unit_type: UnitType, units: Units) -> f64 { // {{{3
-    if units == Units::Metric { return imperial; }
+pub fn metric(value: f64, unit_type: UnitType, units: Units) -> f64 { // {{{3
+    if units == Units::Metric { return value; }
 
     match unit_type {
-        UnitType::LengthSmall => imperial * INCH2MM,
-        UnitType::LengthLong => imperial * FEET2METERS,
-        UnitType::Area => imperial * SQFEET2SQMETERS,
-        UnitType::Weight => imperial * POUND2KG,
-        UnitType::Power => imperial * HP2KW,
-        UnitType::WeightPerArea => imperial / SQFEET2SQMETERS * POUND2KG,
+        UnitType::LengthSmall => value * INCH2MM,
+        UnitType::LengthLong => value * FEET2METERS,
+        UnitType::Area => value * SQFEET2SQMETERS,
+        UnitType::Weight => value * POUND2KG,
+        UnitType::Power => value * HP2KW,
+        UnitType::WeightPerArea => value / SQFEET2SQMETERS * POUND2KG,
     }
 }
 
