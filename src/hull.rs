@@ -60,29 +60,29 @@ pub struct Hull {
     /// Forecastle length as a fraction of the total deck.
     pub fc_len: f64,
     /// Height of forecastle forward.
-    pub fc_fwd: f64,
+    pub fc_fwd: Measurement,
     /// Height of forecastle aft.
-    pub fc_aft: f64,
+    pub fc_aft: Measurement,
 
     /// Foredeck length as a fraction of the total deck.
     pub fd_len: f64,
     /// Height of foredeck forward.
-    pub fd_fwd: f64,
+    pub fd_fwd: Measurement,
     /// Height of foredeck aft.
-    pub fd_aft: f64,
+    pub fd_aft: Measurement,
 
     // NOTE: ad_len() is calculated from fc_len and fd_len
     /// Height of aftdeck forward.
-    pub ad_fwd: f64,
+    pub ad_fwd: Measurement,
     /// Height of aftdeck aft.
-    pub ad_aft: f64,
+    pub ad_aft: Measurement,
 
     /// Quarterdeck length as a fraction of the total deck.
     pub qd_len: f64,
     /// Height of quarterdeck forward.
-    pub qd_fwd: f64,
+    pub qd_fwd: Measurement,
     /// Height of quarterdeck aft.
-    pub qd_aft: f64,
+    pub qd_aft: Measurement,
 
     /// Average rake of stem from waterline to staff.
     /// Positive angles indicate an overhang.
@@ -109,10 +109,20 @@ impl Default for Hull { // {{{2
             stern_type: SternType::Cruiser,
             stern_overhang: 0.0,
 
-            fc_len: 0.0, fc_fwd: 0.0, fc_aft: 0.0,
-            fd_len: 0.0, fd_fwd: 0.0, fd_aft: 0.0,
-                         ad_fwd: 0.0, ad_aft: 0.0,
-            qd_len: 0.0, qd_fwd: 0.0, qd_aft: 0.0,
+            fc_len: 0.0,
+            fc_fwd: Measurement::new(0.0, LengthLong, Units::Imperial),
+            fc_aft: Measurement::new(0.0, LengthLong, Units::Imperial),
+
+            fd_len: 0.0,
+            fd_fwd: Measurement::new(0.0, LengthLong, Units::Imperial),
+            fd_aft: Measurement::new(0.0, LengthLong, Units::Imperial),
+
+            ad_fwd: Measurement::new(0.0, LengthLong, Units::Imperial),
+            ad_aft: Measurement::new(0.0, LengthLong, Units::Imperial),
+
+            qd_len: 0.0,
+            qd_fwd: Measurement::new(0.0, LengthLong, Units::Imperial),
+            qd_aft: Measurement::new(0.0, LengthLong, Units::Imperial),
 
             bow_angle: 0.0,
         }
@@ -144,21 +154,21 @@ impl Hull { // {{{2
 
             s.push("a flush deck".into());
         } else {
-            if self.fc_aft > self.fd_fwd {
+            if self.fc_aft.imp() > self.fd_fwd.imp() {
                 s.push("raised forecastle".into());
-            } else if self.fc_aft < self.fd_fwd {
+            } else if self.fc_aft.imp() < self.fd_fwd.imp() {
                 s.push("low forecastle".into());
             }
 
-            if self.fd_aft > self.ad_fwd {
+            if self.fd_aft.imp() > self.ad_fwd.imp() {
                 s.push("rise forward of midbreak".into());
-            } else if self.fd_aft < self.ad_fwd {
+            } else if self.fd_aft.imp() < self.ad_fwd.imp() {
                 s.push("rise aft of midbreak".into());
             }
 
-            if self.ad_aft > self.qd_fwd {
+            if self.ad_aft.imp() > self.qd_fwd.imp() {
                 s.push("low quarterdeck".into());
-            } else if self.ad_aft < self.qd_fwd {
+            } else if self.ad_aft.imp() < self.qd_fwd.imp() {
                 s.push("raised quarterdeck".into());
             }
         }
@@ -392,7 +402,7 @@ impl Hull { // {{{2
             // Avoid returning infinity
             0.0
         } else {
-            self.fc_fwd * f64::tan(self.bow_angle * PI / 180.0)
+            self.fc_fwd.imp() * f64::tan(self.bow_angle * PI / 180.0)
         }
     }
 
@@ -417,35 +427,35 @@ impl Hull { // {{{2
     /// Does the ship tend to be wet forward?
     ///
     pub fn is_wet_fwd(&self) -> bool {
-        self.fc_fwd < (1.1 * self.lwl().imp().sqrt())
+        self.fc_fwd.imp() < (1.1 * self.lwl().imp().sqrt())
     }
 
     // fc {{{3
     /// Average forecastle height (weighted to slope up toward the bow).
     ///
     pub fn fc(&self) -> f64 {
-        self.fc_aft + (self.fc_fwd - self.fc_aft) * 0.4
+        self.fc_aft.imp() + (self.fc_fwd.imp() - self.fc_aft.imp()) * 0.4
     }
 
     // fd {{{3
     /// Average foredeck height.
     ///
     pub fn fd(&self) -> f64 {
-        self.fd_fwd + (self.fd_aft - self.fd_fwd) * 0.5
+        self.fd_fwd.imp() + (self.fd_aft.imp() - self.fd_fwd.imp()) * 0.5
     }
 
     // ad {{{3
     /// Average afterdeck height.
     ///
     pub fn ad(&self) -> f64 {
-        self.ad_fwd + (self.ad_aft - self.ad_fwd) * 0.5
+        self.ad_fwd.imp() + (self.ad_aft.imp() - self.ad_fwd.imp()) * 0.5
     }
 
     // qd {{{3
     /// Average quarterdeck height.
     ///
     pub fn qd(&self) -> f64 {
-        self.qd_fwd + (self.qd_aft - self.qd_fwd) * 0.5
+        self.qd_fwd.imp() + (self.qd_aft.imp() - self.qd_fwd.imp()) * 0.5
     }
 
     // free_cap {{{3
@@ -679,7 +689,7 @@ mod hull {
 
                     let mut hull = Hull::default();
                     hull.set_loa(100.0, Units::Imperial);
-                    hull.fc_fwd = 10.0;
+                    hull.fc_fwd = Measurement::new(10.0, LengthLong, Units::Imperial);
                     hull.bow_angle = angle;
                     hull.stern_overhang = stern;
 
@@ -715,7 +725,7 @@ mod hull {
 
                     let mut hull = Hull::default();
                     hull.set_lwl(100.0, Units::Imperial);
-                    hull.fc_fwd = 10.0;
+                    hull.fc_fwd = Measurement::new(10.0, LengthLong, Units::Imperial);
                     hull.bow_angle = angle;
                     hull.stern_overhang = stern;
 
@@ -826,7 +836,7 @@ mod hull {
                     let (expected, angle) = $value;
 
                     let mut hull = Hull::default();
-                    hull.fc_fwd = 10.0;
+                    hull.fc_fwd = Measurement::new(10.0, LengthLong, Units::Imperial);
                     hull.bow_angle = angle;
 
                     assert_eq!(expected, to_place(hull.stem_len(), 2));
@@ -853,18 +863,18 @@ mod hull {
                     let mut hull = Hull::default();
 
                     hull.fc_len = fc_len;
-                    hull.fc_fwd = 10.0;
-                    hull.fc_aft = 10.0;
+                    hull.fc_fwd = Measurement::new(10.0, LengthLong, Units::Imperial);
+                    hull.fc_aft = Measurement::new(10.0, LengthLong, Units::Imperial);
 
                     hull.fd_len = (1.0 - fc_len) * 0.4;
-                    hull.fd_fwd = hull.fc_fwd + 5.0;
+                    hull.fd_fwd = Measurement::new(hull.fc_fwd.imp() + 5.0, LengthLong, Units::Imperial);
                     hull.fd_aft = hull.fc_fwd;
 
-                    hull.ad_fwd = hull.fc_fwd + 10.0;
+                    hull.ad_fwd = Measurement::new(hull.fc_fwd.imp() + 10.0, LengthLong, Units::Imperial);
                     hull.ad_aft = hull.fc_fwd;
 
                     hull.qd_len = (1.0 - fc_len) * 0.4;
-                    hull.qd_fwd = hull.fc_fwd - 5.0;
+                    hull.qd_fwd = Measurement::new(hull.fc_fwd.imp() - 5.0, LengthLong, Units::Imperial);
                     hull.qd_aft = hull.fc_fwd;
 
                     assert_eq!(expected, to_place(hull.freeboard(), 3));
@@ -888,18 +898,18 @@ mod hull {
                     let mut hull = Hull::default();
 
                     hull.fc_len = fc_len;
-                    hull.fc_fwd = 10.0;
-                    hull.fc_aft = 10.0;
+                    hull.fc_fwd = Measurement::new(10.0, LengthLong, Units::Imperial);
+                    hull.fc_aft = Measurement::new(10.0, LengthLong, Units::Imperial);
 
                     hull.fd_len = (1.0 - fc_len) * 0.4;
-                    hull.fd_fwd = hull.fc_fwd + 5.0;
+                    hull.fd_fwd = Measurement::new(hull.fc_fwd.imp() + 5.0, LengthLong, Units::Imperial);
                     hull.fd_aft = hull.fc_fwd;
 
-                    hull.ad_fwd = hull.fc_fwd + 10.0;
+                    hull.ad_fwd = Measurement::new(hull.fc_fwd.imp() + 10.0, LengthLong, Units::Imperial);
                     hull.ad_aft = hull.fc_fwd;
 
                     hull.qd_len = (1.0 - fc_len) * 0.4;
-                    hull.qd_fwd = hull.fc_fwd - 5.0;
+                    hull.qd_fwd = Measurement::new(hull.fc_fwd.imp() - 5.0, LengthLong, Units::Imperial);
                     hull.qd_aft = hull.fc_fwd;
 
                     assert_eq!(expected, to_place(hull.freeboard_dist(), 2));
@@ -920,7 +930,7 @@ mod hull {
                     let (expected, fc_fwd) = $value;
 
                     let mut hull = Hull::default();
-                    hull.fc_fwd = fc_fwd;
+                    hull.fc_fwd = Measurement::new(fc_fwd, LengthLong, Units::Imperial);
                     hull.set_lwl(100.0, Units::Imperial);
 
                     assert_eq!(expected, hull.is_wet_fwd());
@@ -945,8 +955,8 @@ mod hull {
 
                     let mut hull = Hull::default();
 
-                    hull.fc_fwd = fc_fwd;
-                    hull.fc_aft = fc_aft;
+                    hull.fc_fwd = Measurement::new(fc_fwd, LengthLong, Units::Imperial);
+                    hull.fc_aft = Measurement::new(fc_aft, LengthLong, Units::Imperial);
 
                     assert_eq!(expected, hull.fc());
                 }
@@ -971,8 +981,8 @@ mod hull {
 
                     let mut hull = Hull::default();
 
-                    hull.fd_fwd = fd_fwd;
-                    hull.fd_aft = fd_aft;
+                    hull.fd_fwd = Measurement::new(fd_fwd, LengthLong, Units::Imperial);
+                    hull.fd_aft = Measurement::new(fd_aft, LengthLong, Units::Imperial);
 
                     assert_eq!(expected, hull.fd());
                 }
@@ -996,8 +1006,8 @@ mod hull {
                     let (expected, ad_fwd, ad_aft) = $value;
 
                     let mut hull = Hull::default();
-                    hull.ad_fwd = ad_fwd;
-                    hull.ad_aft = ad_aft;
+                    hull.ad_fwd = Measurement::new(ad_fwd, LengthLong, Units::Imperial);
+                    hull.ad_aft = Measurement::new(ad_aft, LengthLong, Units::Imperial);
 
                     assert_eq!(expected, hull.ad());
                 }
@@ -1022,8 +1032,8 @@ mod hull {
 
                     let mut hull = Hull::default();
 
-                    hull.qd_fwd = qd_fwd;
-                    hull.qd_aft = qd_aft;
+                    hull.qd_fwd = Measurement::new(qd_fwd, LengthLong, Units::Imperial);
+                    hull.qd_aft = Measurement::new(qd_aft, LengthLong, Units::Imperial);
 
                     assert_eq!(expected, hull.qd());
                 }
@@ -1051,8 +1061,8 @@ mod hull {
                     hull.b = Measurement::new(b, LengthLong, Units::Imperial);
 
                     hull.fc_len = 0.25;
-                    hull.fc_fwd = 10.0;
-                    hull.fc_aft = 10.0;
+                    hull.fc_fwd = Measurement::new(10.0, LengthLong, Units::Imperial);
+                    hull.fc_aft = Measurement::new(10.0, LengthLong, Units::Imperial);
 
                     hull.fd_len = 0.25;
                     hull.fd_fwd = hull.fc_fwd;

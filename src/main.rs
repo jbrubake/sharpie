@@ -314,8 +314,8 @@ mod cli {
         ship.hull.stern_overhang = 0.0;
 
         ship.hull.fc_len = 0.20;
-        ship.hull.fc_fwd = 10.0;
-        ship.hull.fc_aft = 10.0;
+        ship.hull.fc_fwd = Measurement::new(10.0, LengthLong, Units::Imperial);
+        ship.hull.fc_aft = Measurement::new(10.0, LengthLong, Units::Imperial);
 
         ship.hull.fd_len = 0.30;
         ship.hull.fd_fwd = ship.hull.fc_fwd;

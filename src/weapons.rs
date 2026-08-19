@@ -459,11 +459,11 @@ mod battery {
                     hull.fc_len = 0.2;
 
                     hull.fd_len = 0.3;
-                    hull.fd_fwd = 10.0;
-                    hull.fd_aft = 0.0;
+                    hull.fd_fwd = Measurement::new(10.0, UnitType::LengthLong, Units::Imperial);
+                    hull.fd_aft = Measurement::new(0.0, UnitType::LengthLong, Units::Imperial);
 
-                    hull.ad_fwd = 20.0;
-                    hull.ad_aft = 0.0;
+                    hull.ad_fwd = Measurement::new(20.0, UnitType::LengthLong, Units::Imperial);
+                    hull.ad_aft = Measurement::new(0.0, UnitType::LengthLong, Units::Imperial);
 
                     hull.qd_len = 0.15;
 
@@ -500,11 +500,11 @@ mod battery {
                     hull.fc_len = 0.2;
 
                     hull.fd_len = 0.3;
-                    hull.fd_fwd = 10.0;
-                    hull.fd_aft = 0.0;
+                    hull.fd_fwd = Measurement::new(10.0, UnitType::LengthLong, Units::Imperial);
+                    hull.fd_aft = Measurement::new(0.0, UnitType::LengthLong, Units::Imperial);
 
-                    hull.ad_fwd = 20.0;
-                    hull.ad_aft = 0.0;
+                    hull.ad_fwd = Measurement::new(20.0, UnitType::LengthLong, Units::Imperial);
+                    hull.ad_aft = Measurement::new(0.0, UnitType::LengthLong, Units::Imperial);
 
                     hull.qd_len = 0.15;
 
@@ -633,11 +633,11 @@ mod battery {
                     hull.fc_len = 0.2;
 
                     hull.fd_len = 0.3;
-                    hull.fd_fwd = 10.0;
-                    hull.fd_aft = 0.0;
+                    hull.fd_fwd = Measurement::new(10.0, UnitType::LengthLong, Units::Imperial);
+                    hull.fd_aft = Measurement::new(0.0, UnitType::LengthLong, Units::Imperial);
 
-                    hull.ad_fwd = 20.0;
-                    hull.ad_aft = 0.0;
+                    hull.ad_fwd = Measurement::new(20.0, UnitType::LengthLong, Units::Imperial);
+                    hull.ad_aft = Measurement::new(0.0, UnitType::LengthLong, Units::Imperial);
 
                     hull.qd_len = 0.15;
 
@@ -1603,11 +1603,11 @@ mod sub_battery {
                     hull.fc_len = 0.2;
 
                     hull.fd_len = 0.3;
-                    hull.fd_fwd = 10.0;
-                    hull.fd_aft = 0.0;
+                    hull.fd_fwd = Measurement::new(10.0, UnitType::LengthLong, Units::Imperial);
+                    hull.fd_aft = Measurement::new(0.0, UnitType::LengthLong, Units::Imperial);
 
-                    hull.ad_fwd = 20.0;
-                    hull.ad_aft = 0.0;
+                    hull.ad_fwd = Measurement::new(20.0, UnitType::LengthLong, Units::Imperial);
+                    hull.ad_aft = Measurement::new(0.0, UnitType::LengthLong, Units::Imperial);
 
                     hull.qd_len = 0.15;
 
@@ -1879,10 +1879,10 @@ impl GunDistributionType { // {{{2
 
         let fd     = hull.fd();
         let ad     = hull.ad();
-        let fd_fwd = hull.fd_fwd;
-        let fd_aft = hull.fd_aft;
-        let ad_fwd = hull.ad_fwd;
-        let ad_aft = hull.ad_aft;
+        let fd_fwd = hull.fd_fwd.imp();
+        let fd_aft = hull.fd_aft.imp();
+        let ad_fwd = hull.ad_fwd.imp();
+        let ad_aft = hull.ad_aft.imp();
 
         match self {
             Self::CenterlineEven | Self::SidesEven =>
@@ -2120,11 +2120,11 @@ mod gun_dist_type {
                     hull.fc_len = 0.2;
 
                     hull.fd_len = 0.3;
-                    hull.fd_fwd = 10.0;
-                    hull.fd_aft = 0.0;
+                    hull.fd_fwd = Measurement::new(10.0, UnitType::LengthLong, Units::Imperial);
+                    hull.fd_aft = Measurement::new(0.0, UnitType::LengthLong, Units::Imperial);
 
-                    hull.ad_fwd = 20.0;
-                    hull.ad_aft = 0.0;
+                    hull.ad_fwd = Measurement::new(20.0, UnitType::LengthLong, Units::Imperial);
+                    hull.ad_aft = Measurement::new(0.0, UnitType::LengthLong, Units::Imperial);
 
                     hull.qd_len = 0.15;
 

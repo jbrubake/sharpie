@@ -77,10 +77,20 @@ mod test_support {
         hull.bb = Measurement::new(hull.b.imp(), LengthLong, Units::Imperial);
         hull.t  = Measurement::new(10.0, LengthLong, Units::Imperial);
 
-        hull.fc_len = 0.2;  hull.fc_fwd = 10.0;        hull.fc_aft = hull.fc_fwd;
-        hull.fd_len = 0.3;  hull.fd_fwd = hull.fc_fwd; hull.fd_aft = hull.fc_fwd;
-                            hull.ad_fwd = hull.fc_fwd; hull.ad_aft = hull.fc_fwd;
-        hull.qd_len = 0.15; hull.qd_fwd = hull.fc_fwd; hull.qd_aft = hull.fc_fwd;
+        hull.fc_len = 0.2;
+        hull.fc_fwd = Measurement::new(10.0, LengthLong, Units::Imperial);
+        hull.fc_aft = hull.fc_fwd;
+
+        hull.fd_len = 0.3;
+        hull.fd_fwd = hull.fc_fwd;
+        hull.fd_aft = hull.fc_fwd;
+
+        hull.ad_fwd = hull.fc_fwd;
+        hull.ad_aft = hull.fc_fwd;
+
+        hull.qd_len = 0.15;
+        hull.qd_fwd = hull.fc_fwd;
+        hull.qd_aft = hull.fc_fwd;
 
         let mut engine = Engine::default();
         engine.set_shafts(2, &mut hull);
@@ -1074,21 +1084,21 @@ impl Ship { // {{{2
         ship.hull.stern_type = lines.next().unwrap().into();
         ship.hull.set_cb(lines.next().unwrap().parse()?);
 
-        ship.hull.qd_aft         = lines.next().unwrap().parse()?;
+        ship.hull.qd_aft         = Measurement::new(lines.next().unwrap().parse()?, LengthLong, ship.hull.units);
         ship.hull.stern_overhang = lines.next().unwrap().parse()?;
         ship.hull.qd_len         = lines.next().unwrap().parse()?;
         ship.hull.qd_len /= 100.0; // convert from % to decimal
-        ship.hull.qd_fwd         = lines.next().unwrap().parse()?;
-        ship.hull.ad_aft         = lines.next().unwrap().parse()?;
+        ship.hull.qd_fwd         = Measurement::new(lines.next().unwrap().parse()?, LengthLong, ship.hull.units);
+        ship.hull.ad_aft         = Measurement::new(lines.next().unwrap().parse()?, LengthLong, ship.hull.units);
         ship.hull.fd_len         = lines.next().unwrap().parse()?;
         ship.hull.fd_len /= 100.0; // convert from % to decimal
-        ship.hull.ad_fwd         = lines.next().unwrap().parse()?;
-        ship.hull.fd_aft         = lines.next().unwrap().parse()?;
+        ship.hull.ad_fwd         = Measurement::new(lines.next().unwrap().parse()?, LengthLong, ship.hull.units);
+        ship.hull.fd_aft         = Measurement::new(lines.next().unwrap().parse()?, LengthLong, ship.hull.units);
         ship.hull.fc_len         = lines.next().unwrap().parse()?;
         ship.hull.fc_len /= 100.0; // convert from % to decimal
-        ship.hull.fd_fwd         = lines.next().unwrap().parse()?;
-        ship.hull.fc_aft         = lines.next().unwrap().parse()?;
-        ship.hull.fc_fwd         = lines.next().unwrap().parse()?;
+        ship.hull.fd_fwd         = Measurement::new(lines.next().unwrap().parse()?, LengthLong, ship.hull.units);
+        ship.hull.fc_aft         = Measurement::new(lines.next().unwrap().parse()?, LengthLong, ship.hull.units);
+        ship.hull.fc_fwd         = Measurement::new(lines.next().unwrap().parse()?, LengthLong, ship.hull.units);
         ship.hull.bow_angle      = lines.next().unwrap().parse()?;
 
         for b in ship.batteries.iter_mut() {
@@ -2093,16 +2103,16 @@ impl Ship { // {{{3
         addto!(r, "    Freeboard (% = length of deck as a percentage of waterline length):");
         addto!(r, "            Fore end, Aft end");
         addto!(r, "    - Forecastle:    {:.2} %, {:.2} ft / {:.2} m, {:.2} ft / {:.2} m",
-            self.hull.fc_len*100.0,   self.hull.fc_fwd, metric(self.hull.fc_fwd, LengthLong, self.hull.units), self.hull.fc_aft, metric(self.hull.fc_aft, LengthLong, self.hull.units)
+            self.hull.fc_len*100.0,   self.hull.fc_fwd.imp(), self.hull.fc_fwd.metric(), self.hull.fc_aft.imp(), self.hull.fc_aft.metric()
         );
         addto!(r, "    - Forward deck:    {:.2} %, {:.2} ft / {:.2} m, {:.2} ft / {:.2} m",
-            self.hull.fd_len*100.0,   self.hull.fd_fwd, metric(self.hull.fd_fwd, LengthLong, self.hull.units), self.hull.fd_aft, metric(self.hull.fd_aft, LengthLong, self.hull.units)
+            self.hull.fd_len*100.0,   self.hull.fd_fwd.imp(), self.hull.fd_fwd.metric(), self.hull.fd_aft.imp(), self.hull.fd_aft.metric()
         );
         addto!(r, "    - Aft deck:    {:.2} %, {:.2} ft / {:.2} m, {:.2} ft / {:.2} m",
-            self.hull.ad_len()*100.0, self.hull.ad_fwd, metric(self.hull.ad_fwd, LengthLong, self.hull.units), self.hull.ad_aft, metric(self.hull.ad_aft, LengthLong, self.hull.units)
+            self.hull.ad_len()*100.0, self.hull.ad_fwd.imp(), self.hull.ad_fwd.metric(), self.hull.ad_aft.imp(), self.hull.ad_aft.metric()
         );
         addto!(r, "    - Quarter deck:    {:.2} %, {:.2} ft / {:.2} m, {:.2} ft / {:.2} m",
-            self.hull.qd_len*100.0,   self.hull.qd_fwd, metric(self.hull.qd_fwd, LengthLong, self.hull.units), self.hull.qd_aft, metric(self.hull.qd_aft, LengthLong, self.hull.units)
+            self.hull.qd_len*100.0,   self.hull.qd_fwd.imp(), self.hull.qd_fwd.metric(), self.hull.qd_aft.imp(), self.hull.qd_aft.metric()
         );
         addto!(r, "    - Average freeboard:        {:.2} ft / {:.2} m",
             self.hull.freeboard(), metric(self.hull.freeboard(), LengthLong, self.hull.units)
