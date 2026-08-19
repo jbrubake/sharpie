@@ -54,6 +54,7 @@ mod test_support {
     use crate::Hull;
     use crate::Engine;
     use crate::engine::{BoilerType, DriveType, FuelType};
+    use crate::units::Units;
 
     // Round a float to a given number of digits
     //
@@ -68,7 +69,7 @@ mod test_support {
     pub fn test_ship() -> Ship {
         let mut hull = Hull::default();
 
-        hull.set_lwl(100.0);
+        hull.set_lwl(100.0, Units::Imperial);
         hull.set_d(1000.0);
 
         hull.b      = 50.0;
@@ -222,7 +223,7 @@ impl Ship { // {{{2
     pub fn wgt_bunker(&self) -> f64 {
         self.engine.bunker(
             self.hull.d(),
-            self.hull.lwl(),
+            self.hull.lwl().imp(),
             self.hull.leff(),
             self.hull.cs(),
             self.hull.ws(),
@@ -302,7 +303,7 @@ impl Ship { // {{{2
     /// engine and magazine spaces.
     ///
     pub fn vitalspace_length(&self) -> f64 {
-        self.hull.lwl() * 0.65 * self.hull_room() + 0.01
+        self.hull.lwl().imp() * 0.65 * self.hull_room() + 0.01
     }
 
     // room {{{3
@@ -328,7 +329,7 @@ impl Ship { // {{{2
             if self
                 .armor
                 .bulkhead
-                .wgt(self.hull.lwl(), self.hull.cwp(), self.hull.b) > 0.1 {
+                .wgt(self.hull.lwl().imp(), self.hull.cwp(), self.hull.b) > 0.1 {
                 self.hull.b / self.armor.bh_beam
             } else { 1.0 }
     }
@@ -422,13 +423,13 @@ impl Ship { // {{{2
     fn seaboat(&self) -> f64 {
         let a = (self.hull.free_cap(self.cap_calc_broadside()) / (2.4 * self.hull.d().powf(0.2))).sqrt() *
             (
-                (self.stability() * 5.0 * (self.hull.bb / self.hull.lwl())).powf(0.2) *
-                (self.hull.free_cap(self.cap_calc_broadside()) / self.hull.lwl() * 20.0).sqrt() *
+                (self.stability() * 5.0 * (self.hull.bb / self.hull.lwl().imp())).powf(0.2) *
+                (self.hull.free_cap(self.cap_calc_broadside()) / self.hull.lwl().imp() * 20.0).sqrt() *
                 (
                     self.hull.d() /
                         (
                             self.hull.d() +
-                            self.armor.end.wgt(self.hull.lwl(), self.hull.cwp(), self.hull.b) * 3.0 +
+                            self.armor.end.wgt(self.hull.lwl().imp(), self.hull.cwp(), self.hull.b) * 3.0 +
                             self.wgt_hull_plus() / 3.0 +
                             (
                                 self.wgt_borne() +
@@ -610,7 +611,7 @@ impl Ship { // {{{2
         f64::min(
             self.hull.d() /
             (
-                self.engine.d_engine(self.hull.d(), self.hull.lwl(), self.hull.leff(), self.hull.cs(), self.hull.ws()) +
+                self.engine.d_engine(self.hull.d(), self.hull.lwl().imp(), self.hull.leff(), self.hull.cs(), self.hull.ws()) +
                     8.0 * self.wgt_borne() + self.wgt_armor() + self.wgts.wgt() as f64
             ),
             10.0
@@ -680,15 +681,15 @@ impl Ship { // {{{2
         (
             self.wgt_hull_plus() + match self.armor.bh_kind {
                 BulkheadType::Strengthened =>
-                    self.armor.bulkhead.wgt(self.hull.lwl(), self.hull.cwp(), self.hull.b),
+                    self.armor.bulkhead.wgt(self.hull.lwl().imp(), self.hull.cwp(), self.hull.b),
                 BulkheadType::Additional => 0.0,
             }
         ) /
             (
-                (self.hull.lwl() / (self.hull.t + self.hull.free_cap(self.cap_calc_broadside()))).powf(2.0) *
+                (self.hull.lwl().imp() / (self.hull.t + self.hull.free_cap(self.cap_calc_broadside()))).powf(2.0) *
                 (
                     self.hull.d() +
-                    self.armor.end.wgt(self.hull.lwl(), self.hull.cwp(), self.hull.b) *
+                    self.armor.end.wgt(self.hull.lwl().imp(), self.hull.cwp(), self.hull.b) *
                     3.0 + (
                         self.wgt_borne() +
                         self.wgt_gun_armor()
@@ -752,11 +753,11 @@ impl Ship { // {{{2
                     (self.flotation() / 10_000.0).powf(1.0/3.0) +
                     (self.hull.bb / 75.0).powf(2.0) +
                     (
-                        (self.armor.bulkhead.thick.imp() / 2.0 * self.armor.bulkhead.len.imp() / self.hull.lwl()) /
+                        (self.armor.bulkhead.thick.imp() / 2.0 * self.armor.bulkhead.len.imp() / self.hull.lwl().imp()) /
                         0.65 * self.armor.bulkhead.hgt.imp() / self.hull.t
                     ).powf(1.0/3.0) *
                     self.flotation() / 35_000.0 * self.hull.bb / 50.0
-                ) / self.room() * self.hull.lwl() / (self.hull.lwl() + self.hull.bb)
+                ) / self.room() * self.hull.lwl().imp() / (self.hull.lwl().imp() + self.hull.bb)
             ) * if self.stability_adj() < 1.0 {
                     self.stability_adj().powf(4.0)
                 } else {
@@ -809,7 +810,7 @@ impl Ship { // {{{2
 
             let new = (self.engine.d_engine(
                 self.hull.d(),
-                self.hull.lwl(),
+                self.hull.lwl().imp(),
                 self.hull.leff(),
                 self.hull.cs(),
                 self.hull.ws(),
@@ -835,12 +836,12 @@ impl Ship { // {{{2
             self.wgt_hull_plus() +
             match self.armor.bh_kind {
                 BulkheadType::Strengthened => 
-                    self.armor.bulkhead.wgt(self.hull.lwl(), self.hull.cwp(), self.hull.b),
+                    self.armor.bulkhead.wgt(self.hull.lwl().imp(), self.hull.cwp(), self.hull.b),
                 BulkheadType::Additional => 0.0,
             }
         ) * Self::POUND2TON / (
             self.hull.ws() +
-            2.0 * self.hull.lwl() * self.hull.free_cap(self.cap_calc_broadside()) +
+            2.0 * self.hull.lwl().imp() * self.hull.free_cap(self.cap_calc_broadside()) +
             self.hull.wp()
             )
     }
@@ -1066,7 +1067,7 @@ impl Ship { // {{{2
 
         ship.wgts.vital = lines.next().unwrap().parse()?;
 
-        ship.hull.set_lwl(lines.next().unwrap().parse()?);
+        ship.hull.set_lwl(lines.next().unwrap().parse()?, ship.hull.units);
         ship.hull.b          = lines.next().unwrap().parse()?;
         ship.hull.t          = lines.next().unwrap().parse()?;
         ship.hull.stern_type = lines.next().unwrap().into();
@@ -1403,9 +1404,9 @@ impl Ship { // {{{2
         let ter_broad_no_back  = ter_broad && ter_no_back;
 
         let has_belt = (
-            self.armor.main.wgt (self.hull.lwl(), self.hull.cwp(), self.hull.b) +
-            self.armor.end.wgt  (self.hull.lwl(), self.hull.cwp(), self.hull.b) +
-            self.armor.upper.wgt(self.hull.lwl(), self.hull.cwp(), self.hull.b)
+            self.armor.main.wgt (self.hull.lwl().imp(), self.hull.cwp(), self.hull.b) +
+            self.armor.end.wgt  (self.hull.lwl().imp(), self.hull.cwp(), self.hull.b) +
+            self.armor.upper.wgt(self.hull.lwl().imp(), self.hull.cwp(), self.hull.b)
         ) > 0.0;
 
         if main_broad || sec_broad || ter_broad {
@@ -1448,13 +1449,13 @@ impl Ship { // Convenience wrappers {{{2
     }
 
     pub fn belt_wgt(&self, belt: Belt) -> f64 { // {{{3
-        belt.wgt(self.hull.lwl(), self.hull.cwp(), self.hull.b)
+        belt.wgt(self.hull.lwl().imp(), self.hull.cwp(), self.hull.b)
     }
 
     pub fn hp_max(&self) -> f64 { // {{{3
         self.engine.hp_max(
             self.hull.d(),
-            self.hull.lwl(),
+            self.hull.lwl().imp(),
             self.hull.leff(),
             self.hull.cs(),
             self.hull.ws(),
@@ -1464,7 +1465,7 @@ impl Ship { // Convenience wrappers {{{2
     pub fn hp_cruise(&self) -> f64 { // {{{3
         self.engine.hp_cruise(
             self.hull.d(),
-            self.hull.lwl(),
+            self.hull.lwl().imp(),
             self.hull.leff(),
             self.hull.cs(),
             self.hull.ws(),
@@ -1480,27 +1481,27 @@ impl Ship { // Convenience wrappers {{{2
     }
 
     pub fn rw_max(&self) -> f64 { // {{{3
-        self.engine.rw_max(self.hull.d(), self.hull.lwl(), self.hull.cs())
+        self.engine.rw_max(self.hull.d(), self.hull.lwl().imp(), self.hull.cs())
     }
 
     pub fn rw_cruise(&self) -> f64 { // {{{3
-        self.engine.rw_cruise(self.hull.d(), self.hull.lwl(), self.hull.cs())
+        self.engine.rw_cruise(self.hull.d(), self.hull.lwl().imp(), self.hull.cs())
     }
 
     pub fn pw_max(&self) -> f64 { // {{{3
-        self.engine.pw_max(self.hull.d(), self.hull.lwl(), self.hull.cs(), self.hull.ws())
+        self.engine.pw_max(self.hull.d(), self.hull.lwl().imp(), self.hull.cs(), self.hull.ws())
     }
 
     pub fn pw_cruise(&self) -> f64 { // {{{3
-        self.engine.pw_cruise(self.hull.d(), self.hull.lwl(), self.hull.cs(), self.hull.ws())
+        self.engine.pw_cruise(self.hull.d(), self.hull.lwl().imp(), self.hull.cs(), self.hull.ws())
     }
 
     pub fn d_engine(&self) -> f64 { // {{{3
-        self.engine.d_engine(self.hull.d(), self.hull.lwl(), self.hull.leff(), self.hull.cs(), self.hull.ws())
+        self.engine.d_engine(self.hull.d(), self.hull.lwl().imp(), self.hull.leff(), self.hull.cs(), self.hull.ws())
     }
 
     pub fn bunker_max(&self) -> f64 { // {{{3
-        self.engine.bunker_max(self.hull.d(), self.hull.lwl(), self.hull.leff(), self.hull.cs(), self.hull.ws())
+        self.engine.bunker_max(self.hull.d(), self.hull.lwl().imp(), self.hull.leff(), self.hull.cs(), self.hull.ws())
     }
 }
 
@@ -1594,16 +1595,16 @@ impl Ship { // {{{3
 
         addto!(r, "Dimensions: Length (overall / waterline) x beam x draught (normal/deep)"); // {{{5
         addto!(r, "    ({:.2} ft / {:.2} ft) x {:.2} ft {}x ({:.2} / {:.2} ft)",
-            self.hull.loa(),
-            self.hull.lwl(),
+            self.hull.loa().imp(),
+            self.hull.lwl().imp(),
             self.hull.b,
             addif!(self.hull.bb > self.hull.b, "(Bulges {:.2} ft) ", self.hull.bb),
             self.hull.t,
             self.t_max()
         );
         addto!(r, "    ({:.2} m / {:.2} m) x {:.2} m {}x ({:.2} / {:.2} m)",
-            metric(self.hull.loa(), LengthLong, self.hull.units),
-            metric(self.hull.lwl(), LengthLong, self.hull.units),
+            self.hull.loa().metric(),
+            self.hull.lwl().metric(),
             metric(self.hull.b, LengthLong, self.hull.units),
             addif!(self.hull.bb > self.hull.b, "(Bulges {:.2} m) ", metric(self.hull.bb, LengthLong, self.hull.units)),
             metric(self.hull.t, LengthLong, self.hull.units),
@@ -1791,13 +1792,13 @@ impl Ship { // {{{3
                     self.armor.end.hgt.imp(),
                     self.armor.end.hgt.metric(),
                 );
-                if self.armor.main.len.imp() + self.armor.end.len.imp() < self.hull.lwl() {
+                if self.armor.main.len.imp() + self.armor.end.len.imp() < self.hull.lwl().imp() {
                     addto!(r, "    {:.2} ft / {:.2} m Unarmoured ends",
-                        self.hull.lwl() - self.armor.main.len.imp() - self.armor.end.len.imp(),
-                        metric(self.hull.lwl() - self.armor.main.len.imp() - self.armor.end.len.imp(), LengthLong, self.armor.units)
+                        self.hull.lwl().imp() - self.armor.main.len.imp() - self.armor.end.len.imp(),
+                        metric(self.hull.lwl().imp() - self.armor.main.len.imp() - self.armor.end.len.imp(), LengthLong, self.armor.units)
                     );
                 }
-            } else if self.armor.main.len.imp() < self.hull.lwl() {
+            } else if self.armor.main.len.imp() < self.hull.lwl().imp() {
                 addto!(r, "    Ends:    Unarmoured");
             }
 
@@ -1814,9 +1815,9 @@ impl Ship { // {{{3
 
             if self.armor.main.thick.imp() > 0.0 {
                 addto!(r, "    Main Belt covers {:.0} % of normal length",
-                    self.armor.belt_coverage(self.hull.lwl())*100.0
+                    self.armor.belt_coverage(self.hull.lwl().imp())*100.0
                 );
-                if self.armor.belt_coverage(self.hull.lwl()) < self.hull_room() {
+                if self.armor.belt_coverage(self.hull.lwl().imp()) < self.hull_room() {
                     addto!(r, "    Main belt does not fully cover magazines and engineering spaces");
                 }
             }
@@ -1980,22 +1981,22 @@ impl Ship { // {{{3
 
             if self.armor.main.thick.imp() + self.armor.end.thick.imp() + self.armor.upper.thick.imp() > 0.0 {
                 addto!(r, "    - Belts: {}",
-                    self.percent_calc(self.armor.main.wgt(self.hull.lwl(), self.hull.cwp(), self.hull.b) +
-                        self.armor.end.wgt(self.hull.lwl(), self.hull.cwp(), self.hull.b) +
-                        self.armor.upper.wgt(self.hull.lwl(), self.hull.cwp(), self.hull.b)),
+                    self.percent_calc(self.armor.main.wgt(self.hull.lwl().imp(), self.hull.cwp(), self.hull.b) +
+                        self.armor.end.wgt(self.hull.lwl().imp(), self.hull.cwp(), self.hull.b) +
+                        self.armor.upper.wgt(self.hull.lwl().imp(), self.hull.cwp(), self.hull.b)),
                 );
             }
 
             if self.armor.bulkhead.thick.imp() > 0.0 {
                 addto!(r, "    - Torpedo bulkhead: {}",
-                    self.percent_calc(self.armor.bulkhead.wgt(self.hull.lwl(), self.hull.cwp(), self.hull.b)),
+                    self.percent_calc(self.armor.bulkhead.wgt(self.hull.lwl().imp(), self.hull.cwp(), self.hull.b)),
                 );
             }
 
-            if self.armor.bulge.wgt(self.hull.lwl(), self.hull.cwp(), self.hull.b) > 0.0 {
+            if self.armor.bulge.wgt(self.hull.lwl().imp(), self.hull.cwp(), self.hull.b) > 0.0 {
                 addto!(r, "    - {}: {}",
                     if self.hull.b == self.hull.bb { "Void" } else { "Bulges" },
-                    self.percent_calc(self.armor.bulge.wgt(self.hull.lwl(), self.hull.cwp(), self.hull.b)),
+                    self.percent_calc(self.armor.bulge.wgt(self.hull.lwl().imp(), self.hull.cwp(), self.hull.b)),
                 );
             }
 
@@ -2199,13 +2200,13 @@ impl Ship {
         s.push("".to_string());
         s.push(format!("Rf max = {}", self.engine.rf_max(self.hull.ws())));
         s.push(format!("Rf cruise = {}", self.engine.rf_cruise(self.hull.ws())));
-        s.push(format!("Rw max = {}", self.engine.rw_max(self.hull.d(), self.hull.lwl(), self.hull.cs())));
-        s.push(format!("Rw cruise = {}", self.engine.rw_cruise(self.hull.d(), self.hull.lwl(), self.hull.cs())));
-        s.push(format!("Pw max = {}", self.engine.pw_max(self.hull.d(), self.hull.lwl(), self.hull.cs(), self.hull.ws())));
-        s.push(format!("Pw cruise = {}", self.engine.pw_cruise(self.hull.d(), self.hull.lwl(), self.hull.cs(), self.hull.ws())));
+        s.push(format!("Rw max = {}", self.engine.rw_max(self.hull.d(), self.hull.lwl().imp(), self.hull.cs())));
+        s.push(format!("Rw cruise = {}", self.engine.rw_cruise(self.hull.d(), self.hull.lwl().imp(), self.hull.cs())));
+        s.push(format!("Pw max = {}", self.engine.pw_max(self.hull.d(), self.hull.lwl().imp(), self.hull.cs(), self.hull.ws())));
+        s.push(format!("Pw cruise = {}", self.engine.pw_cruise(self.hull.d(), self.hull.lwl().imp(), self.hull.cs(), self.hull.ws())));
         s.push("".to_string());
-        s.push(format!("hp max = {}", self.engine.hp_max(self.hull.d(), self.hull.lwl(), self.hull.leff(), self.hull.cs(), self.hull.ws())));
-        s.push(format!("hp cruise = {}", self.engine.hp_cruise(self.hull.d(), self.hull.lwl(), self.hull.leff(), self.hull.cs(), self.hull.ws())));
+        s.push(format!("hp max = {}", self.engine.hp_max(self.hull.d(), self.hull.lwl().imp(), self.hull.leff(), self.hull.cs(), self.hull.ws())));
+        s.push(format!("hp cruise = {}", self.engine.hp_cruise(self.hull.d(), self.hull.lwl().imp(), self.hull.leff(), self.hull.cs(), self.hull.ws())));
         s.push("".to_string());
 
         s.push(format!("wgt_load = {}", self.wgt_load()));
@@ -2224,9 +2225,9 @@ impl Ship {
         s.push("".to_string());
 
         s.push(format!("wgt_engine = {}", self.wgt_engine()));
-        s.push(format!("d_engine = {}", self.engine.d_engine(self.hull.d(), self.hull.lwl(), self.hull.leff(), self.hull.cs(), self.hull.ws())));
+        s.push(format!("d_engine = {}", self.engine.d_engine(self.hull.d(), self.hull.lwl().imp(), self.hull.leff(), self.hull.cs(), self.hull.ws())));
         s.push(format!("d_factor = {}", self.d_factor()));
-        s.push(format!("bunker (normal) = {}", self.engine.bunker(self.hull.d(), self.hull.lwl(), self.hull.leff(), self.hull.cs(), self.hull.ws())));
+        s.push(format!("bunker (normal) = {}", self.engine.bunker(self.hull.d(), self.hull.lwl().imp(), self.hull.leff(), self.hull.cs(), self.hull.ws())));
         s.push(format!("bunker_factor = {}", self.engine.boiler.bunker_factor(self.engine.year)));
         s.push("".to_string());
 
@@ -2292,7 +2293,7 @@ mod ship {
                     let mut ship = test_ship();
 
                     ship.hull.set_d(7000.0);
-                    ship.hull.set_lwl(500.0);
+                    ship.hull.set_lwl(500.0, Imperial);
 
                     ship.torps[0].year = 1920;
                     ship.torps[0].num = 3;
@@ -2333,7 +2334,7 @@ mod ship {
                     let mut ship = test_ship();
 
                     ship.hull.set_d(7000.0);
-                    ship.hull.set_lwl(500.0);
+                    ship.hull.set_lwl(500.0, Imperial);
 
                     ship.torps[0].year = 1920;
                     ship.torps[0].num = 3;

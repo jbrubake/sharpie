@@ -72,7 +72,7 @@ impl Armor { // {{{2
     /// Total weight of armor.
     ///
     pub fn wgt(&self, hull: Hull, wgt_mag: f64, wgt_engine: f64) -> f64 {
-        let lwl = hull.lwl();
+        let lwl = hull.lwl().imp();
         let cwp = hull.cwp();
         let b   = hull.b;
         let d   = hull.d();
@@ -420,7 +420,7 @@ impl Deck { // {{{2
     ///
     pub fn wgt(&self, hull: Hull, wgt_mag: f64, wgt_engine: f64) -> f64 {
         let d      = hull.d();
-        let lwl    = hull.lwl();
+        let lwl    = hull.lwl().imp();
         let b      = hull.b;
         let fc_len = hull.fc_len;
         let qd_len = hull.qd_len;

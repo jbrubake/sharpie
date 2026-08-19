@@ -303,7 +303,7 @@ mod cli {
         ship.kind = "Test Kind".into();
         ship.year = 1890;
 
-        ship.hull.set_lwl(500.0);
+        ship.hull.set_lwl(500.0, Units::Imperial);
         ship.hull.b = 50.0;
         ship.hull.bb = ship.hull.b;
         ship.hull.t = 10.0;

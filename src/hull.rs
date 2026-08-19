@@ -1,4 +1,4 @@
-use crate::units::Units;
+use crate::units::{Measurement, UnitType::LengthLong, Units};
 
 use serde::{Deserialize, Serialize};
 
@@ -25,11 +25,11 @@ pub struct Hull {
     /// Overall length including ram and any overhangs
     ///
     /// This is None if lwl is set.
-    loa: Option<f64>,
+    loa: Option<Measurement>,
     /// Maximum length in the water, including any ram.
     ///
     /// This is None if loa is set.
-    lwl: Option<f64>,
+    lwl: Option<Measurement>,
 
     /// Beam (hull): Maximum width in the water, excluding torpedo bulges and
     /// above water overhangs.
@@ -170,9 +170,9 @@ impl Hull { // {{{2
     /// Coefficient of Sharpness.
     ///
     pub fn cs(&self) -> f64 {
-        if self.lwl() == 0.0 { return 0.0; } // Catch divide by zero
+        if self.lwl().imp() == 0.0 { return 0.0; } // Catch divide by zero
 
-        0.4 * (self.bb / self.lwl() * 6.0).powf(1.0 / 3.0) * f64::sqrt(self.cb() / 0.52)
+        0.4 * (self.bb / self.lwl().imp() * 6.0).powf(1.0 / 3.0) * f64::sqrt(self.cb() / 0.52)
     }
 
     // cm {{{3
@@ -212,7 +212,7 @@ impl Hull { // {{{2
     ///
     // XXX: Should this only return values between 0.3 and 1.0 (inclusive)?
     pub fn cb_calc(&self, d: f64, t: f64) -> f64 {
-        let volume = self.lwl() * self.bb * t;
+        let volume = self.lwl().imp() * self.bb * t;
 
         if volume == 0.0 {
             0.0
@@ -247,7 +247,7 @@ impl Hull { // {{{2
     /// Calculate the displacement for a given Block Coefficient.
     ///
     pub fn d_calc(&self, cb: f64) -> f64 {
-        cb * self.lwl() * self.bb * self.t / Self::FT3_PER_TON_SEA
+        cb * self.lwl().imp() * self.bb * self.t / Self::FT3_PER_TON_SEA
     }
 
     // set_d {{{3
@@ -287,7 +287,7 @@ impl Hull { // {{{2
     /// Waterplane Area.
     ///
     pub fn wp(&self) -> f64 {
-        self.cwp() * self.lwl() * self.b
+        self.cwp() * self.lwl().imp() * self.b
     }
 
     // ws {{{3
@@ -295,14 +295,14 @@ impl Hull { // {{{2
     ///
     pub fn ws(&self) -> f64 {
         if self.t == 0.0 { return 0.0; } // catch divide by zero
-        self.lwl() * self.t * 1.7 + (self.d() * Self::FT3_PER_TON_SEA / self.t)
+        self.lwl().imp() * self.t * 1.7 + (self.d() * Self::FT3_PER_TON_SEA / self.t)
     }
 
     // set_lwl {{{3
     /// Set the waterline length and unset the overall length.
     ///
-    pub fn set_lwl(&mut self, len: f64) -> f64 {
-        self.lwl = Some(len);
+    pub fn set_lwl(&mut self, len: f64, units: Units) -> f64 {
+        self.lwl = Some(Measurement::new(len, LengthLong, units));
         self.loa = None;
 
         len
@@ -311,8 +311,8 @@ impl Hull { // {{{2
     // set_loa {{{3
     /// Set the overall length and unset the waterline length.
     ///
-    pub fn set_loa(&mut self, len: f64) -> f64 {
-        self.loa = Some(len);
+    pub fn set_loa(&mut self, len: f64, units: Units) -> f64 {
+        self.loa = Some(Measurement::new(len, LengthLong, units));
         self.lwl = None;
 
         len
@@ -323,13 +323,16 @@ impl Hull { // {{{2
     ///
     /// lwl = loa - max(ram_length, length_from_bow_angle, 0) - max(stern_overhang, 0)
     ///
-    pub fn lwl(&self) -> f64 {
-        match (self.lwl, self.loa) {
-            (None, None)      => 0.0,
-            (Some(len), _)    => len,
+    pub fn lwl(&self) -> Measurement {
+        match (&self.lwl, &self.loa) {
+            (None, None)      => Measurement::new(0.0, LengthLong, self.units),
+            (Some(len), _)    => len.clone(),
             (None, Some(loa)) =>
-                loa - f64::max( self.bow_type.ram_len(), self.stem_len()).max(0.0)
-                    - self.stern_overhang.max(0.0),
+                Measurement::new(
+                    loa.imp() - f64::max( self.bow_type.ram_len(), self.stem_len()).max(0.0)
+                        - self.stern_overhang.max(0.0),
+                    LengthLong, Units::Imperial
+                ),
         }
     }
 
@@ -338,13 +341,16 @@ impl Hull { // {{{2
     ///
     /// loa = lwl + max(ram_length, length_from_bow_angle, 0) + max(stern_overhang, 0)
     ///
-    pub fn loa(&self) -> f64 {
-        match (self.loa, self.lwl) {
-            (None, None)      => 0.0,
-            (Some(len), _)    => len,
+    pub fn loa(&self) -> Measurement {
+        match (&self.loa, &self.lwl) {
+            (None, None)      => Measurement::new(0.0, LengthLong, self.units),
+            (Some(len), _)    => len.clone(),
             (None, Some(lwl)) =>
-                lwl + f64::max( self.bow_type.ram_len(), self.stem_len()).max(0.0)
-                    + self.stern_overhang.max(0.0),
+                Measurement::new(
+                    lwl.imp() + f64::max( self.bow_type.ram_len(), self.stem_len()).max(0.0)
+                        + self.stern_overhang.max(0.0),
+                    LengthLong, Units::Imperial
+                ),
         }
     }
 
@@ -353,7 +359,7 @@ impl Hull { // {{{2
     /// coefficient and stern type.
     ///
     pub fn leff(&self) -> f64 {
-        self.stern_type.leff(self.lwl(), self.bb, self.cs())
+        self.stern_type.leff(self.lwl().imp(), self.bb, self.cs())
     }
 
     // t_calc {{{3
@@ -411,7 +417,7 @@ impl Hull { // {{{2
     /// Does the ship tend to be wet forward?
     ///
     pub fn is_wet_fwd(&self) -> bool {
-        self.fc_fwd < (1.1 * self.lwl().sqrt())
+        self.fc_fwd < (1.1 * self.lwl().imp().sqrt())
     }
 
     // fc {{{3
@@ -468,7 +474,7 @@ impl Hull { // {{{2
     pub fn len2beam(&self) -> f64 {
         if self.bb == 0.0 { return 0.0; } // Catch divide by zero.
 
-        self.lwl() / self.bb
+        self.lwl().imp() / self.bb
     }
 }
 
@@ -487,7 +493,7 @@ mod hull {
                     let mut hull = Hull::default();
 
                     let (expected, lwl) = $value;
-                    hull.set_lwl(lwl);
+                    hull.set_lwl(lwl, Units::Imperial);
                     hull.set_cb(0.55);
                     hull.bb = 10.0;
 
@@ -554,7 +560,7 @@ mod hull {
 
                     let mut hull = Hull::default();
                     hull.set_d(d);
-                    hull.set_lwl(lwl);
+                    hull.set_lwl(lwl, Units::Imperial);
                     hull.bb = bb;
                     hull.t = t;
 
@@ -591,7 +597,7 @@ mod hull {
 
                     let mut hull = Hull::default();
                     hull.set_cb(cb);
-                    hull.set_lwl(lwl);
+                    hull.set_lwl(lwl, Units::Imperial);
                     hull.bb = bb;
                     hull.t = t;
 
@@ -648,7 +654,7 @@ mod hull {
 
                     let (expected, t) = $value;
                     hull.set_d(1000.0);
-                    hull.set_lwl(100.0);
+                    hull.set_lwl(100.0, Units::Imperial);
                     hull.t = t;
 
                     assert_eq!(expected, to_place(hull.ws(), 2));
@@ -672,7 +678,7 @@ mod hull {
                     let (expected, angle, stern, ram) = $value;
 
                     let mut hull = Hull::default();
-                    hull.set_loa(100.0);
+                    hull.set_loa(100.0, Units::Imperial);
                     hull.fc_fwd = 10.0;
                     hull.bow_angle = angle;
                     hull.stern_overhang = stern;
@@ -683,7 +689,7 @@ mod hull {
                         hull.bow_type = BowType::Normal;
                     }
 
-                    assert_eq!(expected, to_place(hull.lwl(), 2));
+                    assert_eq!(expected, to_place(hull.lwl().imp(), 2));
                 }
             )*
         }
@@ -708,7 +714,7 @@ mod hull {
                     let (expected, angle, stern, ram) = $value;
 
                     let mut hull = Hull::default();
-                    hull.set_lwl(100.0);
+                    hull.set_lwl(100.0, Units::Imperial);
                     hull.fc_fwd = 10.0;
                     hull.bow_angle = angle;
                     hull.stern_overhang = stern;
@@ -719,7 +725,7 @@ mod hull {
                         hull.bow_type = BowType::Normal;
                     }
 
-                    assert_eq!(expected, to_place(hull.loa(), 2));
+                    assert_eq!(expected, to_place(hull.loa().imp(), 2));
                 }
             )*
         }
@@ -745,7 +751,7 @@ mod hull {
 
                     let mut hull = Hull::default();
                     hull.set_d(5000.0);
-                    hull.set_lwl(500.0);
+                    hull.set_lwl(500.0, Units::Imperial);
                     hull.b = 50.0;
                     hull.bb = hull.b;
                     hull.t = 10.0;
@@ -770,7 +776,7 @@ mod hull {
 
                     let mut hull = Hull::default();
                     hull.set_d(5000.0);
-                    hull.set_lwl(500.0);
+                    hull.set_lwl(500.0, Units::Imperial);
                     hull.t = t;
                     hull.b = 50.0;
                     hull.bb = hull.b;
@@ -915,7 +921,7 @@ mod hull {
 
                     let mut hull = Hull::default();
                     hull.fc_fwd = fc_fwd;
-                    hull.set_lwl(100.0);
+                    hull.set_lwl(100.0, Units::Imperial);
 
                     assert_eq!(expected, hull.is_wet_fwd());
                 }
@@ -1081,7 +1087,7 @@ mod hull {
                     let mut hull = Hull::default();
 
                     let (expected, lwl) = $value;
-                    hull.set_lwl(lwl);
+                    hull.set_lwl(lwl, Units::Imperial);
                     hull.bb = 10.0;
                     hull.set_cb(0.55);
                     hull.stern_type = SternType::Cruiser;
@@ -1107,7 +1113,7 @@ mod hull {
                     let mut hull = Hull::default();
 
                     let (expected, bb) = $value;
-                    hull.set_lwl(100.0);
+                    hull.set_lwl(100.0, Units::Imperial);
                     hull.bb = bb;
 
                     assert_eq!(expected, to_place(hull.len2beam(), 2));
