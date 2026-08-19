@@ -676,7 +676,7 @@ impl Ship { // {{{2
         }
 
         let mut str_cross = self.wgt_struct() / f64::sqrt(self.hull.bb.imp() * (self.hull.t.imp() + self.hull.freeboard_dist())) /
-            ((self.hull.d() + ((self.wgt_broad().imp() + self.wgt_borne() + self.wgt_gun_armor() + self.armor.ct_fwd.wgt(self.hull.d()) + self.armor.ct_aft.wgt(self.hull.d())) * (concentration * self.gun_super_factor()) + f64::max(self.hp_max(), 0.0) / 100.0)) / self.hull.d()) * 0.6;
+            ((self.hull.d() + ((self.wgt_broad().imp() + self.wgt_borne() + self.wgt_gun_armor() + self.armor.ct_fwd.wgt(self.hull.d()) + self.armor.ct_aft.wgt(self.hull.d())) * (concentration * self.gun_super_factor()) + f64::max(self.hp_max().imp(), 0.0) / 100.0)) / self.hull.d()) * 0.6;
 
         if self.year < 1900 {
             str_cross *= 1.0 - (1900.0 - self.year as f64) / 100.0;
@@ -1463,14 +1463,14 @@ impl Ship { // Convenience wrappers {{{2
         belt.wgt(self.hull.lwl().imp(), self.hull.cwp(), self.hull.b.imp())
     }
 
-    pub fn hp_max(&self) -> f64 { // {{{3
-        self.engine.hp_max(
+    pub fn hp_max(&self) -> Measurement { // {{{3
+        Measurement::new(self.engine.hp_max(
             self.hull.d(),
             self.hull.lwl().imp(),
             self.hull.leff(),
             self.hull.cs(),
             self.hull.ws(),
-        )
+        ), Power, Imperial)
     }
 
     pub fn hp_cruise(&self) -> f64 { // {{{3
@@ -1931,9 +1931,9 @@ impl Ship { // {{{3
                 self.engine.drive,
                 self.engine.shafts(),
                 plural(self.engine.shafts()),
-                num!(self.hp_max(), 0),
+                num!(self.hp_max().imp(), 0),
                 self.engine.boiler.hp_type(),
-                num!(metric(self.hp_max(), Power, Imperial), 0),
+                num!(self.hp_max().metric(), 0),
                 self.engine.vmax
             );
             addto!(r, "    Range {}nm at {:.2} kts",
@@ -1944,7 +1944,7 @@ impl Ship { // {{{3
                 num!(self.bunker_max(), 0),
                 if self.engine.pct_coal > 0.0 { format!(" ({:.0}% coal)", self.engine.pct_coal * 100.0) } else { "".into() }
             );
-            let ratio = self.hp_max() / self.engine.shafts() as f64;
+            let ratio = self.hp_max().imp() / self.engine.shafts() as f64;
 
             if ratio > 20_000.0 && self.engine.boiler.is_reciprocating()
                 { addto!(r, "    Caution: Too much power for reciprocating engines."); }
