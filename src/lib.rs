@@ -1806,7 +1806,7 @@ impl Ship { // {{{3
                 if self.armor.main.len.imp() + self.armor.end.len.imp() < self.hull.lwl().imp() {
                     addto!(r, "    {:.2} ft / {:.2} m Unarmoured ends",
                         self.hull.lwl().imp() - self.armor.main.len.imp() - self.armor.end.len.imp(),
-                        metric(self.hull.lwl().imp() - self.armor.main.len.imp() - self.armor.end.len.imp(), LengthLong, self.armor.units)
+                        self.hull.lwl().metric() - self.armor.main.len.metric() - self.armor.end.len.metric(),
                     );
                 }
             } else if self.armor.main.len.imp() < self.hull.lwl().imp() {
