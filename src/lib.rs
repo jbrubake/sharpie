@@ -591,7 +591,7 @@ impl Ship { // {{{2
             self.armor.main.wgt(self.hull.d(), self.hull.cwp(), self.hull.b.imp()) +
             self.armor.end.wgt(self.hull.d(), self.hull.cwp(), self.hull.b.imp()) +
             self.deck_wgt() +
-            (self.wgt_hull_plus() + self.wgt_guns() + self.wgt_gun_mounts() - self.wgt_borne()) * 1.5 * self.hull.freeboard() / self.hull.t.imp();
+            (self.wgt_hull_plus() + self.wgt_guns() + self.wgt_gun_mounts() - self.wgt_borne()) * 1.5 * self.hull.freeboard().imp() / self.hull.t.imp();
 
         let b = a +
             if self.deck_room() < 1.0 {
@@ -2115,7 +2115,7 @@ impl Ship { // {{{3
             self.hull.qd_len*100.0,   self.hull.qd_fwd.imp(), self.hull.qd_fwd.metric(), self.hull.qd_aft.imp(), self.hull.qd_aft.metric()
         );
         addto!(r, "    - Average freeboard:        {:.2} ft / {:.2} m",
-            self.hull.freeboard(), metric(self.hull.freeboard(), LengthLong, self.hull.units)
+            self.hull.freeboard().imp(), self.hull.freeboard().metric()
         );
         if self.hull.is_wet_fwd() {
             addto!(r, "    Ship tends to be wet forward");

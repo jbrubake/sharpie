@@ -409,11 +409,14 @@ impl Hull { // {{{2
     // freeboard {{{3
     /// Average freeboard.
     ///
-    pub fn freeboard(&self) -> f64 {
-        self.fc() * self.fc_len +
-        self.fd() * self.fd_len +
-        self.ad() * self.ad_len() +
-        self.qd() * self.qd_len
+    pub fn freeboard(&self) -> Measurement {
+        Measurement::new(
+            self.fc() * self.fc_len +
+            self.fd() * self.fd_len +
+            self.ad() * self.ad_len() +
+            self.qd() * self.qd_len,
+            LengthLong, Units::Imperial
+        )
     }
 
     // freeboard_dist {{{3
@@ -462,12 +465,12 @@ impl Hull { // {{{2
     /// XXX: I do not know what this does.
     ///
     pub fn free_cap(&self, cap_calc_broadside: bool) -> f64 {
-        if self.freeboard() > (self.b.imp() / 3.0) {
-            self.freeboard().powf(2.0) * 3.0 / self.b.imp()
+        if self.freeboard().imp() > (self.b.imp() / 3.0) {
+            self.freeboard().imp().powf(2.0) * 3.0 / self.b.imp()
         } else if cap_calc_broadside {
-            self.freeboard() - 6.0
+            self.freeboard().imp() - 6.0
         } else {
-            self.freeboard()
+            self.freeboard().imp()
         }
     }
 
@@ -877,7 +880,7 @@ mod hull {
                     hull.qd_fwd = Measurement::new(hull.fc_fwd.imp() - 5.0, LengthLong, Units::Imperial);
                     hull.qd_aft = hull.fc_fwd;
 
-                    assert_eq!(expected, to_place(hull.freeboard(), 3));
+                    assert_eq!(expected, to_place(hull.freeboard().imp(), 3));
                 }
             )*
         }
