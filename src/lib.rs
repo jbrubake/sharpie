@@ -276,15 +276,15 @@ impl Ship { // {{{2
     // t_max {{{3
     /// Draft at maximum displacement.
     ///
-    pub fn t_max(&self) -> f64 {
-        self.hull.t_calc(self.d_max())
+    pub fn t_max(&self) -> Measurement {
+        Measurement::new(self.hull.t_calc(self.d_max()), LengthLong, self.hull.units)
     }
 
     // cb_max {{{3
     /// Block coefficient at maximum displacement.
     ///
     pub fn cb_max(&self) -> f64 {
-        self.hull.cb_calc(self.d_max(), self.t_max())
+        self.hull.cb_calc(self.d_max(), self.t_max().imp())
     }
 
     // crew_max {{{3
@@ -1611,7 +1611,7 @@ impl Ship { // {{{3
             self.hull.b.imp(),
             addif!(self.hull.bb.imp() > self.hull.b.imp(), "(Bulges {:.2} ft) ", self.hull.bb.imp()),
             self.hull.t.imp(),
-            self.t_max()
+            self.t_max().imp()
         );
         addto!(r, "    ({:.2} m / {:.2} m) x {:.2} m {}x ({:.2} / {:.2} m)",
             self.hull.loa().metric(),
@@ -1619,7 +1619,7 @@ impl Ship { // {{{3
             self.hull.b.metric(),
             addif!(self.hull.bb.imp() > self.hull.b.imp(), "(Bulges {:.2} m) ", self.hull.bb.metric()),
             self.hull.t.metric(),
-            metric(self.t_max(), LengthLong, self.hull.units)
+            self.t_max().metric()
         );
         addto!(r);
 
