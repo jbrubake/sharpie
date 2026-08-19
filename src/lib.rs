@@ -1145,9 +1145,12 @@ impl Ship { // {{{2
         ship.armor.bulkhead.hgt   = lines.next().unwrap().parse()?;
 
         for b in ship.batteries.iter_mut() {
-            b.armor_face = lines.next().unwrap().parse()?;
-            b.armor_back = lines.next().unwrap().parse()?;
-            b.armor_barb = lines.next().unwrap().parse()?;
+            let val: f64 = lines.next().unwrap().parse()?;
+            b.armor_face = Measurement::new(val, LengthSmall, ship.armor.units);
+            let val: f64 = lines.next().unwrap().parse()?;
+            b.armor_back = Measurement::new(val, LengthSmall, ship.armor.units);
+            let val: f64 = lines.next().unwrap().parse()?;
+            b.armor_barb = Measurement::new(val, LengthSmall, ship.armor.units);
         }
 
         ship.armor.deck.md      = lines.next().unwrap().parse()?;
@@ -1371,9 +1374,9 @@ impl Ship { // {{{2
         let sec_broad_below  = sec_broad  && sec_below;
         let ter_broad_below  = ter_broad  && ter_below;
 
-        let main_no_back = main.armor_face > 0.0;
-        let sec_no_back  = sec.armor_face > 0.0;
-        let ter_no_back  = ter.armor_face > 0.0;
+        let main_no_back = main.armor_face.imp() > 0.0;
+        let sec_no_back  = sec.armor_face.imp() > 0.0;
+        let ter_no_back  = ter.armor_face.imp() > 0.0;
 
         let main_broad_no_back = main_broad && main_no_back;
         let sec_broad_no_back  = sec_broad && sec_no_back;
@@ -1848,14 +1851,14 @@ impl Ship { // {{{3
             addto!(r, "- Gun armour:    Face (max)    Other gunhouse (avg)    Barbette/hoist (max)");
 
             for (i, b) in self.batteries.iter().enumerate() {
-                if b.armor_face == 0.0 &&
-                b.armor_back == 0.0 &&
-                b.armor_barb == 0.0 { continue; }
+                if b.armor_face.imp() == 0.0 &&
+                b.armor_back.imp() == 0.0 &&
+                b.armor_barb.imp() == 0.0 { continue; }
                 addto!(r, "    {}:    {}        {}            {}",
                     match i { 0 => "Main", 1 => "2nd", 2 => "3rd", 3 => "4th", 4 => "5th", _ => "Other", },
-                    if b.armor_face == 0.0 { "-".into() } else { format!("{}\" / {:.0} mm", num!(b.armor_face, if b.armor_face >= 10.0 { 1 } else { 2 }), metric(b.armor_face, LengthSmall, b.units)) },
-                    if b.armor_back == 0.0 { "-".into() } else { format!("{}\" / {:.0} mm", num!(b.armor_back, if b.armor_back >= 10.0 { 1 } else { 2 }), metric(b.armor_back, LengthSmall, b.units)) },
-                    if b.armor_barb == 0.0 { "-".into() } else { format!("{}\" / {:.0} mm", num!(b.armor_barb, if b.armor_barb >= 10.0 { 1 } else { 2 }), metric(b.armor_barb, LengthSmall, b.units)) },
+                    if b.armor_face.imp() == 0.0 { "-".into() } else { format!("{}\" / {:.0} mm", num!(b.armor_face.imp(), if b.armor_face.imp() >= 10.0 { 1 } else { 2 }), b.armor_face.metric()) },
+                    if b.armor_back.imp() == 0.0 { "-".into() } else { format!("{}\" / {:.0} mm", num!(b.armor_back.imp(), if b.armor_back.imp() >= 10.0 { 1 } else { 2 }), b.armor_back.metric()) },
+                    if b.armor_barb.imp() == 0.0 { "-".into() } else { format!("{}\" / {:.0} mm", num!(b.armor_barb.imp(), if b.armor_barb.imp() >= 10.0 { 1 } else { 2 }), b.armor_barb.metric()) },
                 );
             }
             addto!(r);

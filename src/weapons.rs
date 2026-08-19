@@ -42,12 +42,12 @@ pub struct Battery {
     pub mount_kind: MountType,
 
     /// Armor thickness on mount face.
-    pub armor_face: f64,
+    pub armor_face: Measurement,
     /// Armor thickness elsewhere.
     // TODO: This should have a better name (other?)
-    pub armor_back: f64,
+    pub armor_back: Measurement,
     /// Armor thickness on barbette.
-    pub armor_barb: f64,
+    pub armor_barb: Measurement,
 
     /// Separate groups of guns within the Battery
     pub groups: Vec<SubBattery>,
@@ -68,9 +68,9 @@ impl Default for Battery { // {{{2
 
             mount_num: 0,
             mount_kind: MountType::default(),
-            armor_face: 0.0,
-            armor_back: 0.0,
-            armor_barb: 0.0,
+            armor_face: Measurement::new(0.0, UnitType::LengthSmall, Units::Imperial),
+            armor_back: Measurement::new(0.0, UnitType::LengthSmall, Units::Imperial),
+            armor_barb: Measurement::new(0.0, UnitType::LengthSmall, Units::Imperial),
 
             groups: vec![
                 SubBattery::default(),
@@ -148,16 +148,16 @@ impl Battery { // {{{2
     /// Weight of battery face armor.
     ///
     pub fn armor_face_wgt(&self) -> f64 {
-        let wgt = self.mount_kind.armor_face_wgt(self.armor_back);
+        let wgt = self.mount_kind.armor_face_wgt(self.armor_back.imp());
 
         let mut diameter_calc = 0.0;
         for g in self.groups.iter() {
             diameter_calc += g.diameter_calc(self.diam.imp()) * g.num_mounts() as f64;
         }
 
-        let wgt = wgt * diameter_calc * self.house_hgt() * self.armor_face * Armor::INCH;
+        let wgt = wgt * diameter_calc * self.house_hgt() * self.armor_face.imp() * Armor::INCH;
 
-        wgt * self.kind.armor_face_wgt(self.armor_back)
+        wgt * self.kind.armor_face_wgt(self.armor_back.imp())
     }
 
     // house_hgt {{{3
@@ -186,7 +186,7 @@ impl Battery { // {{{2
             b += (g.diameter_calc(self.diam.imp()) / 2.0).powf(2.0) * g.num_mounts() as f64;
         }
 
-        (bw1 * a * self.house_hgt() + PI * bw2 * b) * self.armor_back * Armor::INCH
+        (bw1 * a * self.house_hgt() + PI * bw2 * b) * self.armor_back.imp() * Armor::INCH
     }
     // armor_barb_wgt {{{3
     /// Weight of battery barbette armor
@@ -210,7 +210,7 @@ impl Battery { // {{{2
             0.0
         } else {
             (1.0 - (a as f64 - 2.0) / 6.0) *
-                self.armor_barb *
+                 self.armor_barb.imp() *
                  self.num as f64 *
                  self.diam.imp().powf(1.2) *
                  b *
@@ -345,9 +345,9 @@ impl Battery {
         eprintln!("kind = {}", self.kind);
         eprintln!("mount_num = {}", self.mount_num);
         eprintln!("mount_kind = {}", self.mount_kind);
-        eprintln!("armor_face = {}", self.armor_face);
-        eprintln!("armor_back = {}", self.armor_back);
-        eprintln!("armor_barb = {}", self.armor_barb);
+        eprintln!("armor_face = {}", self.armor_face.imp());
+        eprintln!("armor_back = {}", self.armor_back.imp());
+        eprintln!("armor_barb = {}", self.armor_barb.imp());
 
         eprintln!("broad_and_below() = {}", self.broad_and_below());
         eprintln!("concentration() = {}", self.concentration(wgt_broad));
@@ -532,8 +532,8 @@ mod battery {
 
                     btry.kind = gun_kind;
                     btry.mount_kind = mount_kind;
-                    btry.armor_face = armor_face;
-                    btry.armor_back = armor_back;
+                    btry.armor_face = Measurement::new(armor_face, UnitType::LengthSmall, Units::Imperial);
+                    btry.armor_back = Measurement::new(armor_back, UnitType::LengthSmall, Units::Imperial);
                     btry.diam = Measurement::new(10.0, UnitType::LengthSmall, Units::Imperial);
 
                     btry.groups[0].on = 2;
@@ -587,7 +587,7 @@ mod battery {
 
                     btry.kind = gun_kind;
                     btry.mount_kind = mount_kind;
-                    btry.armor_back = armor_back;
+                    btry.armor_back = Measurement::new(armor_back, UnitType::LengthSmall, Units::Imperial);
                     btry.diam = Measurement::new(10.0, UnitType::LengthSmall, Units::Imperial);
 
                     btry.groups[0].on = 2;
@@ -617,7 +617,7 @@ mod battery {
 
                     btry.kind = gun_kind;
                     btry.mount_kind = mount_kind;
-                    btry.armor_barb = armor_barb;
+                    btry.armor_barb = Measurement::new(armor_barb, UnitType::LengthSmall, Units::Imperial);
                     btry.diam = Measurement::new(10.0, UnitType::LengthSmall, Units::Imperial);
                     btry.year = 1920;
                     btry.num = 2;
