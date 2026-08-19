@@ -675,7 +675,7 @@ impl Ship { // {{{2
             concentration = 1.0 + self.gun_concentration();
         }
 
-        let mut str_cross = self.wgt_struct() / f64::sqrt(self.hull.bb.imp() * (self.hull.t.imp() + self.hull.freeboard_dist())) /
+        let mut str_cross = self.wgt_struct().imp() / f64::sqrt(self.hull.bb.imp() * (self.hull.t.imp() + self.hull.freeboard_dist())) /
             ((self.hull.d() + ((self.wgt_broad().imp() + self.wgt_borne() + self.wgt_gun_armor() + self.armor.ct_fwd.wgt(self.hull.d()) + self.armor.ct_aft.wgt(self.hull.d())) * (concentration * self.gun_super_factor()) + f64::max(self.hp_max().imp(), 0.0) / 100.0)) / self.hull.d()) * 0.6;
 
         if self.year < 1900 {
@@ -842,19 +842,22 @@ impl Ship { // {{{2
     // wgt_struct {{{3
     /// Weight per square feet of hull.
     ///
-    pub fn wgt_struct(&self) -> f64 {
-        (
-            self.wgt_hull_plus() +
-            match self.armor.bh_kind {
-                BulkheadType::Strengthened => 
-                    self.armor.bulkhead.wgt(self.hull.lwl().imp(), self.hull.cwp(), self.hull.b.imp()),
-                BulkheadType::Additional => 0.0,
-            }
-        ) * Self::POUND2TON / (
-            self.hull.ws() +
-            2.0 * self.hull.lwl().imp() * self.hull.free_cap(self.cap_calc_broadside()) +
-            self.hull.wp()
-            )
+    pub fn wgt_struct(&self) -> Measurement {
+        Measurement::new(
+            (
+                self.wgt_hull_plus() +
+                match self.armor.bh_kind {
+                    BulkheadType::Strengthened => 
+                        self.armor.bulkhead.wgt(self.hull.lwl().imp(), self.hull.cwp(), self.hull.b.imp()),
+                    BulkheadType::Additional => 0.0,
+                }
+            ) * Self::POUND2TON / (
+                self.hull.ws() +
+                2.0 * self.hull.lwl().imp() * self.hull.free_cap(self.cap_calc_broadside()) +
+                self.hull.wp()
+            ),
+            WeightPerArea, Imperial
+        )
     }
 
     // wgt_hull {{{3
@@ -2137,8 +2140,8 @@ impl Ship { // {{{3
             self.d_factor() * 100.0
         );
         addto!(r, "    Structure weight / hull surface area: {:.0} lbs/sq ft or {:.0} Kg/sq metre",
-            self.wgt_struct(),
-            metric(self.wgt_struct(), WeightPerArea, Imperial)
+            self.wgt_struct().imp(),
+            self.wgt_struct().metric()
         );
         addto!(r, "Hull strength (Relative):");
         addto!(r, "        - Cross-sectional: {:.2}", self.str_cross());
