@@ -31,7 +31,7 @@ pub struct Battery {
     /// Number of shells in the magazine
     pub shells: u32,
     /// Weight of each shell.
-    shell_wgt: Option<f64>,
+    shell_wgt: Option<Measurement>,
 
     /// Type of gun.
     pub kind: GunType,
@@ -105,7 +105,7 @@ impl Battery { // {{{2
         // Catch divide by zero
         if self.mount_num == 0 || wgt_broad == 0.0 { return 0.0; }
 
-        (self.shell_wgt() * self.num as f64 / wgt_broad) *
+        (self.shell_wgt().imp() * self.num as f64 / wgt_broad) *
             if self.mount_kind.wgt_adj() > 0.6 {
                 (4.0 / self.mount_num as f64).powf(0.25) - 1.0
             } else {
@@ -252,8 +252,8 @@ impl Battery { // {{{2
     // set_shell_wgt {{{3
     /// Set the shell weight.
     ///
-    pub fn set_shell_wgt(&mut self, wgt: f64) -> f64 {
-        self.shell_wgt = Some(wgt);
+    pub fn set_shell_wgt(&mut self, wgt: f64, units: Units) -> f64 {
+        self.shell_wgt = Some(Measurement::new(wgt, UnitType::Weight, units));
 
         wgt
     }
@@ -264,10 +264,10 @@ impl Battery { // {{{2
     /// Return the value previously set by set_shell_wgt()
     /// or the estimated shell weight if unset.
     ///
-    pub fn shell_wgt(&self) -> f64 {
+    pub fn shell_wgt(&self) -> Measurement {
         match self.shell_wgt {
             Some(wgt) => wgt,
-            None      => self.shell_wgt_est(),
+            None      => Measurement::new(self.shell_wgt_est(), UnitType::Weight, Units::Imperial),
         }
     }
 
@@ -321,14 +321,14 @@ impl Battery { // {{{2
     /// Weight of shells if each barrel fires a single shell.
     ///
     pub fn broadside_wgt(&self) -> f64 {
-        self.num as f64 * self.shell_wgt()
+        self.num as f64 * self.shell_wgt().imp()
     }
 
     // mag_wgt {{{3
     /// Weight of the battery magazine.
     ///
     pub fn mag_wgt(&self) -> f64 {
-        (self.num * self.shells) as f64 * self.shell_wgt() / Ship::POUND2TON * (1.0 + Self::CORDITE_FACTOR)
+        (self.num * self.shells) as f64 * self.shell_wgt().imp() / Ship::POUND2TON * (1.0 + Self::CORDITE_FACTOR)
     }
 }
 
@@ -360,7 +360,7 @@ impl Battery {
         eprintln!("armor_wgt() = {}", self.armor_wgt(hull.clone()));
         eprintln!("wgt_adj() = {}", self.wgt_adj());
         eprintln!("date_factor() = {}", self.date_factor());
-        eprintln!("shell_wgt() = {}", self.shell_wgt());
+        eprintln!("shell_wgt() = {}", self.shell_wgt().imp());
         eprintln!("shell_wgt_est() = {}", self.shell_wgt_est());
         eprintln!("gun_wgt() = {}", self.gun_wgt());
         eprintln!("mount_wgt() = {}", self.mount_wgt());
@@ -415,7 +415,7 @@ mod battery {
                     let (expected, shell_wgt, mount_kind, mount_num) = $value;
 
                     let mut btry = Battery::default();
-                    btry.set_shell_wgt(shell_wgt);
+                    btry.set_shell_wgt(shell_wgt, Units::Imperial);
                     btry.mount_kind = mount_kind;
                     btry.mount_num = mount_num;
                     btry.num = 10;
@@ -797,7 +797,7 @@ mod battery {
                     let (expected, num) = $value;
 
                     let mut btry = Battery::default();
-                    btry.set_shell_wgt(10.0);
+                    btry.set_shell_wgt(10.0, Units::Imperial);
                     btry.num = num;
 
                     assert_eq!(expected, btry.broadside_wgt());
@@ -821,7 +821,7 @@ mod battery {
                     let mut btry = Battery::default();
                     btry.num = num;
                     btry.shells = shells;
-                    btry.set_shell_wgt(shell_wgt);
+                    btry.set_shell_wgt(shell_wgt, Units::Imperial);
 
                     assert_eq!(to_place(expected, 2), to_place(btry.mag_wgt(), 2));
                 }

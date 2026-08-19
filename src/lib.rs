@@ -1099,7 +1099,7 @@ impl Ship { // {{{2
 
             // Have to remove the commas from the string or it fails
             // to convert to a float
-            b.set_shell_wgt( lines.next().unwrap().replace(",", "").parse()? );
+            b.set_shell_wgt( lines.next().unwrap().replace(",", "").parse()?, Imperial );
         }
 
         ship.batteries[0].shells                 = lines.next().unwrap().parse()?;
@@ -1602,8 +1602,8 @@ impl Ship { // {{{3
                 num!(b.diam.metric(), if b.diam.imp() * 25.4 < 100.0 { 1 } else { 0 }),
                 b.len,
                 plural(b.num),
-                num!(b.shell_wgt(), 2),
-                num!(metric(b.shell_wgt(), Weight, b.units), 2),
+                num!(b.shell_wgt().imp(), 2),
+                num!(b.shell_wgt().metric(), 2),
                 num!(b.shells, 0),
             );
             addto!(r, "        {} gun{} in {} mount{}, {} Model",
