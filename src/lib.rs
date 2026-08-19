@@ -1937,7 +1937,7 @@ impl Ship { // {{{3
             );
         }
 
-        if self.torps[0].wgt() + self.torps[1].wgt() + self.mines.wgt() + self.asw[0].wgt() + self.asw[1].wgt > 0.0 {
+        if self.torps[0].wgt() + self.torps[1].wgt() + self.mines.wgt() + self.asw[0].wgt() + self.asw[1].wgt() > 0.0 {
             addto!(r, "    - Weapons: {}",
                 self.percent_calc(self.torps[0].wgt() + self.torps[1].wgt() + self.mines.wgt() + self.asw[0].wgt() + self.asw[1].wgt()),
             );
