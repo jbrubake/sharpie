@@ -142,7 +142,7 @@ impl Hull { // {{{2
            self.fd_aft == self.ad_fwd &&
            self.ad_aft == self.qd_fwd {
 
-            s.push("flush deck".into());
+            s.push("a flush deck".into());
         } else {
             if self.fc_aft > self.fd_fwd {
                 s.push("raised forecastle".into());

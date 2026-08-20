@@ -874,10 +874,10 @@ impl fmt::Display for GunType { // {{{2
             match self {
                 Self::MuzzleLoading => "Muzzle loading",
                 Self::BreechLoading => "Breech loading",
-                Self::QuickFiring   => "Quick-firing",
+                Self::QuickFiring   => "Quick firing",
                 Self::AntiAir       => "Anti-air",
-                Self::DualPurpose   => "Dual-purpose",
-                Self::RapidFire     => "Automatic rapid-fire",
+                Self::DualPurpose   => "Dual purpose",
+                Self::RapidFire     => "Auto rapid fire",
                 Self::MachineGun    => "Machine",
             }
         )
@@ -1053,10 +1053,10 @@ mod gun_type {
         // name:               (display, gun)
         display_muzzle:        ("Muzzle loading", GunType::MuzzleLoading),
         display_breech:        ("Breech loading", GunType::BreechLoading),
-        display_qf:            ("Quick-firing", GunType::QuickFiring),
+        display_qf:            ("Quick firing", GunType::QuickFiring),
         display_aa:            ("Anti-air", GunType::AntiAir),
-        display_dp:            ("Dual-purpose", GunType::DualPurpose),
-        display_rf:            ("Automatic rapid-fire", GunType::RapidFire),
+        display_dp:            ("Dual purpose", GunType::DualPurpose),
+        display_rf:            ("Auto rapid fire", GunType::RapidFire),
         display_mg:            ("Machine", GunType::MachineGun),
     }
 
