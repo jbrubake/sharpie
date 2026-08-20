@@ -40,12 +40,6 @@ A `Makefile` provides convenience targets: `make build`, `make gui` (build and
 launch the GUI), `make preview` (preview the UI with `slint-viewer`),
 `make live-preview` and `make docs`.
 
-# Missing Functionality
-
-- Metric units are not supported in either `sharpie` or `SpringSharp` files.
-  Files using them will load but all values are interpreted as Imperial so
-  they will not work properly.
-
 # Comparing Sharpie reports to SpringSharp reports
 
 The report output by `sharpie` is supposed to be formatted exactly like a
