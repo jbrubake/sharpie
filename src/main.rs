@@ -227,21 +227,21 @@ mod cli {
              None),
         cli_load:
             (["sharpie", "load", "ship.ship"],
-            Some(Commands::Load { ref file }) if file == "ship.ship"),
+             Some(Commands::Load { ref file }) if file == "ship.ship"),
         cli_convert_minimal:
             (["sharpie", "convert", "in.sship"],
-            Some(Commands::Convert { ref from, to: None, report: false }) if from == "in.sship"),
+             Some(Commands::Convert { ref from, to: None, report: false }) if from == "in.sship"),
         cli_convert_to_long:
             (["sharpie", "convert", "in.sship", "--to", "out.ship"],
-            Some(Commands::Convert { ref from, to: Some(ref to), report: false }) if from == "in.sship" && to == "out.ship"),
+             Some(Commands::Convert { ref from, to: Some(ref to), report: false }) if from == "in.sship" && to == "out.ship"),
         cli_convert_to_short:
             (["sharpie", "convert", "in.sship", "-t", "out.ship"],
-            Some(Commands::Convert { to: Some(ref to), .. }) if to == "out.ship"),
+             Some(Commands::Convert { to: Some(ref to), .. }) if to == "out.ship"),
         cli_convert_report_long:
-            (["sharpie", "convert", "in.sship", "--report"],        
+            (["sharpie", "convert", "in.sship", "--report"],
             Some(Commands::Convert { ref from, report: true, .. }) if from == "in.sship"),
         cli_convert_report_short:
-            (["sharpie", "convert", "in.sship", "-r"],              
+            (["sharpie", "convert", "in.sship", "-r"],
             Some(Commands::Convert { report: true, .. })),
     }
 
