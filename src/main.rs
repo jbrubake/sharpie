@@ -190,53 +190,59 @@ mod cli {
     use super::*;
     use clap::Parser;
 
+    // assert_matches! {{{3
+    //
+    // assert_matches! would require "nightly"
+    //
+    // Local replacement for std::assert_matches (unstable as of Rust 1.93).
+    macro_rules! assert_matches {
+        ($expression:expr, $(|)? $( $pattern:pat_param )|+ $( if $guard:expr )? $(,)?) => {
+            match $expression {
+                $( $pattern )|+ $( if $guard )? => {}
+                _ => panic!(
+                    "assertion failed: value did not match pattern `{}`",
+                    stringify!($( $pattern )|+ $( if $guard )?)
+                ),
+            }
+        };
+    }
+
     // Test cli_parse_ok {{{3
     macro_rules! test_cli_parse_ok {
-        ($($name:ident: $value:expr,)*) => {
+        ($($name:ident: ($args:expr, $($pattern:tt)+),)*) => {
             $(
                 #[test]
                 fn $name() {
-                    let (args, check) = $value;
-                    let cli = Cli::try_parse_from(args).unwrap();
-                    assert!(check(cli));
+                    let cli = Cli::try_parse_from($args).unwrap();
+                    assert_matches!(cli.command, $($pattern)+);
                 }
             )*
         }
     }
 
     test_cli_parse_ok! {
-        // name: (
-        //  args,
-        //  check
-        // )
-        cli_no_subcommand: (
-            ["sharpie"],
-            |cli: Cli| cli.command.is_none()
-        ),
-        cli_load: (
-            ["sharpie", "load", "ship.ship"],
-            |cli: Cli| matches!(cli.command, Some(Commands::Load { ref file }) if file == "ship.ship")
-        ),
-        cli_convert_minimal: (
-            ["sharpie", "convert", "in.sship"],
-            |cli: Cli| matches!(cli.command, Some(Commands::Convert { ref from, to: None, report: false }) if from == "in.sship")
-        ),
-        cli_convert_to_long: (
-            ["sharpie", "convert", "in.sship", "--to", "out.ship"],
-            |cli: Cli| matches!(cli.command, Some(Commands::Convert { ref from, to: Some(ref to), report: false }) if from == "in.sship" && to == "out.ship")
-        ),
-        cli_convert_to_short: (
-            ["sharpie", "convert", "in.sship", "-t", "out.ship"],
-            |cli: Cli| matches!(cli.command, Some(Commands::Convert { to: Some(ref to), .. }) if to == "out.ship")
-        ),
-        cli_convert_report_long: (
-            ["sharpie", "convert", "in.sship", "--report"],
-            |cli: Cli| matches!(cli.command, Some(Commands::Convert { ref from, report: true, .. }) if from == "in.sship")
-        ),
-        cli_convert_report_short: (
-            ["sharpie", "convert", "in.sship", "-r"],
-            |cli: Cli| matches!(cli.command, Some(Commands::Convert { report: true, .. }))
-        ),
+        // name: (args, pattern)
+        cli_no_subcommand:
+            (["sharpie"],
+             None),
+        cli_load:
+            (["sharpie", "load", "ship.ship"],
+            Some(Commands::Load { ref file }) if file == "ship.ship"),
+        cli_convert_minimal:
+            (["sharpie", "convert", "in.sship"],
+            Some(Commands::Convert { ref from, to: None, report: false }) if from == "in.sship"),
+        cli_convert_to_long:
+            (["sharpie", "convert", "in.sship", "--to", "out.ship"],
+            Some(Commands::Convert { ref from, to: Some(ref to), report: false }) if from == "in.sship" && to == "out.ship"),
+        cli_convert_to_short:
+            (["sharpie", "convert", "in.sship", "-t", "out.ship"],
+            Some(Commands::Convert { to: Some(ref to), .. }) if to == "out.ship"),
+        cli_convert_report_long:
+            (["sharpie", "convert", "in.sship", "--report"],        
+            Some(Commands::Convert { ref from, report: true, .. }) if from == "in.sship"),
+        cli_convert_report_short:
+            (["sharpie", "convert", "in.sship", "-r"],              
+            Some(Commands::Convert { report: true, .. })),
     }
 
     // Test cli_parse_err {{{3
