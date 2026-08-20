@@ -1,0 +1,17 @@
+#!/bin/sh
+
+sed_filter() {
+    sed '
+        /^[[:space:]]*$/d
+        s/[[:blank:]][[:blank:]]*/ /g
+        s/^[[:blank:]]*//
+        s/[[:space:]]*$//
+        '
+}
+
+diff='/usr/bin/diff -y'
+command -v vimdiff >/dev/null && diff=vimdiff
+
+$diff \
+    <(cargo run -- convert -r "$1" | sed_filter) \
+    <(cat "${1%.sship}.report"     | sed_filter)

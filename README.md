@@ -43,11 +43,14 @@ launch the GUI), `make preview` (preview the UI with `slint-viewer`),
 # Comparing Sharpie reports to SpringSharp reports
 
 The report output by `sharpie` is supposed to be formatted exactly like a
-`SpringSharp` report, except for differences in spacing. If you run both reports
-through the following command you should be able to use `diff(1)` to easily spot
-differences between the two reports:
+`SpringSharp` report, except for differences in spacing. If you place the
+`*.sship` file and a corresponding `*.report` file that contains the
+`SpringSharp` report (i.e., `foo.sship` and `foo.report` in the same directory),
+you can use the included `chkreport` script to compare `sharpie's` report:
 
-    sed -e 's/\t/ /g' -e 's/  */ /g' -e 's/^ *//' -e 's/ *$//' [REPORT] > [REPORT].nospaces
+`./chkreport path/to/SHIP.sship`
+
+This will use `vimdiff` if available.
 
 Please file an [issue](https://github.com/jbrubake/sharpie/issues/new/choose)
 for any `sharpie` reports that differ from `SpringSharp`. Include both the
