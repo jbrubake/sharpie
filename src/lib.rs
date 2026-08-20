@@ -1999,24 +1999,22 @@ impl Ship { // {{{3
             self.percent_calc(self.wgt_load()),
         );
 
-        if self.wgts.wgt() > 0 {
-            addto!(r, "    Miscellaneous weights: {}",
-                self.percent_calc(self.wgts.wgt() as f64),
+        addto!(r, "    Miscellaneous weights: {}",
+            self.percent_calc(self.wgts.wgt() as f64),
+        );
+        if self.wgts.vital > 0 { addto!(r, "    - Hull below water: {} tons", 
+                num!(self.wgts.vital, 0)
             );
-            if self.wgts.vital > 0 { addto!(r, "    - Hull below water: {} tons", 
-                    num!(self.wgts.vital, 0)
-                );
-            }
-            if self.wgts.void > 0 {
-                addto!(r, "    - {} void weights: {} tons",
-                    if self.hull.bb > self.hull.b { "Bulge" } else { "Hull" },
-                    num!(self.wgts.void, 0),
-                );
-            }
-            if self.wgts.hull > 0  { addto!(r, "    - Hull above water: {:.0} tons", self.wgts.hull) };
-            if self.wgts.on > 0    { addto!(r, "    - On freeboard deck: {:.0} tons", self.wgts.on) };
-            if self.wgts.above > 0 { addto!(r, "    - Above deck: {:.0} tons", self.wgts.above) };
         }
+        if self.wgts.void > 0 {
+            addto!(r, "    - {} void weights: {} tons",
+                if self.hull.bb > self.hull.b { "Bulge" } else { "Hull" },
+                num!(self.wgts.void, 0),
+            );
+        }
+        if self.wgts.hull > 0  { addto!(r, "    - Hull above water: {:.0} tons", self.wgts.hull) };
+        if self.wgts.on > 0    { addto!(r, "    - On freeboard deck: {:.0} tons", self.wgts.on) };
+        if self.wgts.above > 0 { addto!(r, "    - Above deck: {:.0} tons", self.wgts.above) };
 
         addto!(r);
 
