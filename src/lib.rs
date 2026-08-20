@@ -1312,7 +1312,7 @@ impl Ship { // {{{2
         };
 
         ship.torps[1].units = lines.next().unwrap().into();
-        ship.mines.units    = lines.next().unwrap().into();
+        ship.mines.wgt     = Measurement::new(0.0, Weight, lines.next().unwrap().into());
         ship.asw[0].units   = lines.next().unwrap().into();
         ship.asw[1].units   = lines.next().unwrap().into();
 
@@ -1343,8 +1343,7 @@ impl Ship { // {{{2
 
         ship.mines.num    = lines.next().unwrap().parse()?;
         ship.mines.reload = lines.next().unwrap().parse()?;
-        let wgt_val: f64  = lines.next().unwrap().parse()?;
-        ship.mines.wgt    = Measurement::new(wgt_val, Weight, ship.mines.units);
+        ship.mines.wgt.v    = lines.next().unwrap().parse()?;
         ship.mines.kind   = lines.next().unwrap().into();
 
         ship.asw[0].num    = lines.next().unwrap().parse()?;

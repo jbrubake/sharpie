@@ -2876,9 +2876,6 @@ mod torpedo_mount_type {
 ///
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
 pub struct Mines {
-    /// Units
-    pub units: Units,
-
     /// Year mines were designed.
     pub year: u32,
 
