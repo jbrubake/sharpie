@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 sed_filter() {
     sed '
@@ -9,9 +9,22 @@ sed_filter() {
         '
 }
 
-diff='/usr/bin/diff -y'
+ship=$1
+report=${ship%.sship}.report
+
+if [ -z "$ship" ]; then
+    echo "Usage: $0 SHIP.sship" >&2
+    exit 1
+elif ! [ -f "$ship" ]; then
+    echo "SpringSharp ship not found: $ship" >&2
+    exit 1
+elif ! [ -f "$report" ]; then
+    echo "SpringSharp report not found: $report" >&2
+    exit 1
+fi
+
+diff="$(command -p diff) -y"
 command -v vimdiff >/dev/null && diff=vimdiff
 
-$diff \
-    <(cargo run -- convert -r "$1" | sed_filter) \
-    <(cat "${1%.sship}.report"     | sed_filter)
+$diff <(cargo run -- convert -r "$ship" | sed_filter) \
+      <(sed_filter < "$report")
