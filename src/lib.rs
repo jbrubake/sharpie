@@ -1313,8 +1313,8 @@ impl Ship { // {{{2
 
         ship.torps[1].units = lines.next().unwrap().into();
         ship.mines.wgt     = Measurement::new(0.0, Weight, lines.next().unwrap().into());
-        ship.asw[0].units   = lines.next().unwrap().into();
-        ship.asw[1].units   = lines.next().unwrap().into();
+        ship.asw[0].wgt    = Measurement::new(0.0, Weight, lines.next().unwrap().into());
+        ship.asw[1].wgt    = Measurement::new(0.0, Weight, lines.next().unwrap().into());
 
         for b in ship.batteries.iter_mut() { b.len = lines.next().unwrap().parse()?; }
 
@@ -1350,10 +1350,8 @@ impl Ship { // {{{2
         ship.asw[1].num    = lines.next().unwrap().parse()?;
         ship.asw[0].reload = lines.next().unwrap().parse()?;
         ship.asw[1].reload = lines.next().unwrap().parse()?;
-        let asw0_wgt: f64  = lines.next().unwrap().parse()?;
-        ship.asw[0].wgt    = Measurement::new(asw0_wgt, Weight, ship.asw[0].units);
-        let asw1_wgt: f64  = lines.next().unwrap().parse()?;
-        ship.asw[1].wgt    = Measurement::new(asw1_wgt, Weight, ship.asw[1].units);
+        ship.asw[0].wgt.v  = lines.next().unwrap().parse()?;
+        ship.asw[1].wgt.v  = lines.next().unwrap().parse()?;
         ship.asw[0].kind   = lines.next().unwrap().into();
         ship.asw[1].kind   = lines.next().unwrap().into();
 

@@ -3026,9 +3026,6 @@ mod mine_type {
 ///
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
 pub struct ASW {
-    /// Units.
-    pub units: Units,
-
     /// Year ASW system was designed.
     pub year: u32,
 
