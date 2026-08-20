@@ -103,6 +103,7 @@ pub mod units;
 use units::UnitType::*;
 use units::Units::*;
 use units::Measurement;
+use units::Units;
 
 use format_num::format_num;
 
@@ -1162,7 +1163,9 @@ impl Ship { // {{{2
         ship.hull.units = lines.next().unwrap().into();
 
         for b in ship.batteries.iter_mut() { b.units = lines.next().unwrap().into(); }
-        ship.torps[0].units = lines.next().unwrap().into();
+        let units: Units = lines.next().unwrap().into();
+        ship.torps[0].diam = Measurement::new(0.0, LengthSmall, units);
+        ship.torps[0].len  = Measurement::new(0.0, LengthLong, units);
         ship.armor.units    = lines.next().unwrap().into();
 
         ship.year = lines.next().unwrap().parse()?;
@@ -1228,8 +1231,7 @@ impl Ship { // {{{2
 
         ship.torps[0].num  = lines.next().unwrap().parse()?;
         ship.torps[1].num  = lines.next().unwrap().parse()?;
-        let diam_val: f64  = lines.next().unwrap().parse()?;
-        ship.torps[0].diam = Measurement::new(diam_val, LengthSmall, ship.torps[0].units);
+        ship.torps[0].diam.v = lines.next().unwrap().parse()?;
 
         let val: f64 = lines.next().unwrap().parse()?;
         ship.armor.main.thick = Measurement::new(val, LengthSmall, ship.armor.units);
@@ -1311,7 +1313,9 @@ impl Ship { // {{{2
             _ => ship.hull.bow_type,
         };
 
-        ship.torps[1].units = lines.next().unwrap().into();
+        let units: Units = lines.next().unwrap().into();
+        ship.torps[1].diam = Measurement::new(0.0, LengthSmall, units);
+        ship.torps[1].len  = Measurement::new(0.0, LengthLong, units);
         ship.mines.wgt     = Measurement::new(0.0, Weight, lines.next().unwrap().into());
         ship.asw[0].wgt    = Measurement::new(0.0, Weight, lines.next().unwrap().into());
         ship.asw[1].wgt    = Measurement::new(0.0, Weight, lines.next().unwrap().into());
@@ -1332,12 +1336,9 @@ impl Ship { // {{{2
 
         ship.torps[0].mounts = lines.next().unwrap().parse()?;
         ship.torps[1].mounts = lines.next().unwrap().parse()?;
-        let diam_val: f64    = lines.next().unwrap().parse()?;
-        ship.torps[1].diam   = Measurement::new(diam_val, LengthSmall, ship.torps[1].units);
-        let len_val: f64     = lines.next().unwrap().parse()?;
-        ship.torps[0].len    = Measurement::new(len_val, LengthLong, ship.torps[0].units);
-        let len_val: f64     = lines.next().unwrap().parse()?;
-        ship.torps[1].len    = Measurement::new(len_val, LengthLong, ship.torps[1].units);
+        ship.torps[1].diam.v = lines.next().unwrap().parse()?;
+        ship.torps[0].len.v  = lines.next().unwrap().parse()?;
+        ship.torps[1].len.v  = lines.next().unwrap().parse()?;
         ship.torps[0].kind   = lines.next().unwrap().into();
         ship.torps[1].kind   = lines.next().unwrap().into();
 
@@ -2391,8 +2392,8 @@ mod ship {
                     ship.torps[0].year = 1920;
                     ship.torps[0].num = 3;
                     ship.torps[0].mounts = 2;
-                    ship.torps[0].diam = Measurement::new(20.0, LengthSmall, ship.torps[0].units);
-                    ship.torps[0].len  = Measurement::new(10.0, LengthLong,  ship.torps[0].units);
+                    ship.torps[0].diam = Measurement::new(20.0, LengthSmall, Units::Imperial);
+                    ship.torps[0].len  = Measurement::new(10.0, LengthLong,  Units::Imperial);
                     ship.torps[0].kind = kind;
 
                     ship.torps[1].num = 0;
@@ -2432,8 +2433,8 @@ mod ship {
                     ship.torps[0].year = 1920;
                     ship.torps[0].num = 3;
                     ship.torps[0].mounts = 2;
-                    ship.torps[0].diam = Measurement::new(20.0, LengthSmall, ship.torps[0].units);
-                    ship.torps[0].len  = Measurement::new(10.0, LengthLong,  ship.torps[0].units);
+                    ship.torps[0].diam = Measurement::new(20.0, LengthSmall, Units::Imperial);
+                    ship.torps[0].len  = Measurement::new(10.0, LengthLong,  Units::Imperial);
                     ship.torps[0].kind = kind;
 
                     ship.torps[1].num = 0;

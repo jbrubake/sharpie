@@ -2545,8 +2545,6 @@ mod gunlayouttype {
 ///
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
 pub struct Torpedoes {
-    /// Units
-    pub units: Units,
     /// Year torpedo was designed.
     pub year: u32,
 
