@@ -2022,9 +2022,9 @@ impl Ship { // {{{3
 
         addto!(r, "Overall survivability and seakeeping ability:"); // {{{5
         addto!(r, "    Survivability (Non-critical penetrating hits needed to sink ship):");
-        addto!(r, "    {:.0} lbs / {:.0} Kg = {:.1} x {:.1} \" / {:.0} mm shells or {:.1} torpedoes",
-            self.flotation(),
-            metric(self.flotation(), Weight, Imperial),
+        addto!(r, "    {} lbs / {} Kg = {:.1} x {:.1} \" / {:.0} mm shells or {:.1} torpedoes",
+            num!(self.flotation(), 0),
+            num!(metric(self.flotation(), Weight, Imperial), 0),
             self.damage_shell_num(),
             self.damage_shell_size(),
             metric(self.damage_shell_size(), LengthSmall, Imperial),
