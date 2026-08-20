@@ -137,7 +137,7 @@ fn run_gui() -> Result<(), Box<dyn Error>> {
     }
 }
 
-// Run the CLI command.
+// Run the CLI {{{1
 //
 fn run(cli: Cli) -> Result<(), Box<dyn Error>> {
     match cli.command {
