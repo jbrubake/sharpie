@@ -2271,6 +2271,7 @@ mod ship {
     use super::*;
     use crate::test_support::*;
     use crate::weapons::TorpedoMountType;
+    use tempfile::NamedTempFile;
 
     // Test year_adj {{{3
     macro_rules! test_year_adj {
@@ -2446,7 +2447,68 @@ mod ship {
         wgt_engine_d_600:  (372.23,     600.0),
         wgt_engine_d_4999: (11_339.23,  4999.0),
         wgt_engine_d_5000: (11_344.2,   5_000.0),
-    }   
+    }
+
+    // Test ship_save_load_roundtrip {{{3
+    #[test]
+    fn ship_save_load_roundtrip() {
+        let path = NamedTempFile::new()
+            .unwrap()
+            .path()
+            .to_str()
+            .unwrap()
+            .to_string();
+
+        test_ship().save(path.clone()).unwrap();
+        assert!(Ship::load(path).is_ok());
+    }
+
+    // Test ship_convert_roundtrip {{{3
+    #[test]
+    fn ship_convert_roundtrip() {
+        let from = concat!(env!("CARGO_MANIFEST_DIR"), "/test.sship");
+        let to   = NamedTempFile::new()
+            .unwrap()
+            .path()
+            .to_str()
+            .unwrap()
+            .to_string();
+
+        Ship::convert(from.into())
+            .unwrap()
+            .save(to.clone())
+            .unwrap();
+
+        assert!(Ship::load(to).is_ok());
+    }
+
+    // Test ship_load_missing {{{3
+    #[test]
+    fn ship_load_missing() {
+        let tmp  = NamedTempFile::new().unwrap();
+        let path = tmp
+            .path()
+            .to_str()
+            .unwrap()
+            .to_string();
+        drop(tmp);
+
+        assert!(Ship::load(path).is_err());
+    }
+
+    // Test ship_convert_missing {{{3
+    #[test]
+    fn ship_convert_missing() {
+        let tmp  = NamedTempFile::new().unwrap();
+        let path = tmp
+            .path()
+            .to_str()
+            .unwrap()
+            .to_string();
+        drop(tmp);
+
+        assert!(Ship::convert(path).is_err());
+    }
 }
 
 // SeaType {{{1
