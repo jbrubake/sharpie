@@ -671,8 +671,8 @@ impl fmt::Display for BoilerType { // {{{2
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}",
             bitflags_match!(*self, {
-                Self::Simple => "simple receiprocating steam engines",
-                Self::Complex => "complex receiprocating steam engines",
+                Self::Simple => "simple reciprocating steam engines",
+                Self::Complex => "complex reciprocating steam engines",
                 Self::Turbine => "steam turbines",
 
                 Self::Simple |
