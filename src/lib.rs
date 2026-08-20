@@ -30,6 +30,11 @@ use std::fs;
 use std::fs::{File, OpenOptions};
 use std::io::{BufRead, BufReader, Write};
 
+/// Earliest valid year for a ship.
+pub const YEAR_MIN: u32 = 1850;
+/// Latest valid year for a ship.
+pub const YEAR_MAX: u32 = 1950;
+
 /// File extension for sharpie files.
 pub const SHIP_FILE_EXT: &str = "ship";
 /// File extension for SpringSharp files.
@@ -161,7 +166,7 @@ impl Default for Ship { // {{{2
             name: "".into(),
             country: "".into(),
             kind: "".into(),
-            year: 1950,
+            year: YEAR_MAX,
 
             trim: 50,
 
@@ -195,7 +200,7 @@ impl Ship { // {{{2
     ///
     pub fn year_adj(year: u32) -> f64 {
              if year <= 1890 { 1.0 - (1890 - year) as f64 / 66.666664 }
-        else if year <= 1950 { 1.0 }
+        else if year <= YEAR_MAX { 1.0 }
         else                 { 0.0 }
     }
 

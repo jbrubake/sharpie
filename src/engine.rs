@@ -1,4 +1,4 @@
-use crate::Hull;
+use crate::{Hull, YEAR_MAX};
 
 use bitflags::{bitflags, bitflags_match};
 use serde::{Deserialize, Serialize};
@@ -780,7 +780,7 @@ impl BoilerType {
             1.0 - (1910 - year) as f64 / 70.0
         } else if year < 1920 {
             1.0 + (year - 1910) as f64 / 20.0
-        } else if year < 1950 {
+        } else if year < YEAR_MAX {
             1.5 + (year - 1920) as f64 / 60.0
         } else {
             2.0
