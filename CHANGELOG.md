@@ -3,20 +3,23 @@
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.3.1] - 2026-08-21
 
 ### Added
 
 - Length parameter to `BowType::BulbForward`
 - `YEAR_MIN`/`YEAR_MAX` constants bounding valid ship years
 - `chkreport` script for diffing generated reports against SpringSharp output
+- `GunDistributionType::None` gun distribution layout, now the default
+- Crate metadata (`description`, `license`, `repository`, `rust-version`)
 
 ### Changed
 
 - `d`/`cb` and `lwl`/`loa` pairs in `Hull` replaced with enums so each GUI widget
   maps 1:1 to a data state
 - `BulkheadType::Additional` is now the default bulkhead type
-- Combined duplicated sship/gui list enums, generated via macros
+- added `choice_enum!` macro to simplify enum construction for enums that define
+    a list of user choices
 
 ### Fixed
 
@@ -61,7 +64,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CLI and GUI to generate reports from ship files and convert SpringSharp sship
   files to Sharpie format
 
-[unreleased]: https://github.com/orionarts/sharpie/compare/v0.3.0...HEAD
+[unreleased]: https://github.com/orionarts/sharpie/compare/v0.3.1...HEAD
+[0.3.1]: https://github.com/orionarts/sharpie/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/orionarts/sharpie/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/orionarts/sharpie/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/orionarts/sharpie/compare/v0.1.0...v0.1.1
