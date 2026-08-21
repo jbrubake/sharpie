@@ -628,6 +628,7 @@ mod battery {
                     btry.groups[1].on = 0;
 
                     btry.groups[0].layout = GunLayoutType::Single;
+                    btry.groups[0].distribution = GunDistributionType::CenterlineEven;
 
                     let mut hull = Hull::default();
                     hull.fc_len = 0.2;
@@ -1649,6 +1650,7 @@ mod sub_battery {
 #[derive(PartialEq, Serialize, Deserialize, Clone, Debug, Default)]
 pub enum GunDistributionType {
     #[default]
+    None,
     CenterlineEven,
     CenterlineEndsFD,
     CenterlineEndsAD,
@@ -1688,6 +1690,7 @@ choice_enum!(GunDistributionType {
     SidesADFwd       => ("Sides - aft deck forward"),
     SidesAD          => ("Sides - aft deck"),
     SidesADAft       => ("Sides - aft deck aft"),
+    None             => ("None"),
 });
 
 impl GunDistributionType { // {{{2
@@ -1696,6 +1699,7 @@ impl GunDistributionType { // {{{2
     ///
     pub fn desc(&self, mounts: u32, fwd_len: f64) -> String {
         let s = match self {
+            Self::None => "layout not set",
             Self::CenterlineEven => {
                 if mounts == 1 {
                     if fwd_len >= 0.5 {
@@ -1817,6 +1821,7 @@ impl GunDistributionType { // {{{2
         }
 
         match self {
+            Self::None             => 0,
             Self::CenterlineFDFwd  => tot,
             Self::CenterlineFD     => tot,
             Self::CenterlineFDAft  => tot,
@@ -1869,6 +1874,8 @@ impl GunDistributionType { // {{{2
         let ad_aft = hull.ad_aft.imp();
 
         match self {
+            Self::None             => 0.0,
+
             Self::CenterlineEven | Self::SidesEven =>
                 (fwd * fd + (tot - fwd) * ad) / tot,
 
@@ -1976,6 +1983,7 @@ impl GunDistributionType { // {{{2
     ///
     pub fn super_factor_long(&self) -> bool {
         match self {
+            Self::None             => false,
             Self::CenterlineEven   => false,
             Self::CenterlineEndsFD => false,
             Self::CenterlineEndsAD => true,
@@ -2091,6 +2099,8 @@ mod gun_dist_type {
         mounts_fwd_sides_ad_fwd:    (0, 3, 0.0, GunDistributionType::SidesADFwd),
         mounts_fwd_sides_ad:        (0, 3, 0.0, GunDistributionType::SidesAD),
         mounts_fwd_sides_ad_aft:    (0, 3, 0.0, GunDistributionType::SidesADAft),
+
+        mounts_fwd_none:            (0, 5, 0.5, GunDistributionType::None),
     }
 
     // Test free {{{3
@@ -2139,6 +2149,7 @@ mod gun_dist_type {
         free_case_7_2: (10.0, 5, GunDistributionType::SidesAD),
         free_case_8_1: (4.0, 5, GunDistributionType::CenterlineADAft),
         free_case_8_2: (4.0, 5, GunDistributionType::SidesADAft),
+        free_none:     (0.0, 5, GunDistributionType::None),
     }
 
     // Test desc {{{3
@@ -2190,6 +2201,7 @@ mod gun_dist_type {
         desc_sides_ad_few:           ("sides, aft deck centre", 2, 0.5, GunDistributionType::SidesAD),
         desc_sides_ad_multi:         ("sides, aft evenly spread", 3, 0.5, GunDistributionType::SidesAD),
         desc_sides_ad_aft:           ("sides, aft deck aft", 2, 0.5, GunDistributionType::SidesADAft),
+        desc_none:                   ("layout not set", 0, 0.5, GunDistributionType::None),
     }
 
     // Test Display {{{3
@@ -2226,6 +2238,7 @@ mod gun_dist_type {
         display_sides_ad_fwd:     ("Sides - aft deck forward", GunDistributionType::SidesADFwd),
         display_sides_ad:         ("Sides - aft deck", GunDistributionType::SidesAD),
         display_sides_ad_aft:     ("Sides - aft deck aft", GunDistributionType::SidesADAft),
+        display_none:             ("None", GunDistributionType::None),
     }
 
     // Test From<&str> {{{3
@@ -2262,7 +2275,7 @@ mod gun_dist_type {
         from_str_sides_ad_fwd: (GunDistributionType::SidesADFwd, "15"),
         from_str_sides_ad:     (GunDistributionType::SidesAD, "16"),
         from_str_sides_ad_aft: (GunDistributionType::SidesADAft, "17"),
-        from_str_default:      (GunDistributionType::CenterlineEven, "99"),
+        from_str_default:      (GunDistributionType::None, "99"),
     }
 
     // Test from/index round-trip {{{3
@@ -2301,7 +2314,7 @@ mod gun_dist_type {
              "Sides - ends (fore >= aft)", "Sides - ends (aft >= fore)",
              "Sides - fore deck forward", "Sides - fore deck",
              "Sides - fore deck aft", "Sides - aft deck forward",
-             "Sides - aft deck", "Sides - aft deck aft"]
+             "Sides - aft deck", "Sides - aft deck aft", "None"]
         );
     }
 }
