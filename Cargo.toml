@@ -2,7 +2,7 @@
 name = "sharpie"
 version = "0.3.0"
 edition = "2024"
-rust-version = "1.85"
+rust-version = "1.87"
 description = "A SpringSharp 3 remake"
 license = "GPL-3.0-only"
 repository = "https://github.com/orionarts/sharpie"

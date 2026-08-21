@@ -110,7 +110,7 @@ impl Armor { // {{{2
 
 // Testing Armor {{{2
 #[cfg(test)]
-mod armor {
+mod tests {
     use super::*;
     use crate::test_support::*;
 
@@ -642,6 +642,7 @@ impl DeckType { // {{{2
     // wgt_factor {{{3
     /// Main deck weight factor for each deck type.
     ///
+    #[allow(clippy::too_many_arguments)]
     pub fn wgt_factor(&self,
         d: f64, lwl: f64, b: f64, 
         fc_len: f64, qd_len:f64,

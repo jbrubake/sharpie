@@ -216,7 +216,7 @@ impl Engine { // {{{2
 
 // Testing Engine {{{2
 #[cfg(test)]
-mod engine {
+mod tests {
     use super::*;
     use crate::test_support::*;
 
@@ -774,9 +774,7 @@ impl BoilerType {
     /// XXX: I do not know what this does.
     ///
     pub fn bunker_factor(&self, year: u32) -> f64 {
-        if self.is_reciprocating() {
-            1.0 - (1910 - year) as f64 / 70.0
-        } else if year < 1898 {
+        if self.is_reciprocating() || year < 1898 {
             1.0 - (1910 - year) as f64 / 70.0
         } else if year < 1920 {
             1.0 + (year - 1910) as f64 / 20.0

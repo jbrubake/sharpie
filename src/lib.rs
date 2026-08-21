@@ -189,12 +189,11 @@ mod test_support {
         engine.vcruise  = 20.0;
         engine.range    = 10000;
 
-        let mut ship = Ship::default();
-
-        ship.hull = hull;
-        ship.engine = engine;
-
-        ship
+        Ship {
+            hull,
+            engine,
+            ..Default::default()
+        }
     }
 }
 
@@ -639,7 +638,7 @@ impl Ship { // {{{2
                         "can fire her guns in the heaviest weather"
                     } else {
                         "rides out heavy weather easily"
-                    }).into(),
+                    }),
             SeaType::Error   => "Invalid SeaType".into(),
         };
 
@@ -1148,7 +1147,7 @@ impl Ship { // {{{2
 
         let line = lines.next().unwrap();
         if line.contains("SpringSharp Version 3.0") {
-            ()
+            // Supported format: no special handling required
         } else if line.contains("SpringSharp") {
             Err("SpringSharp file too old")?;
         } else {
@@ -1423,8 +1422,8 @@ impl Ship { // {{{2
         // Handle opening older ship file formats
         //
         let version: Version = serde_json::from_value(stream.next().ok_or("")??)?;
-        if version.version == 1 { // No special handling required
-            ()
+        if version.version == 1 {
+            // No special handling required
         } else { // Cannot open any other versions
             let err = format!("Cannot open ship files of this version: {}!", version.version);
             return Err(err.into());

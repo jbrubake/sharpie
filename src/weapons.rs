@@ -3072,7 +3072,7 @@ impl ASW { // {{{2
 
 // Testing Torpedoes, Mines and ASW {{{2
 #[cfg(test)]
-mod weapons {
+mod tests {
     use super::*;
     use crate::test_support::*;
     use crate::units::UnitType;

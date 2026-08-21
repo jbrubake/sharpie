@@ -18,8 +18,8 @@ impl From<String> for Units { // {{{2
 impl From<&str> for Units {
     fn from(index: &str) -> Self {
         match index {
-            "1"     => Self::Metric,
-            "0" | _ => Self::Imperial,
+            "1" => Self::Metric,
+            _   => Self::Imperial, // "0" and unknown strings default to imperial
         }
     }
 }
@@ -88,7 +88,7 @@ impl Measurement { // {{{2
 // Testing {{{1
 //
 #[cfg(test)]
-mod units {
+mod tests {
     use super::*;
     use crate::test_support::*;
 

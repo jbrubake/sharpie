@@ -234,7 +234,7 @@ impl Hull { // {{{2
         if volume == 0.0 {
             0.0
         } else {
-            (d * Self::FT3_PER_TON_SEA / volume).min(1.0).max(0.0)
+            (d * Self::FT3_PER_TON_SEA / volume).clamp(0.0, 1.0)
         }
     }
 
@@ -490,7 +490,7 @@ impl Hull { // {{{2
 
 // Testing Hull {{{2
 #[cfg(test)]
-mod hull {
+mod tests {
     use super::*;
     use crate::test_support::*;
 
@@ -1340,10 +1340,12 @@ mod bow_type {
     //
     #[test]
     fn lwl_bulb_forward() {
-        let mut hull = Hull::default();
-        hull.len = Length::Loa(Measurement::new(100.0, LengthLong, Units::Imperial));
-        hull.fc_fwd = Measurement::new(10.0, LengthLong, Units::Imperial);
-        hull.bow_type = BowType::BulbForward(Measurement::new(15.0, LengthLong, Units::Imperial));
+        let hull = Hull {
+            len: Length::Loa(Measurement::new(100.0, LengthLong, Units::Imperial)),
+            fc_fwd: Measurement::new(10.0, LengthLong, Units::Imperial),
+            bow_type: BowType::BulbForward(Measurement::new(15.0, LengthLong, Units::Imperial)),
+            ..Default::default()
+        };
 
         assert_eq!(85.0, to_place(hull.lwl().imp(), 2));
     }
