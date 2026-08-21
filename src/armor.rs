@@ -307,7 +307,7 @@ mod belt {
 // BulkheadType {{{1
 /// Values for Armor::bh_kind
 ///
-#[derive(Serialize, Deserialize, Clone, Debug, Default)]
+#[derive(PartialEq, Serialize, Deserialize, Clone, Debug, Default)]
 pub enum BulkheadType {
     /// Simpler and thinner.
     Strengthened,
@@ -315,6 +315,18 @@ pub enum BulkheadType {
     #[default]
     Additional,
 }
+
+// Format layer: .sship order, parsing, report display {{{2
+sship_enum!(BulkheadType {
+    Additional   => "Additional damage containing bulkheads",
+    Strengthened => "Strengthened structural bulkheads",
+});
+
+// View layer: GUI dropdown labels {{{2
+gui_enum!(BulkheadType {
+    Additional   => "Additional bulkheads",
+    Strengthened => "Strengthened bulkheads",
+});
 
 // BeltType {{{1
 /// Values for Belt::kind
@@ -511,7 +523,7 @@ mod deck {
         display_single_protected: ("Protected deck - single deck", DeckType::SingleProtected),
         display_box_machinery: ("Box over machinery", DeckType::BoxOverMachinery),
         display_box_magazine: ("Box over magazines", DeckType::BoxOverMagazine),
-        display_box_both: ("Box over machiner & magazines", DeckType::BoxOverBoth),
+        display_box_both: ("Box over machinery & magazines", DeckType::BoxOverBoth),
     }
 
     // Test From<&str> {{{3
@@ -522,10 +534,7 @@ mod deck {
                 fn $name() {
                     let (expected, index) = $value;
 
-                    assert_eq!(
-                        std::mem::discriminant(&expected),
-                        std::mem::discriminant(&index.into())
-                    );
+                    assert_eq!(expected, index.into());
                 }
             )*
         }
@@ -541,6 +550,83 @@ mod deck {
         from_str_four:    (DeckType::BoxOverMachinery, "4"),
         from_str_five:    (DeckType::BoxOverMagazine, "5"),
         from_str_six:     (DeckType::BoxOverBoth, "6"),
+    }
+
+    // Test from/index round-trip {{{3
+    #[test]
+    fn from_matches_sship_codes() {
+        assert_eq!(DeckType::from("0"), DeckType::MultipleArmored);
+        assert_eq!(DeckType::from("3"), DeckType::SingleProtected);
+        assert_eq!(DeckType::from("6"), DeckType::BoxOverBoth);
+    }
+
+    #[test]
+    fn index_roundtrip() {
+        for v in DeckType::ALL {
+            assert_eq!(DeckType::from_index(v.index()), *v);
+            assert_eq!(DeckType::from(v.index().to_string()), *v);
+        }
+    }
+
+    #[test]
+    fn from_unknown_falls_back_to_default() {
+        assert_eq!(DeckType::from("99"), DeckType::default());
+        assert_eq!(DeckType::from("abc"), DeckType::default());
+        assert_eq!(DeckType::from(""), DeckType::default());
+    }
+
+    #[test]
+    fn labels_match_dropdown_order() {
+        let labels: Vec<&str> = DeckType::ALL.iter().map(|v| v.label()).collect();
+        assert_eq!(
+            labels,
+            ["Armoured deck - multiple decks", "Armoured deck - single deck",
+             "Protected deck - multiple decks", "Protected deck - single deck",
+             "Box over machinery", "Box over magazines",
+             "Box over machinery & magazines"]
+        );
+    }
+}
+
+// Testing BulkheadType {{{1
+#[cfg(test)]
+mod bulkhead_type {
+    use super::*;
+
+    // Test from/index round-trip {{{3
+    #[test]
+    fn from_matches_sship_codes() {
+        assert_eq!(BulkheadType::from("0"), BulkheadType::Additional);
+        assert_eq!(BulkheadType::from("1"), BulkheadType::Strengthened);
+    }
+
+    #[test]
+    fn index_roundtrip() {
+        for v in BulkheadType::ALL {
+            assert_eq!(BulkheadType::from_index(v.index()), *v);
+            assert_eq!(BulkheadType::from(v.index().to_string()), *v);
+        }
+    }
+
+    #[test]
+    fn from_unknown_falls_back_to_default() {
+        assert_eq!(BulkheadType::from("99"), BulkheadType::default());
+        assert_eq!(BulkheadType::from("abc"), BulkheadType::default());
+        assert_eq!(BulkheadType::from(""), BulkheadType::default());
+    }
+
+    #[test]
+    fn default_is_additional() {
+        assert_eq!(BulkheadType::default(), BulkheadType::Additional);
+    }
+
+    #[test]
+    fn labels_match_dropdown_order() {
+        let labels: Vec<&str> = BulkheadType::ALL.iter().map(|v| v.label()).collect();
+        assert_eq!(
+            labels,
+            ["Additional bulkheads", "Strengthened bulkheads"]
+        );
     }
 }
 
@@ -599,39 +685,25 @@ impl DeckType { // {{{2
     }
 }
 
-impl fmt::Display for DeckType { // {{{2
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}",
-            match self {
-                Self::MultipleArmored   => "Armoured deck - multiple decks",
-                Self::SingleArmored     => "Armoured deck - single deck",
-                Self::MultipleProtected => "Protected deck - multiple decks",
-                Self::SingleProtected   => "Protected deck - single deck",
-                Self::BoxOverMachinery  => "Box over machinery",
-                Self::BoxOverMagazine   => "Box over magazines",
-                Self::BoxOverBoth       => "Box over machiner & magazines",
-            }
-        )
-    }
-}
+// Format layer: .sship order, parsing, report display {{{2
+sship_enum!(DeckType {
+    MultipleArmored   => "Armoured deck - multiple decks",
+    SingleArmored     => "Armoured deck - single deck",
+    MultipleProtected => "Protected deck - multiple decks",
+    SingleProtected   => "Protected deck - single deck",
+    BoxOverMachinery  => "Box over machinery",
+    BoxOverMagazine   => "Box over magazines",
+    BoxOverBoth       => "Box over machinery & magazines",
+});
 
-impl From<String> for DeckType { // {{{2
-    fn from(index: String) -> Self {
-        index.as_str().into()
-    }
-}
-
-impl From<&str> for DeckType {
-    fn from(index: &str) -> Self {
-        match index {
-            "1" => Self::SingleArmored,
-            "2" => Self::MultipleProtected,
-            "3" => Self::SingleProtected,
-            "4" => Self::BoxOverMachinery,
-            "5" => Self::BoxOverMagazine,
-            "6" => Self::BoxOverBoth,
-            "0" | _ => Self::MultipleArmored,
-        }
-    }
-}
+// View layer: GUI dropdown labels {{{2
+gui_enum!(DeckType {
+    MultipleArmored   => "Armoured deck - multiple decks",
+    SingleArmored     => "Armoured deck - single deck",
+    MultipleProtected => "Protected deck - multiple decks",
+    SingleProtected   => "Protected deck - single deck",
+    BoxOverMachinery  => "Box over machinery",
+    BoxOverMagazine   => "Box over magazines",
+    BoxOverBoth       => "Box over machinery & magazines",
+});
 

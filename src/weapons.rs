@@ -838,7 +838,7 @@ mod battery {
 // GunType {{{1
 /// Type of gun
 ///
-#[derive(Serialize, Deserialize, Clone, Debug, Default)]
+#[derive(PartialEq, Serialize, Deserialize, Clone, Debug, Default)]
 pub enum GunType {
     MuzzleLoading,
     #[default]
@@ -850,41 +850,27 @@ pub enum GunType {
     MachineGun,
 }
 
-impl From<String> for GunType { // {{{2
-    fn from(index: String) -> Self {
-        index.as_str().into()
-    }
-}
+// Format layer: .sship order, parsing, report display {{{2
+sship_enum!(GunType {
+    MuzzleLoading => "Muzzle loading",
+    BreechLoading => "Breech loading",
+    QuickFiring   => "Quick firing",
+    AntiAir       => "Anti-air",
+    DualPurpose   => "Dual purpose",
+    RapidFire     => "Auto rapid fire",
+    MachineGun    => "Machine",
+});
 
-impl From<&str> for GunType {
-    fn from(index: &str) -> Self {
-        match index {
-            "1" => Self::BreechLoading,
-            "2" => Self::QuickFiring,
-            "3" => Self::AntiAir,
-            "4" => Self::DualPurpose,
-            "5" => Self::RapidFire,
-            "6" => Self::MachineGun,
-            "0" | _ => Self::MuzzleLoading,
-        }
-    }
-}
-
-impl fmt::Display for GunType { // {{{2
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}",
-            match self {
-                Self::MuzzleLoading => "Muzzle loading",
-                Self::BreechLoading => "Breech loading",
-                Self::QuickFiring   => "Quick firing",
-                Self::AntiAir       => "Anti-air",
-                Self::DualPurpose   => "Dual purpose",
-                Self::RapidFire     => "Auto rapid fire",
-                Self::MachineGun    => "Machine",
-            }
-        )
-    }
-}
+// View layer: GUI dropdown labels {{{2
+gui_enum!(GunType {
+    MuzzleLoading => "Muzzle loading gun",
+    BreechLoading => "Breech loading gun",
+    QuickFiring   => "Quick firing gun",
+    AntiAir       => "Anti-air gun",
+    DualPurpose   => "Dual purpose gun",
+    RapidFire     => "Auto rapid fire gun",
+    MachineGun    => "Machine gun",
+});
 
 impl GunType { // {{{2
     // armor_face_wgt {{{3
@@ -1070,10 +1056,7 @@ mod gun_type {
                 fn $name() {
                     let (expected, index) = $value;
 
-                    assert_eq!(
-                        std::mem::discriminant(&expected),
-                        std::mem::discriminant(&index.into())
-                    );
+                    assert_eq!(expected, index.into());
                 }
             )*
         }
@@ -1088,7 +1071,44 @@ mod gun_type {
         from_str_dp:       (GunType::DualPurpose, "4"),
         from_str_rf:       (GunType::RapidFire, "5"),
         from_str_mg:       (GunType::MachineGun, "6"),
-        from_str_default:  (GunType::MuzzleLoading, "9"),
+        from_str_default:  (GunType::BreechLoading, "9"),
+    }
+
+    // Test from/index round-trip {{{3
+    #[test]
+    fn from_matches_sship_codes() {
+        assert_eq!(GunType::from("0"), GunType::MuzzleLoading);
+        assert_eq!(GunType::from("1"), GunType::BreechLoading);
+        assert_eq!(GunType::from("2"), GunType::QuickFiring);
+        assert_eq!(GunType::from("3"), GunType::AntiAir);
+        assert_eq!(GunType::from("4"), GunType::DualPurpose);
+        assert_eq!(GunType::from("5"), GunType::RapidFire);
+        assert_eq!(GunType::from("6"), GunType::MachineGun);
+    }
+
+    #[test]
+    fn index_roundtrip() {
+        for v in GunType::ALL {
+            assert_eq!(GunType::from_index(v.index()), *v);
+            assert_eq!(GunType::from(v.index().to_string()), *v);
+        }
+    }
+
+    #[test]
+    fn from_unknown_falls_back_to_default() {
+        assert_eq!(GunType::from("99"), GunType::default());
+        assert_eq!(GunType::from("abc"), GunType::default());
+        assert_eq!(GunType::from(""), GunType::default());
+    }
+
+    #[test]
+    fn labels_match_dropdown_order() {
+        let labels: Vec<&str> = GunType::ALL.iter().map(|v| v.label()).collect();
+        assert_eq!(
+            labels,
+            ["Muzzle loading gun", "Breech loading gun", "Quick firing gun",
+             "Anti-air gun", "Dual purpose gun", "Auto rapid fire gun", "Machine gun"]
+        );
     }
 }
 
@@ -1107,40 +1127,27 @@ pub enum MountType {
     Casemate,
 }
 
-impl From<String> for MountType { // {{{2
-    fn from(index: String) -> Self {
-        index.as_str().into()
-    }
-}
+// Format layer: .sship order, parsing, report display {{{2
+sship_enum!(MountType {
+    Broadside      => "broadside",
+    ColesTurret    => "Coles/Ericsson turret",
+    OpenBarbette   => "open barbette",
+    ClosedBarbette => "turret on barbette",
+    DeckAndHoist   => "deck and hoist",
+    Deck           => "deck",
+    Casemate       => "casemate",
+});
 
-impl From<&str> for MountType {
-    fn from(index: &str) -> Self {
-        match index {
-            "1" => Self::ColesTurret,
-            "2" => Self::OpenBarbette,
-            "3" => Self::ClosedBarbette,
-            "4" => Self::DeckAndHoist,
-            "5" => Self::Deck,
-            "6" => Self::Casemate,
-            "0" | _ => Self::Broadside,
-        }
-    }
-}
-impl fmt::Display for MountType { // {{{2
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}",
-            match self {
-                Self::Broadside      => "broadside",
-                Self::ColesTurret    => "Coles/Ericsson turret",
-                Self::OpenBarbette   => "open barbette",
-                Self::ClosedBarbette => "turret on barbette",
-                Self::DeckAndHoist   => "deck and hoist",
-                Self::Deck           => "deck",
-                Self::Casemate       => "casemate",
-            }
-        )
-    }
-}
+// View layer: GUI dropdown labels {{{2
+gui_enum!(MountType {
+    Broadside      => "in broadside mount",
+    ColesTurret    => "in Coles/Ericsson turret mount",
+    OpenBarbette   => "in open barbette mount",
+    ClosedBarbette => "in turret on barbette mount",
+    DeckAndHoist   => "in deck and hoist mount",
+    Deck           => "in deck mount",
+    Casemate       => "in casemate mount",
+});
 impl MountType { // {{{2
     // gunhouse_hgt_factor {{{3
     /// XXX: I do not know what this does.
@@ -1399,7 +1406,45 @@ mod mount_type {
         from_str_deckhoist: (MountType::DeckAndHoist, "4"),
         from_str_deck:     (MountType::Deck, "5"),
         from_str_casemate: (MountType::Casemate, "6"),
-        from_str_default:  (MountType::Broadside, "9"),
+        from_str_default:  (MountType::Deck, "9"),
+    }
+
+    // Test from/index round-trip {{{3
+    #[test]
+    fn from_matches_sship_codes() {
+        assert_eq!(MountType::from("0"), MountType::Broadside);
+        assert_eq!(MountType::from("1"), MountType::ColesTurret);
+        assert_eq!(MountType::from("2"), MountType::OpenBarbette);
+        assert_eq!(MountType::from("3"), MountType::ClosedBarbette);
+        assert_eq!(MountType::from("4"), MountType::DeckAndHoist);
+        assert_eq!(MountType::from("5"), MountType::Deck);
+        assert_eq!(MountType::from("6"), MountType::Casemate);
+    }
+
+    #[test]
+    fn index_roundtrip() {
+        for v in MountType::ALL {
+            assert_eq!(MountType::from_index(v.index()), *v);
+            assert_eq!(MountType::from(v.index().to_string()), *v);
+        }
+    }
+
+    #[test]
+    fn from_unknown_falls_back_to_default() {
+        assert_eq!(MountType::from("99"), MountType::default());
+        assert_eq!(MountType::from("abc"), MountType::default());
+        assert_eq!(MountType::from(""), MountType::default());
+    }
+
+    #[test]
+    fn labels_match_dropdown_order() {
+        let labels: Vec<&str> = MountType::ALL.iter().map(|v| v.label()).collect();
+        assert_eq!(
+            labels,
+            ["in broadside mount", "in Coles/Ericsson turret mount",
+             "in open barbette mount", "in turret on barbette mount",
+             "in deck and hoist mount", "in deck mount", "in casemate mount"]
+        );
     }
 }
 
@@ -1648,63 +1693,49 @@ pub enum GunDistributionType {
     SidesADAft,
 }
 
-impl From<String> for GunDistributionType { // {{{2
-    fn from(index: String) -> Self {
-        index.as_str().into()
-    }
-}
+// Format layer: .sship order, parsing, report display {{{2
+sship_enum!(GunDistributionType {
+    CenterlineEven   => "centerline - distributed",
+    CenterlineEndsFD => "centerline - ends (fore ≥ aft)",
+    CenterlineEndsAD => "centerline - ends (aft ≥ fore)",
+    CenterlineFDFwd  => "centerline - foredeck forward",
+    CenterlineFD     => "centerline - foredeck",
+    CenterlineFDAft  => "centerline - foredeck aft",
+    CenterlineADFwd  => "centerline - afterdeck forward",
+    CenterlineAD     => "centerline - afterdeck",
+    CenterlineADAft  => "centerline - afterdeck aft",
+    SidesEven        => "sides - distributed",
+    SidesEndsFD      => "sides - ends (fore ≥ aft)",
+    SidesEndsAD      => "sides - ends (aft ≥ fore)",
+    SidesFDFwd       => "sides - foredeck forward",
+    SidesFD          => "sides - foredeck",
+    SidesFDAft       => "sides - foredeck aft",
+    SidesADFwd       => "sides - afterdeck forward",
+    SidesAD          => "sides - afterdeck",
+    SidesADAft       => "sides - afterdeck aft",
+});
 
-impl From<&str> for GunDistributionType {
-    fn from(index: &str) -> Self {
-        match index {
-            "1" => Self::CenterlineEndsFD,
-            "2" => Self::CenterlineEndsAD,
-            "3" => Self::CenterlineFDFwd,
-            "4" => Self::CenterlineFD,
-            "5" => Self::CenterlineFDAft,
-            "6" => Self::CenterlineADFwd,
-            "7" => Self::CenterlineAD,
-            "8" => Self::CenterlineADAft,
-            "9" => Self::SidesEven,
-            "10" => Self::SidesEndsFD,
-            "11" => Self::SidesEndsAD,
-            "12" => Self::SidesFDFwd,
-            "13" => Self::SidesFD,
-            "14" => Self::SidesFDAft,
-            "15" => Self::SidesADFwd,
-            "16" => Self::SidesAD,
-            "17" => Self::SidesADAft,
-            "0" | _ => Self::CenterlineEven,
-        }
-    }
-}
-
-impl fmt::Display for GunDistributionType { // {{{2
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}",
-            match self {
-                Self::CenterlineEven   => "centerline - distributed",
-                Self::CenterlineEndsFD => "centerline - ends (fore ≥ aft)",
-                Self::CenterlineEndsAD => "centerline - ends (aft ≥ fore)",
-                Self::CenterlineFDFwd  => "centerline - foredeck forward",
-                Self::CenterlineFD     => "centerline - foredeck",
-                Self::CenterlineFDAft  => "centerline - foredeck aft",
-                Self::CenterlineADFwd  => "centerline - afterdeck forward",
-                Self::CenterlineAD     => "centerline - afterdeck",
-                Self::CenterlineADAft  => "centerline - afterdeck aft",
-                Self::SidesEven        => "sides - distributed",
-                Self::SidesEndsFD      => "sides - ends (fore ≥ aft)",
-                Self::SidesEndsAD      => "sides - ends (aft ≥ fore)",
-                Self::SidesFDFwd       => "sides - foredeck forward",
-                Self::SidesFD          => "sides - foredeck",
-                Self::SidesFDAft       => "sides - foredeck aft",
-                Self::SidesADFwd       => "sides - afterdeck forared",
-                Self::SidesAD          => "sides - afterdeck",
-                Self::SidesADAft       => "sides - afterdeck aft",
-            }
-        )
-    }
-}
+// View layer: GUI dropdown labels {{{2
+gui_enum!(GunDistributionType {
+    CenterlineEven   => "Centreline - distributed",
+    CenterlineEndsFD => "Centreline - ends (fore >= aft)",
+    CenterlineEndsAD => "Centreline - ends (aft >= fore)",
+    CenterlineFDFwd  => "Centreline - fore deck forward",
+    CenterlineFD     => "Centreline - fore deck",
+    CenterlineFDAft  => "Centreline - fore deck aft",
+    CenterlineADFwd  => "Centreline - aft deck forward",
+    CenterlineAD     => "Centreline - aft deck",
+    CenterlineADAft  => "Centreline - aft deck aft",
+    SidesEven        => "Sides - distributed",
+    SidesEndsFD      => "Sides - ends (fore >= aft)",
+    SidesEndsAD      => "Sides - ends (aft >= fore)",
+    SidesFDFwd       => "Sides - fore deck forward",
+    SidesFD          => "Sides - fore deck",
+    SidesFDAft       => "Sides - fore deck aft",
+    SidesADFwd       => "Sides - aft deck forward",
+    SidesAD          => "Sides - aft deck",
+    SidesADAft       => "Sides - aft deck aft",
+});
 
 impl GunDistributionType { // {{{2
     // desc {{{3
@@ -2239,7 +2270,7 @@ mod gun_dist_type {
         display_sides_fd_fwd:     ("sides - foredeck forward", GunDistributionType::SidesFDFwd),
         display_sides_fd:         ("sides - foredeck", GunDistributionType::SidesFD),
         display_sides_fd_aft:     ("sides - foredeck aft", GunDistributionType::SidesFDAft),
-        display_sides_ad_fwd:     ("sides - afterdeck forared", GunDistributionType::SidesADFwd),
+        display_sides_ad_fwd:     ("sides - afterdeck forward", GunDistributionType::SidesADFwd),
         display_sides_ad:         ("sides - afterdeck", GunDistributionType::SidesAD),
         display_sides_ad_aft:     ("sides - afterdeck aft", GunDistributionType::SidesADAft),
     }
@@ -2280,12 +2311,52 @@ mod gun_dist_type {
         from_str_sides_ad_aft: (GunDistributionType::SidesADAft, "17"),
         from_str_default:      (GunDistributionType::CenterlineEven, "99"),
     }
+
+    // Test from/index round-trip {{{3
+    #[test]
+    fn from_matches_sship_codes() {
+        assert_eq!(GunDistributionType::from("0"),  GunDistributionType::CenterlineEven);
+        assert_eq!(GunDistributionType::from("9"),  GunDistributionType::SidesEven);
+        assert_eq!(GunDistributionType::from("17"), GunDistributionType::SidesADAft);
+    }
+
+    #[test]
+    fn index_roundtrip() {
+        for v in GunDistributionType::ALL {
+            assert_eq!(GunDistributionType::from_index(v.index()), *v);
+            assert_eq!(GunDistributionType::from(v.index().to_string()), *v);
+        }
+    }
+
+    #[test]
+    fn from_unknown_falls_back_to_default() {
+        assert_eq!(GunDistributionType::from("99"), GunDistributionType::default());
+        assert_eq!(GunDistributionType::from("abc"), GunDistributionType::default());
+        assert_eq!(GunDistributionType::from(""), GunDistributionType::default());
+    }
+
+    #[test]
+    fn labels_match_dropdown_order() {
+        let labels: Vec<&str> = GunDistributionType::ALL.iter().map(|v| v.label()).collect();
+        assert_eq!(
+            labels,
+            ["Centreline - distributed", "Centreline - ends (fore >= aft)",
+             "Centreline - ends (aft >= fore)", "Centreline - fore deck forward",
+             "Centreline - fore deck", "Centreline - fore deck aft",
+             "Centreline - aft deck forward", "Centreline - aft deck",
+             "Centreline - aft deck aft", "Sides - distributed",
+             "Sides - ends (fore >= aft)", "Sides - ends (aft >= fore)",
+             "Sides - fore deck forward", "Sides - fore deck",
+             "Sides - fore deck aft", "Sides - aft deck forward",
+             "Sides - aft deck", "Sides - aft deck aft"]
+        );
+    }
 }
 
 // GunLayoutType {{{1
 /// Layout of guns within a mount.
 ///
-#[derive(Serialize, Deserialize, Clone, Debug, Default)]
+#[derive(PartialEq, Serialize, Deserialize, Clone, Debug, Default)]
 pub enum GunLayoutType {
     #[default]
     Single,
@@ -2305,57 +2376,43 @@ pub enum GunLayoutType {
     Dec2Row,
 }
 
-impl From<String> for GunLayoutType { // {{{2
-    fn from(index: String) -> Self {
-        index.as_str().into()
-    }
-}
+// Format layer: .sship order, parsing, report display {{{2
+sship_enum!(GunLayoutType {
+    Single   => "Single",
+    Twin2Row => "2 row, twin",
+    Quad4Row => "4 row, quad",
+    Twin     => "Twin",
+    TwoGun   => "2-gun",
+    Quad2Row => "2 row, quad",
+    Triple   => "Triple",
+    ThreeGun => "3-gun",
+    Sex2Row  => "2 row, sextuple",
+    Quad     => "quad",
+    FourGun  => "4-gun",
+    Oct2Row  => "2 row, octuple",
+    Quint    => "quintuple",
+    FiveGun  => "5-gun",
+    Dec2Row  => "2 row, decuple",
+});
 
-impl From<&str> for GunLayoutType {
-    fn from(index: &str) -> Self {
-        match index {
-            "1" => Self::Twin2Row,
-            "2" => Self::Quad4Row,
-            "3" => Self::Twin,
-            "4" => Self::TwoGun,
-            "5" => Self::Quad2Row,
-            "6" => Self::Triple,
-            "7" => Self::ThreeGun,
-            "8" => Self::Sex2Row,
-            "9" => Self::Quad,
-            "10" => Self::FourGun,
-            "11" => Self::Oct2Row,
-            "12" => Self::Quint,
-            "13" => Self::FiveGun,
-            "14" => Self::Dec2Row,
-            "0" | _ => Self::Single,
-        }
-    }
-}
-
-impl fmt::Display for GunLayoutType { // {{{2
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}",
-            match self {
-                Self::Single   => "Single",
-                Self::Twin2Row => "2 row, twin",
-                Self::Quad4Row => "4 row, quad",
-                Self::Twin     => "Twin",
-                Self::TwoGun   => "2-gun",
-                Self::Quad2Row => "2 row, quad",
-                Self::Triple   => "Triple",
-                Self::ThreeGun => "3-gun",
-                Self::Sex2Row  => "2 row, sextuple",
-                Self::Quad     => "quad",
-                Self::FourGun  => "4-gun",
-                Self::Oct2Row  => "2 row, octuple",
-                Self::Quint    => "quintuple",
-                Self::FiveGun  => "5-gun",
-                Self::Dec2Row  => "2 row, decuple",
-            }
-        )
-    }
-}
+// View layer: GUI dropdown labels {{{2
+gui_enum!(GunLayoutType {
+    Single   => "Single mount",
+    Twin2Row => "2 row twin mount",
+    Quad4Row => "4 row quad mount",
+    Twin     => "Twin mount",
+    TwoGun   => "2-gun mount",
+    Quad2Row => "2 row quad mount",
+    Triple   => "Triple mount",
+    ThreeGun => "3-gun mount",
+    Sex2Row  => "2 row sextuple mount",
+    Quad     => "Quad mount",
+    FourGun  => "4-gun mount",
+    Oct2Row  => "2 row octuple mount",
+    Quint    => "Quintuple mount",
+    FiveGun  => "5-gun mount",
+    Dec2Row  => "2 row decuple mount",
+});
 
 impl GunLayoutType { // {{{2
     // num_guns {{{3
@@ -2474,10 +2531,7 @@ mod gunlayouttype {
                 fn $name() {
                     let (expected, index) = $value;
 
-                    assert_eq!(
-                        std::mem::discriminant(&expected),
-                        std::mem::discriminant(&index.into())
-                    );
+                    assert_eq!(expected, index.into());
                 }
             )*
         }
@@ -2501,6 +2555,42 @@ mod gunlayouttype {
         from_str_five_gun:   (GunLayoutType::FiveGun, "13"),
         from_str_dec_2row:   (GunLayoutType::Dec2Row, "14"),
         from_str_default:    (GunLayoutType::Single, "99"),
+    }
+
+    // Test from/index round-trip {{{3
+    #[test]
+    fn from_matches_sship_codes() {
+        assert_eq!(GunLayoutType::from("0"),  GunLayoutType::Single);
+        assert_eq!(GunLayoutType::from("8"),  GunLayoutType::Sex2Row);
+        assert_eq!(GunLayoutType::from("14"), GunLayoutType::Dec2Row);
+    }
+
+    #[test]
+    fn index_roundtrip() {
+        for v in GunLayoutType::ALL {
+            assert_eq!(GunLayoutType::from_index(v.index()), *v);
+            assert_eq!(GunLayoutType::from(v.index().to_string()), *v);
+        }
+    }
+
+    #[test]
+    fn from_unknown_falls_back_to_default() {
+        assert_eq!(GunLayoutType::from("99"), GunLayoutType::default());
+        assert_eq!(GunLayoutType::from("abc"), GunLayoutType::default());
+        assert_eq!(GunLayoutType::from(""), GunLayoutType::default());
+    }
+
+    #[test]
+    fn labels_match_dropdown_order() {
+        let labels: Vec<&str> = GunLayoutType::ALL.iter().map(|v| v.label()).collect();
+        assert_eq!(
+            labels,
+            ["Single mount", "2 row twin mount", "4 row quad mount", "Twin mount",
+             "2-gun mount", "2 row quad mount", "Triple mount", "3-gun mount",
+             "2 row sextuple mount", "Quad mount", "4-gun mount",
+             "2 row octuple mount", "Quintuple mount", "5-gun mount",
+             "2 row decuple mount"]
+        );
     }
 }
 
@@ -2573,7 +2663,7 @@ impl Torpedoes { // {{{2
 // TorpedoMountType {{{1
 /// Type of torpedo mount.
 ///
-#[derive(Serialize, Deserialize, Clone, Debug, Default)]
+#[derive(PartialEq, Serialize, Deserialize, Clone, Debug, Default)]
 pub enum TorpedoMountType {
     #[default]
     FixedTubes,
@@ -2587,27 +2677,31 @@ pub enum TorpedoMountType {
     SubmergedReloads,
 }
 
-impl From<String> for TorpedoMountType { // {{{2
-    fn from(index: String) -> Self {
-        index.as_str().into()
-    }
-}
+// Format layer: .sship order, parsing, report display {{{2
+sship_enum!(TorpedoMountType {
+    FixedTubes         => "deck mounted carriage/fixed tube",
+    DeckSideTubes      => "deck mounted side rotating tube",
+    CenterTubes        => "deck mounted centre rotating tube",
+    DeckReloads        => "deck mounted reload",
+    BowTubes           => "submerged bow tube",
+    SternTubes         => "submerged stern tube",
+    BowAndSternTubes   => "submerged bow & stern tube",
+    SubmergedSideTubes => "submerged side tube",
+    SubmergedReloads   => "below water reload",
+});
 
-impl From<&str> for TorpedoMountType {
-    fn from(index: &str) -> Self {
-        match index {
-            "1" => Self::DeckSideTubes,
-            "2" => Self::CenterTubes,
-            "3" => Self::DeckReloads,
-            "4" => Self::BowTubes,
-            "5" => Self::SternTubes,
-            "6" => Self::BowAndSternTubes,
-            "7" => Self::SubmergedSideTubes,
-            "8" => Self::SubmergedReloads,
-            "0" | _ => Self::FixedTubes,
-        }
-    }
-}
+// View layer: GUI dropdown labels {{{2
+gui_enum!(TorpedoMountType {
+    FixedTubes         => "deck mounted carriage/fixed tube",
+    DeckSideTubes      => "deck mounted side rotating tube",
+    CenterTubes        => "deck mounted centre rotating tube",
+    DeckReloads        => "deck mounted reload",
+    BowTubes           => "submerged bow tube",
+    SternTubes         => "submerged stern tube",
+    BowAndSternTubes   => "submerged bow & stern tube",
+    SubmergedSideTubes => "submerged side tube",
+    SubmergedReloads   => "below water reload",
+});
 
 impl TorpedoMountType { // {{{2
     // wgt_factor {{{3
@@ -2807,6 +2901,42 @@ mod torpedo_mount_type {
         deck_space_sub_side:   (0.0, TorpedoMountType::SubmergedSideTubes),
         deck_space_sub_reload: (0.0, TorpedoMountType::SubmergedReloads),
     }
+
+    // Test from/index round-trip {{{3
+    #[test]
+    fn from_matches_sship_codes() {
+        assert_eq!(TorpedoMountType::from("0"), TorpedoMountType::FixedTubes);
+        assert_eq!(TorpedoMountType::from("4"), TorpedoMountType::BowTubes);
+        assert_eq!(TorpedoMountType::from("8"), TorpedoMountType::SubmergedReloads);
+    }
+
+    #[test]
+    fn index_roundtrip() {
+        for v in TorpedoMountType::ALL {
+            assert_eq!(TorpedoMountType::from_index(v.index()), *v);
+            assert_eq!(TorpedoMountType::from(v.index().to_string()), *v);
+        }
+    }
+
+    #[test]
+    fn from_unknown_falls_back_to_default() {
+        assert_eq!(TorpedoMountType::from("99"), TorpedoMountType::default());
+        assert_eq!(TorpedoMountType::from("abc"), TorpedoMountType::default());
+        assert_eq!(TorpedoMountType::from(""), TorpedoMountType::default());
+    }
+
+    #[test]
+    fn labels_match_dropdown_order() {
+        let labels: Vec<&str> = TorpedoMountType::ALL.iter().map(|v| v.label()).collect();
+        assert_eq!(
+            labels,
+            ["deck mounted carriage/fixed tube", "deck mounted side rotating tube",
+             "deck mounted centre rotating tube", "deck mounted reload",
+             "submerged bow tube", "submerged stern tube",
+             "submerged bow & stern tube", "submerged side tube",
+             "below water reload"]
+        );
+    }
 }
 
 // Mines {{{1
@@ -2858,7 +2988,7 @@ impl Mines { // {{{2
 // MineType {{{1
 /// Types of mine deployment gear.
 ///
-#[derive(Serialize, Deserialize, Clone, Debug, Default)]
+#[derive(PartialEq, Serialize, Deserialize, Clone, Debug, Default)]
 pub enum MineType {
     #[default]
     SternRails,
@@ -2867,22 +2997,21 @@ pub enum MineType {
     SideTubes,
 }
 
-impl From<String> for MineType { // {{{2
-    fn from(index: String) -> Self {
-        index.as_str().into()
-    }
-}
+// Format layer: .sship order, parsing, report display {{{2
+sship_enum!(MineType {
+    SternRails => "Above water - Stern racks/rails",
+    BowTubes   => "Below water - bow tubes",
+    SternTubes => "Below water - stern tubes",
+    SideTubes  => "Below water - side tubes",
+});
 
-impl From<&str> for MineType {
-    fn from(index: &str) -> Self {
-        match index {
-            "1" => Self::BowTubes,
-            "2" => Self::SternTubes,
-            "3" => Self::SideTubes,
-            "0" | _ => Self::SternRails,
-        }
-    }
-}
+// View layer: GUI dropdown labels {{{2
+gui_enum!(MineType {
+    SternRails => "Above water - Stern racks/rails",
+    BowTubes   => "Below water - bow tubes",
+    SternTubes => "Below water - stern tubes",
+    SideTubes  => "Below water - side tubes",
+});
 
 impl MineType { // {{{2
     // wgt_factor {{{3
@@ -2935,6 +3064,40 @@ mod mine_type {
         bow:     (1.0, MineType::BowTubes),
         stern:   (1.0, MineType::SternTubes),
         side:    (1.0, MineType::SideTubes),
+    }
+
+    // Test from/index round-trip {{{3
+    #[test]
+    fn from_matches_sship_codes() {
+        assert_eq!(MineType::from("0"), MineType::SternRails);
+        assert_eq!(MineType::from("1"), MineType::BowTubes);
+        assert_eq!(MineType::from("2"), MineType::SternTubes);
+        assert_eq!(MineType::from("3"), MineType::SideTubes);
+    }
+
+    #[test]
+    fn index_roundtrip() {
+        for v in MineType::ALL {
+            assert_eq!(MineType::from_index(v.index()), *v);
+            assert_eq!(MineType::from(v.index().to_string()), *v);
+        }
+    }
+
+    #[test]
+    fn from_unknown_falls_back_to_default() {
+        assert_eq!(MineType::from("99"), MineType::default());
+        assert_eq!(MineType::from("abc"), MineType::default());
+        assert_eq!(MineType::from(""), MineType::default());
+    }
+
+    #[test]
+    fn labels_match_dropdown_order() {
+        let labels: Vec<&str> = MineType::ALL.iter().map(|v| v.label()).collect();
+        assert_eq!(
+            labels,
+            ["Above water - Stern racks/rails", "Below water - bow tubes",
+             "Below water - stern tubes", "Below water - side tubes"]
+        );
     }
 }
 
@@ -3318,7 +3481,7 @@ mod weapons {
 // ASWType {{{1
 /// Type of ASW deployment gear.
 ///
-#[derive(Serialize, Deserialize, Clone, Debug, Default)]
+#[derive(PartialEq, Serialize, Deserialize, Clone, Debug, Default)]
 pub enum ASWType {
     #[default]
     SternRacks,
@@ -3327,22 +3490,21 @@ pub enum ASWType {
     SquidMortars,
 }
 
-impl From<String> for ASWType { // {{{2
-    fn from(index: String) -> Self {
-        index.as_str().into()
-    }
-}
+// Format layer: .sship order, parsing, report display {{{2
+sship_enum!(ASWType {
+    SternRacks   => "Stern depth charge racks",
+    Throwers     => "Depth charge throwers",
+    Hedgehogs    => "Hedgehog style A/S mortars",
+    SquidMortars => "Squid style A/S mortars",
+});
 
-impl From<&str> for ASWType {
-    fn from(index: &str) -> Self {
-        match index {
-            "1" => Self::Throwers,
-            "2" => Self::Hedgehogs,
-            "3" => Self::SquidMortars,
-            "0" | _ => Self::SternRacks,
-        }
-    }
-}
+// View layer: GUI dropdown labels {{{2
+gui_enum!(ASWType {
+    SternRacks   => "Stern depth charge racks",
+    Throwers     => "Depth charge throwers",
+    Hedgehogs    => "Hedgehog style A/S mortars",
+    SquidMortars => "Squid style A/S mortars",
+});
 
 impl ASWType { // {{{2
     // mount_wgt_factor {{{3
@@ -3407,6 +3569,40 @@ mod asw_type {
         throw:   (0.5, ASWType::Throwers),
         hedge:   (0.5, ASWType::Hedgehogs),
         squid:   (10.0, ASWType::SquidMortars),
+    }
+
+    // Test from/index round-trip {{{3
+    #[test]
+    fn from_matches_sship_codes() {
+        assert_eq!(ASWType::from("0"), ASWType::SternRacks);
+        assert_eq!(ASWType::from("1"), ASWType::Throwers);
+        assert_eq!(ASWType::from("2"), ASWType::Hedgehogs);
+        assert_eq!(ASWType::from("3"), ASWType::SquidMortars);
+    }
+
+    #[test]
+    fn index_roundtrip() {
+        for v in ASWType::ALL {
+            assert_eq!(ASWType::from_index(v.index()), *v);
+            assert_eq!(ASWType::from(v.index().to_string()), *v);
+        }
+    }
+
+    #[test]
+    fn from_unknown_falls_back_to_default() {
+        assert_eq!(ASWType::from("99"), ASWType::default());
+        assert_eq!(ASWType::from("abc"), ASWType::default());
+        assert_eq!(ASWType::from(""), ASWType::default());
+    }
+
+    #[test]
+    fn labels_match_dropdown_order() {
+        let labels: Vec<&str> = ASWType::ALL.iter().map(|v| v.label()).collect();
+        assert_eq!(
+            labels,
+            ["Stern depth charge racks", "Depth charge throwers",
+             "Hedgehog style A/S mortars", "Squid style A/S mortars"]
+        );
     }
 }
 

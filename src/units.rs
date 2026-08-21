@@ -61,11 +61,11 @@ pub struct Measurement {
 }
 
 impl Measurement { // {{{2
-    pub fn new(v: f64, unit_type: UnitType, units: Units) -> Self {
+    pub const fn new(v: f64, unit_type: UnitType, units: Units) -> Self {
         Self { v, units, factor: Self::factor_for(unit_type) }
     }
 
-    fn factor_for(unit_type: UnitType) -> f64 {
+    const fn factor_for(unit_type: UnitType) -> f64 {
         match unit_type {
             UnitType::LengthSmall   => INCH2MM,
             UnitType::LengthLong    => FEET2METERS,

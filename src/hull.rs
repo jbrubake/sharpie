@@ -1140,7 +1140,7 @@ mod hull {
 }
 
 // SternType {{{1
-#[derive(Serialize, Deserialize, Clone, Debug, Default)]
+#[derive(PartialEq, Serialize, Deserialize, Clone, Debug, Default)]
 pub enum SternType {
     /// Transom stern (small).
     TransomSm,
@@ -1153,34 +1153,21 @@ pub enum SternType {
     Round,
 }
 
-impl From<String> for SternType { // {{{2
-    fn from(index: String) -> Self {
-        index.as_str().into()
-    }
-}
+// Format layer: .sship order, parsing, report display {{{2
+sship_enum!(SternType {
+    Cruiser   => "a cruiser stern",
+    TransomSm => "a small transom stern",
+    TransomLg => "a large transom stern",
+    Round     => "a round stern",
+});
 
-impl From<&str> for SternType {
-    fn from(index: &str) -> Self {
-        match index {
-            "1" => Self::TransomSm,
-            "2" => Self::TransomLg,
-            "3" => Self::Round,
-            "0" | _ => Self::Cruiser,
-        }
-    }
-}
-
-impl fmt::Display for SternType { // {{{2
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}",
-            match self {
-            SternType::TransomSm => "a small transom stern",
-            SternType::TransomLg => "a large transom stern",
-            SternType::Cruiser   => "a cruiser stern",
-            SternType::Round     => "a round stern",
-        })
-    }
-}
+// View layer: GUI dropdown labels {{{2
+gui_enum!(SternType {
+    Cruiser   => "Cruiser",
+    TransomSm => "Transom (small)",
+    TransomLg => "Transom (large)",
+    Round     => "Round",
+});
 
 impl SternType { // {{{2
     // wp_calc {{{3
@@ -1258,6 +1245,35 @@ mod stern_type {
         leff_cruiser:    (500.0, SternType::Cruiser),
         leff_round:      (500.0, SternType::Round),
     }
+
+    // Test from/index round-trip {{{3
+    fn from_matches_sship_codes() {
+        assert_eq!(SternType::from("0"), SternType::Cruiser);
+        assert_eq!(SternType::from("1"), SternType::TransomSm);
+        assert_eq!(SternType::from("2"), SternType::TransomLg);
+        assert_eq!(SternType::from("3"), SternType::Round);
+    }
+
+    fn index_roundtrip() {
+        for v in SternType::ALL {
+            assert_eq!(SternType::from_index(v.index()), *v);
+            assert_eq!(SternType::from(v.index().to_string()), *v);
+        }
+    }
+
+    fn from_unknown_falls_back_to_default() {
+        assert_eq!(SternType::from("99"), SternType::default());
+        assert_eq!(SternType::from("abc"), SternType::default());
+        assert_eq!(SternType::from(""), SternType::default());
+    }
+
+    fn labels_match_dropdown_order() {
+        let labels: Vec<&str> = SternType::ALL.iter().map(|v| v.label()).collect();
+        assert_eq!(
+            labels,
+            ["Cruiser", "Transom (small)", "Transom (large)", "Round"]
+        );
+    }
 }
 
 // BowType {{{1
@@ -1274,34 +1290,21 @@ pub enum BowType {
     Normal,
 }
 
-impl From<String> for BowType { // {{{2
-    fn from(index: String) -> Self {
-        index.as_str().into()
-    }
-}
+// Format layer: .sship order, parsing, report display {{{2
+sship_enum!(BowType {
+    Normal       => "a normal bow",
+    BulbStraight => "a straight bulbous bow",
+    BulbForward(Measurement::new(0.0, LengthLong, Units::Imperial)) => "an extended bulbous bow",
+    Ram(Measurement::new(0.0, LengthLong, Units::Imperial)) => "a ram bow",
+});
 
-impl From<&str> for BowType {
-    fn from(index: &str) -> Self {
-        match index {
-            "1" => Self::BulbStraight,
-            "2" => Self::BulbForward(Measurement::new(0.0, LengthLong, Units::Imperial)),
-            "3" => Self::Ram(Measurement::new(0.0, LengthLong, Units::Imperial)),
-            "0" | _ => Self::Normal,
-        }
-    }
-}
-
-impl fmt::Display for BowType { // {{{2
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}",
-            match self {
-                Self::Ram(_)         => "a ram bow",
-                Self::BulbStraight   => "a straight bulbous bow",
-                Self::BulbForward(_) => "an extended bulbous bow",
-                Self::Normal         => "a normal bow",
-        })
-    }
-}
+// View layer: GUI dropdown labels {{{2
+gui_enum!(BowType {
+    Normal       => "Normal",
+    BulbStraight => "Bulbous (straight)",
+    BulbForward  => "Bulbous (forward)",
+    Ram          => "Ram",
+});
 
 impl BowType { // {{{2
     // ram_len {{{3
@@ -1366,5 +1369,33 @@ mod bow_type {
 
         assert_eq!(115.0, to_place(hull.loa().imp(), 2));
     }
-}
 
+    // Test from/index round-trip {{{3
+    fn from_matches_sship_codes() {
+        assert_eq!(BowType::from("0"), BowType::Normal);
+        assert_eq!(BowType::from("1"), BowType::BulbStraight);
+        assert!(matches!(BowType::from("2"), BowType::BulbForward(_)));
+        assert!(matches!(BowType::from("3"), BowType::Ram(_)));
+    }
+
+    fn index_roundtrip() {
+        for v in BowType::ALL {
+            assert_eq!(BowType::from_index(v.index()), *v);
+            assert_eq!(BowType::from(v.index().to_string()), *v);
+        }
+    }
+
+    fn from_unknown_falls_back_to_default() {
+        assert_eq!(BowType::from("99"), BowType::default());
+        assert_eq!(BowType::from("abc"), BowType::default());
+        assert_eq!(BowType::from(""), BowType::default());
+    }
+
+    fn labels_match_dropdown_order() {
+        let labels: Vec<&str> = BowType::ALL.iter().map(|v| v.label()).collect();
+        assert_eq!(
+            labels,
+            ["Normal", "Bulbous (straight)", "Bulbous (forward)", "Ram"]
+        );
+    }
+}
