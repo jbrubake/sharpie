@@ -1670,24 +1670,24 @@ pub enum GunDistributionType {
 }
 
 choice_enum!(GunDistributionType {
-    CenterlineEven   => ("Centreline - distributed",        "centerline - distributed"),
-    CenterlineEndsFD => ("Centreline - ends (fore >= aft)", "centerline - ends (fore ≥ aft)"),
-    CenterlineEndsAD => ("Centreline - ends (aft >= fore)", "centerline - ends (aft ≥ fore)"),
-    CenterlineFDFwd  => ("Centreline - fore deck forward",  "centerline - foredeck forward"),
-    CenterlineFD     => ("Centreline - fore deck",          "centerline - foredeck"),
-    CenterlineFDAft  => ("Centreline - fore deck aft",      "centerline - foredeck aft"),
-    CenterlineADFwd  => ("Centreline - aft deck forward",   "centerline - afterdeck forward"),
-    CenterlineAD     => ("Centreline - aft deck",           "centerline - afterdeck"),
-    CenterlineADAft  => ("Centreline - aft deck aft",       "centerline - afterdeck aft"),
-    SidesEven        => ("Sides - distributed",             "sides - distributed"),
-    SidesEndsFD      => ("Sides - ends (fore >= aft)",      "sides - ends (fore ≥ aft)"),
-    SidesEndsAD      => ("Sides - ends (aft >= fore)",      "sides - ends (aft ≥ fore)"),
-    SidesFDFwd       => ("Sides - fore deck forward",       "sides - foredeck forward"),
-    SidesFD          => ("Sides - fore deck",               "sides - foredeck"),
-    SidesFDAft       => ("Sides - fore deck aft",           "sides - foredeck aft"),
-    SidesADFwd       => ("Sides - aft deck forward",        "sides - afterdeck forward"),
-    SidesAD          => ("Sides - aft deck",                "sides - afterdeck"),
-    SidesADAft       => ("Sides - aft deck aft",            "sides - afterdeck aft"),
+    CenterlineEven   => ("Centreline - distributed"),
+    CenterlineEndsFD => ("Centreline - ends (fore >= aft)"),
+    CenterlineEndsAD => ("Centreline - ends (aft >= fore)"),
+    CenterlineFDFwd  => ("Centreline - fore deck forward"),
+    CenterlineFD     => ("Centreline - fore deck"),
+    CenterlineFDAft  => ("Centreline - fore deck aft"),
+    CenterlineADFwd  => ("Centreline - aft deck forward"),
+    CenterlineAD     => ("Centreline - aft deck"),
+    CenterlineADAft  => ("Centreline - aft deck aft"),
+    SidesEven        => ("Sides - distributed"),
+    SidesEndsFD      => ("Sides - ends (fore >= aft)"),
+    SidesEndsAD      => ("Sides - ends (aft >= fore)"),
+    SidesFDFwd       => ("Sides - fore deck forward"),
+    SidesFD          => ("Sides - fore deck"),
+    SidesFDAft       => ("Sides - fore deck aft"),
+    SidesADFwd       => ("Sides - aft deck forward"),
+    SidesAD          => ("Sides - aft deck"),
+    SidesADAft       => ("Sides - aft deck aft"),
 });
 
 impl GunDistributionType { // {{{2
@@ -2208,24 +2208,24 @@ mod gun_dist_type {
 
     test_display! {
         // name:                  (display, dist)
-        display_even:             ("centerline - distributed", GunDistributionType::CenterlineEven),
-        display_end_fd:           ("centerline - ends (fore ≥ aft)", GunDistributionType::CenterlineEndsFD),
-        display_end_ad:           ("centerline - ends (aft ≥ fore)", GunDistributionType::CenterlineEndsAD),
-        display_fd_fwd:           ("centerline - foredeck forward", GunDistributionType::CenterlineFDFwd),
-        display_fd:               ("centerline - foredeck", GunDistributionType::CenterlineFD),
-        display_fd_aft:           ("centerline - foredeck aft", GunDistributionType::CenterlineFDAft),
-        display_ad_fwd:           ("centerline - afterdeck forward", GunDistributionType::CenterlineADFwd),
-        display_ad:               ("centerline - afterdeck", GunDistributionType::CenterlineAD),
-        display_ad_aft:           ("centerline - afterdeck aft", GunDistributionType::CenterlineADAft),
-        display_sides:            ("sides - distributed", GunDistributionType::SidesEven),
-        display_sides_end_fd:     ("sides - ends (fore ≥ aft)", GunDistributionType::SidesEndsFD),
-        display_sides_end_ad:     ("sides - ends (aft ≥ fore)", GunDistributionType::SidesEndsAD),
-        display_sides_fd_fwd:     ("sides - foredeck forward", GunDistributionType::SidesFDFwd),
-        display_sides_fd:         ("sides - foredeck", GunDistributionType::SidesFD),
-        display_sides_fd_aft:     ("sides - foredeck aft", GunDistributionType::SidesFDAft),
-        display_sides_ad_fwd:     ("sides - afterdeck forward", GunDistributionType::SidesADFwd),
-        display_sides_ad:         ("sides - afterdeck", GunDistributionType::SidesAD),
-        display_sides_ad_aft:     ("sides - afterdeck aft", GunDistributionType::SidesADAft),
+        display_even:             ("Centreline - distributed", GunDistributionType::CenterlineEven),
+        display_end_fd:           ("Centreline - ends (fore >= aft)", GunDistributionType::CenterlineEndsFD),
+        display_end_ad:           ("Centreline - ends (aft >= fore)", GunDistributionType::CenterlineEndsAD),
+        display_fd_fwd:           ("Centreline - fore deck forward", GunDistributionType::CenterlineFDFwd),
+        display_fd:               ("Centreline - fore deck", GunDistributionType::CenterlineFD),
+        display_fd_aft:           ("Centreline - fore deck aft", GunDistributionType::CenterlineFDAft),
+        display_ad_fwd:           ("Centreline - aft deck forward", GunDistributionType::CenterlineADFwd),
+        display_ad:               ("Centreline - aft deck", GunDistributionType::CenterlineAD),
+        display_ad_aft:           ("Centreline - aft deck aft", GunDistributionType::CenterlineADAft),
+        display_sides:            ("Sides - distributed", GunDistributionType::SidesEven),
+        display_sides_end_fd:     ("Sides - ends (fore >= aft)", GunDistributionType::SidesEndsFD),
+        display_sides_end_ad:     ("Sides - ends (aft >= fore)", GunDistributionType::SidesEndsAD),
+        display_sides_fd_fwd:     ("Sides - fore deck forward", GunDistributionType::SidesFDFwd),
+        display_sides_fd:         ("Sides - fore deck", GunDistributionType::SidesFD),
+        display_sides_fd_aft:     ("Sides - fore deck aft", GunDistributionType::SidesFDAft),
+        display_sides_ad_fwd:     ("Sides - aft deck forward", GunDistributionType::SidesADFwd),
+        display_sides_ad:         ("Sides - aft deck", GunDistributionType::SidesAD),
+        display_sides_ad_aft:     ("Sides - aft deck aft", GunDistributionType::SidesADAft),
     }
 
     // Test From<&str> {{{3
@@ -2611,15 +2611,15 @@ pub enum TorpedoMountType {
 }
 
 choice_enum!(TorpedoMountType {
-    FixedTubes         => ("deck mounted carriage/fixed tube", "deck mounted carriage/fixed tube"),
-    DeckSideTubes      => ("deck mounted side rotating tube",  "deck mounted side rotating tube"),
-    CenterTubes        => ("deck mounted centre rotating tube", "deck mounted centre rotating tube"),
-    DeckReloads        => ("deck mounted reload",              "deck mounted reload"),
-    BowTubes           => ("submerged bow tube",               "submerged bow tube"),
-    SternTubes         => ("submerged stern tube",             "submerged stern tube"),
-    BowAndSternTubes   => ("submerged bow & stern tube",       "submerged bow & stern tube"),
-    SubmergedSideTubes => ("submerged side tube",              "submerged side tube"),
-    SubmergedReloads   => ("below water reload",               "below water reload"),
+    FixedTubes         => ("deck mounted carriage/fixed tube"),
+    DeckSideTubes      => ("deck mounted side rotating tube"),
+    CenterTubes        => ("deck mounted centre rotating tube"),
+    DeckReloads        => ("deck mounted reload"),
+    BowTubes           => ("submerged bow tube"),
+    SternTubes         => ("submerged stern tube"),
+    BowAndSternTubes   => ("submerged bow & stern tube"),
+    SubmergedSideTubes => ("submerged side tube"),
+    SubmergedReloads   => ("below water reload"),
 });
 
 impl TorpedoMountType { // {{{2
@@ -2917,10 +2917,10 @@ pub enum MineType {
 }
 
 choice_enum!(MineType {
-    SternRails => ("Above water - Stern racks/rails", "Above water - Stern racks/rails"),
-    BowTubes   => ("Below water - bow tubes",         "Below water - bow tubes"),
-    SternTubes => ("Below water - stern tubes",       "Below water - stern tubes"),
-    SideTubes  => ("Below water - side tubes",        "Below water - side tubes"),
+    SternRails => ("Above water - Stern racks/rails"),
+    BowTubes   => ("Below water - bow tubes"),
+    SternTubes => ("Below water - stern tubes"),
+    SideTubes  => ("Below water - side tubes"),
 });
 
 impl MineType { // {{{2
@@ -3401,10 +3401,10 @@ pub enum ASWType {
 }
 
 choice_enum!(ASWType {
-    SternRacks   => ("Stern depth charge racks",    "Stern depth charge racks"),
-    Throwers     => ("Depth charge throwers",       "Depth charge throwers"),
-    Hedgehogs    => ("Hedgehog style A/S mortars",  "Hedgehog style A/S mortars"),
-    SquidMortars => ("Squid style A/S mortars",     "Squid style A/S mortars"),
+    SternRacks   => ("Stern depth charge racks"),
+    Throwers     => ("Depth charge throwers"),
+    Hedgehogs    => ("Hedgehog style A/S mortars"),
+    SquidMortars => ("Squid style A/S mortars"),
 });
 
 impl ASWType { // {{{2

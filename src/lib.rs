@@ -8,12 +8,25 @@
 ///     From<&str>, From<String>: parse a decimal index string
 ///
 /// The variants must be listed in SpringSharp (.sship) index order, which is not always
-/// declaration order. Each row carries the menu label first, then the report prose.
+/// declaration order. Each row carries the menu label followed by an optional report
+/// prose string; when the prose is omitted, fmt::Display falls back to the label.
 /// Parsing accepts any non-negative decimal integer; unknown or out-of-range values
 /// yield the default variant.
 ///
 macro_rules! choice_enum {
     ($name:ident { $( $variant:ident $( ( $init:expr ) )? => ( $label:expr, $display:expr ) ),+ $(,)? }) => {
+        choice_enum!(@impl $name {
+            $( $variant $( ( $init ) )? => ( $label, $display ) ),+
+        });
+    };
+
+    ($name:ident { $( $variant:ident $( ( $init:expr ) )? => ( $label:expr ) ),+ $(,)? }) => {
+        choice_enum!(@impl $name {
+            $( $variant $( ( $init ) )? => ( $label, $label ) ),+
+        });
+    };
+
+    (@impl $name:ident { $( $variant:ident $( ( $init:expr ) )? => ( $label:expr, $display:expr ) ),+ $(,)? }) => {
         impl $name {
             /// Every variant, in .sship index order.
             pub const ALL: &'static [$name] = &[ $( $name::$variant $( ( $init ) )? ),+ ];
