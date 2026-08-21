@@ -1720,7 +1720,7 @@ impl GunDistributionType { // {{{2
                 if mounts == 1 {
                     "centreline aft"
                 } else if mounts.is_multiple_of(2) {
-                    "centrelineends, evenly spread"
+                    "centreline ends, evenly spread"
                 } else {
                     "centreline ends, majority aft"
                 }
@@ -1742,7 +1742,7 @@ impl GunDistributionType { // {{{2
                     "centreline, aft evenly spread"
                 }
             }
-            Self::CenterlineADAft => "cenreline, aft deck aft",
+            Self::CenterlineADAft => "centreline, aft deck aft",
             Self::SidesEven => {
                 if mounts < 3 {
                     "sides amidships"
@@ -2164,7 +2164,7 @@ mod gun_dist_type {
         desc_end_fd_even:            ("centreline ends, evenly spread", 2, 0.5, GunDistributionType::CenterlineEndsFD),
         desc_end_fd_odd:             ("centreline ends, majority forward", 3, 0.5, GunDistributionType::CenterlineEndsFD),
         desc_end_ad_1:               ("centreline aft", 1, 0.5, GunDistributionType::CenterlineEndsAD),
-        desc_end_ad_even:            ("centrelineends, evenly spread", 2, 0.5, GunDistributionType::CenterlineEndsAD),
+        desc_end_ad_even:            ("centreline ends, evenly spread", 2, 0.5, GunDistributionType::CenterlineEndsAD),
         desc_end_ad_odd:             ("centreline ends, majority aft", 3, 0.5, GunDistributionType::CenterlineEndsAD),
         desc_fd_fwd:                 ("centreline, forward deck forward", 2, 0.5, GunDistributionType::CenterlineFDFwd),
         desc_fd_1:                   ("centreline, forward deck centre", 1, 0.5, GunDistributionType::CenterlineFD),
@@ -2173,7 +2173,7 @@ mod gun_dist_type {
         desc_ad_fwd:                 ("centreline, aft deck forward", 2, 0.5, GunDistributionType::CenterlineADFwd),
         desc_ad_1:                   ("centreline, aft deck centre", 1, 0.5, GunDistributionType::CenterlineAD),
         desc_ad_multi:               ("centreline, aft evenly spread", 2, 0.5, GunDistributionType::CenterlineAD),
-        desc_ad_aft:                 ("cenreline, aft deck aft", 2, 0.5, GunDistributionType::CenterlineADAft),
+        desc_ad_aft:                 ("centreline, aft deck aft", 2, 0.5, GunDistributionType::CenterlineADAft),
         desc_sides_few:              ("sides amidships", 2, 0.5, GunDistributionType::SidesEven),
         desc_sides_multi:            ("sides, evenly spread", 3, 0.5, GunDistributionType::SidesEven),
         desc_sides_end_fd_few:       ("sides, forward", 2, 0.5, GunDistributionType::SidesEndsFD),
