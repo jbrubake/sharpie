@@ -1222,7 +1222,8 @@ impl Ship { // {{{2
         ship.hull.bow_type = lines.next().unwrap().into();
         let ram_len        = lines.next().unwrap().parse()?;
         ship.hull.bow_type = match ship.hull.bow_type {
-            BowType::Ram(_) => BowType::Ram(Measurement::new(ram_len, LengthLong, ship.hull.units)),
+            BowType::Ram(_)         => BowType::Ram(Measurement::new(ram_len, LengthLong, ship.hull.units)),
+            BowType::BulbForward(_) => BowType::BulbForward(Measurement::new(ram_len, LengthLong, ship.hull.units)),
             _ => ship.hull.bow_type,
         };
 
@@ -2213,6 +2214,7 @@ impl Ship {
         s.push("".to_string());
         s.push(format!("Stem length = {}", self.hull.stem_len()));
         if let BowType::Ram(len) = self.hull.bow_type { s.push(format!("Ram length = {}", len.imp())); }
+        if let BowType::BulbForward(len) = self.hull.bow_type { s.push(format!("Bulb length = {}", len.imp())); }
         s.push(format!("Freeboard dist = {}", self.hull.freeboard_dist()));
         s.push(format!("Leff = {}", self.hull.leff()));
         s.push("".to_string());

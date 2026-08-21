@@ -1271,7 +1271,7 @@ pub enum BowType {
     /// Bulbous, straight bow.
     BulbStraight,
     /// Bulbous, forward bow.
-    BulbForward,
+    BulbForward(Measurement),
     #[default]
     /// Normal bow (default).
     Normal,
@@ -1287,7 +1287,7 @@ impl From<&str> for BowType {
     fn from(index: &str) -> Self {
         match index {
             "1" => Self::BulbStraight,
-            "2" => Self::BulbForward,
+            "2" => Self::BulbForward(Measurement::new(0.0, LengthLong, Units::Imperial)),
             "3" => Self::Ram(Measurement::new(0.0, LengthLong, Units::Imperial)),
             "0" | _ => Self::Normal,
         }
@@ -1298,23 +1298,76 @@ impl fmt::Display for BowType { // {{{2
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}",
             match self {
-                Self::Ram(_)       => "a ram bow",
-                Self::BulbStraight => "a straight bulbous bow",
-                Self::BulbForward  => "an extended bulbous bow",
-                Self::Normal       => "a normal bow",
+                Self::Ram(_)         => "a ram bow",
+                Self::BulbStraight   => "a straight bulbous bow",
+                Self::BulbForward(_) => "an extended bulbous bow",
+                Self::Normal         => "a normal bow",
         })
     }
 }
 
 impl BowType { // {{{2
     // ram_len {{{3
-    /// Return length of the ram.
+    /// Return length of any bow protrusion.
     ///
     pub fn ram_len(&self) -> Measurement {
         match self {
-            Self::Ram(len) => *len,
+            Self::Ram(len) | Self::BulbForward(len) => *len,
             _              => Measurement::new(0.0, LengthLong, Units::Imperial),
         }
+    }
+}
+
+#[cfg(test)] // BowType {{{1
+mod bow_type {
+    use super::*;
+    use crate::test_support::*;
+
+    // Test ram_len {{{2
+    macro_rules! test_ram_len {
+        ($($name:ident: $value:expr,)*) => {
+            $(
+                #[test]
+                fn $name() {
+                    let (expected, bow) = $value;
+
+                    assert_eq!(expected, to_place(bow.ram_len().imp(), 2));
+                }
+            )*
+        }
+    }
+
+    test_ram_len! {
+        // name:      (ram_len, bow)
+        ram_len_ram:   (12.0, BowType::Ram(Measurement::new(12.0, LengthLong, Units::Imperial))),
+        ram_len_bulb:  (8.0,  BowType::BulbForward(Measurement::new(8.0, LengthLong, Units::Imperial))),
+        ram_len_none:  (0.0,  BowType::Normal),
+        ram_len_straight: (0.0, BowType::BulbStraight),
+    }
+
+    // Test lwl and loa with a bulbous forward bow {{{2
+    //
+    // SpringSharp extends LOA by max(stem length, ram length) for both
+    // ram and extended bulbous bows (SpringSharp3b3.cs lengthCalc()).
+    //
+    #[test]
+    fn lwl_bulb_forward() {
+        let mut hull = Hull::default();
+        hull.set_loa(100.0, Units::Imperial);
+        hull.fc_fwd = Measurement::new(10.0, LengthLong, Units::Imperial);
+        hull.bow_type = BowType::BulbForward(Measurement::new(15.0, LengthLong, Units::Imperial));
+
+        assert_eq!(85.0, to_place(hull.lwl().imp(), 2));
+    }
+
+    #[test]
+    fn loa_bulb_forward() {
+        let mut hull = Hull::default();
+        hull.set_lwl(100.0, Units::Imperial);
+        hull.fc_fwd = Measurement::new(10.0, LengthLong, Units::Imperial);
+        hull.bow_type = BowType::BulbForward(Measurement::new(15.0, LengthLong, Units::Imperial));
+
+        assert_eq!(115.0, to_place(hull.loa().imp(), 2));
     }
 }
 
