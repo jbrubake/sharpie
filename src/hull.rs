@@ -5,6 +5,28 @@ use serde::{Deserialize, Serialize};
 use std::f64::consts::PI;
 use std::fmt;
 
+// Displacement {{{1
+/// Normal Displacement: given directly or as a Block Coefficient.
+///
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+pub enum Displacement {
+    /// Block Coefficient at normal displacement.
+    Cb(f64),
+    /// Normal Displacement (t)
+    D(f64),
+}
+
+// Length {{{1
+/// Hull length: given at the waterline or overall.
+///
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub enum Length {
+    /// Maximum length in the water, including any ram.
+    Lwl(Measurement),
+    /// Overall length including ram and any overhangs
+    Loa(Measurement),
+}
+
 // Hull {{{1
 /// Hull characteristics.
 ///
@@ -13,23 +35,11 @@ pub struct Hull {
     /// Units
     pub units: Units,
 
-    /// Block Coefficient at normal displacement.
-    ///
-    /// This is None if d is set.
-    cb: Option<f64>,
-    /// Normal Displacement (t)
-    ///
-    /// This is None if cb is set.
-    d: Option<f64>,
+    /// Normal Displacement, given directly or via Block Coefficient.
+    pub disp: Displacement,
 
-    /// Overall length including ram and any overhangs
-    ///
-    /// This is None if lwl is set.
-    loa: Option<Measurement>,
-    /// Maximum length in the water, including any ram.
-    ///
-    /// This is None if loa is set.
-    lwl: Option<Measurement>,
+    /// Waterline or overall length.
+    pub len: Length,
 
     /// Beam (hull): Maximum width in the water, excluding torpedo bulges and
     /// above water overhangs.
@@ -94,11 +104,9 @@ impl Default for Hull { // {{{2
         Hull {
             units: Units::Imperial,
 
-            cb: Some(0.550),
-            d: None,
-            lwl: None,
-            loa: None,
+            disp: Displacement::Cb(0.550),
 
+            len: Length::Lwl(Measurement::new(0.0, LengthLong, Units::Imperial)),
             b: Measurement::new(0.0, LengthLong, Units::Imperial),
             bb: Measurement::new(0.0, LengthLong, Units::Imperial),
             t: Measurement::new(0.0, LengthLong, Units::Imperial),
@@ -208,12 +216,11 @@ impl Hull { // {{{2
     // cb {{{3
     /// Block Coefficient at normal displacement.
     ///
-    /// Return a previously set value or cb_calc() if unset.
+    /// Return the set value or cb_calc() if displacement was given instead.
     pub fn cb(&self) -> f64 {
-        match (self.cb, self.d) {
-            (None, None)    => 0.0,
-            (Some(cb), _)   => cb,
-            (None, Some(d)) => self.cb_calc(d, self.t.imp()),
+        match &self.disp {
+            Displacement::Cb(cb) => *cb,
+            Displacement::D(d)   => self.cb_calc(*d, self.t.imp()),
         }
     }
 
@@ -232,11 +239,13 @@ impl Hull { // {{{2
     }
 
     // set_cb {{{3
-    /// Set the Block Coefficient and unset the Displacement.
+    /// Set the Block Coefficient, replacing any Displacement.
+    ///
+    /// Needed purely to load SpringSharp files. No corresponding set_disp() is required as
+    /// SpringSharp only ever stores Cb
     ///
     pub fn set_cb(&mut self, cb: f64) -> f64 {
-        self.cb = Some(cb);
-        self.d = None;
+        self.disp = Displacement::Cb(cb);
 
         cb
     }
@@ -244,12 +253,11 @@ impl Hull { // {{{2
     // d {{{3
     /// Normal Displacement (t).
     ///
-    /// Return a previously set value or calculate from cb if unset.
+    /// Return the set value or d_calc() if block coefficient was given instead.
     pub fn d(&self) -> f64 {
-        match (self.d, self.cb) {
-            (None, None)     => 0.0,
-            (Some(d), _)     => d,
-            (None, Some(cb)) => self.d_calc(cb),
+        match &self.disp {
+            Displacement::D(d)   => *d,
+            Displacement::Cb(cb) => self.d_calc(*cb),
         }
     }
 
@@ -261,11 +269,10 @@ impl Hull { // {{{2
     }
 
     // set_d {{{3
-    /// Set the Displacement and unset the Block Coefficient.
+    /// Set the Displacement, replacing any Block Coefficient.
     ///
     pub fn set_d(&mut self, d: f64) -> f64 {
-        self.d = Some(d);
-        self.cb = None;
+        self.disp = Displacement::D(d);
 
         d
     }
@@ -309,21 +316,13 @@ impl Hull { // {{{2
     }
 
     // set_lwl {{{3
-    /// Set the waterline length and unset the overall length.
+    /// Set the waterline length, replacing any overall length.
+    ///
+    /// Needed purely to load SpringSharp files. No corresponding set_disp() is required as
+    /// SpringSharp only ever stores Lwl
     ///
     pub fn set_lwl(&mut self, len: f64, units: Units) -> f64 {
-        self.lwl = Some(Measurement::new(len, LengthLong, units));
-        self.loa = None;
-
-        len
-    }
-
-    // set_loa {{{3
-    /// Set the overall length and unset the waterline length.
-    ///
-    pub fn set_loa(&mut self, len: f64, units: Units) -> f64 {
-        self.loa = Some(Measurement::new(len, LengthLong, units));
-        self.lwl = None;
+        self.len = Length::Lwl(Measurement::new(len, LengthLong, units));
 
         len
     }
@@ -334,10 +333,9 @@ impl Hull { // {{{2
     /// lwl = loa - max(ram_length, length_from_bow_angle, 0) - max(stern_overhang, 0)
     ///
     pub fn lwl(&self) -> Measurement {
-        match (&self.lwl, &self.loa) {
-            (None, None)      => Measurement::new(0.0, LengthLong, self.units),
-            (Some(len), _)    => len.clone(),
-            (None, Some(loa)) =>
+        match &self.len {
+            Length::Lwl(len) => *len,
+            Length::Loa(loa) =>
                 Measurement::new(
                     loa.imp() - f64::max( self.bow_type.ram_len().imp(), self.stem_len()).max(0.0)
                         - self.stern_overhang.imp().max(0.0),
@@ -352,10 +350,9 @@ impl Hull { // {{{2
     /// loa = lwl + max(ram_length, length_from_bow_angle, 0) + max(stern_overhang, 0)
     ///
     pub fn loa(&self) -> Measurement {
-        match (&self.loa, &self.lwl) {
-            (None, None)      => Measurement::new(0.0, LengthLong, self.units),
-            (Some(len), _)    => len.clone(),
-            (None, Some(lwl)) =>
+        match &self.len {
+            Length::Loa(loa) => *loa,
+            Length::Lwl(lwl) =>
                 Measurement::new(
                     lwl.imp() + f64::max( self.bow_type.ram_len().imp(), self.stem_len()).max(0.0)
                         + self.stern_overhang.imp().max(0.0),
@@ -691,7 +688,7 @@ mod hull {
                     let (expected, angle, stern, ram) = $value;
 
                     let mut hull = Hull::default();
-                    hull.set_loa(100.0, Units::Imperial);
+                    hull.len = Length::Loa(Measurement::new(100.0, LengthLong, Units::Imperial));
                     hull.fc_fwd = Measurement::new(10.0, LengthLong, Units::Imperial);
                     hull.bow_angle = angle;
                     hull.stern_overhang = Measurement::new(stern, LengthLong, Units::Imperial);
@@ -1353,7 +1350,7 @@ mod bow_type {
     #[test]
     fn lwl_bulb_forward() {
         let mut hull = Hull::default();
-        hull.set_loa(100.0, Units::Imperial);
+        hull.len = Length::Loa(Measurement::new(100.0, LengthLong, Units::Imperial));
         hull.fc_fwd = Measurement::new(10.0, LengthLong, Units::Imperial);
         hull.bow_type = BowType::BulbForward(Measurement::new(15.0, LengthLong, Units::Imperial));
 
