@@ -1247,6 +1247,7 @@ mod stern_type {
     }
 
     // Test from/index round-trip {{{3
+    #[test]
     fn from_matches_sship_codes() {
         assert_eq!(SternType::from("0"), SternType::Cruiser);
         assert_eq!(SternType::from("1"), SternType::TransomSm);
@@ -1254,6 +1255,7 @@ mod stern_type {
         assert_eq!(SternType::from("3"), SternType::Round);
     }
 
+    #[test]
     fn index_roundtrip() {
         for v in SternType::ALL {
             assert_eq!(SternType::from_index(v.index()), *v);
@@ -1261,12 +1263,14 @@ mod stern_type {
         }
     }
 
+    #[test]
     fn from_unknown_falls_back_to_default() {
         assert_eq!(SternType::from("99"), SternType::default());
         assert_eq!(SternType::from("abc"), SternType::default());
         assert_eq!(SternType::from(""), SternType::default());
     }
 
+    #[test]
     fn labels_match_dropdown_order() {
         let labels: Vec<&str> = SternType::ALL.iter().map(|v| v.label()).collect();
         assert_eq!(
@@ -1371,6 +1375,7 @@ mod bow_type {
     }
 
     // Test from/index round-trip {{{3
+    #[test]
     fn from_matches_sship_codes() {
         assert_eq!(BowType::from("0"), BowType::Normal);
         assert_eq!(BowType::from("1"), BowType::BulbStraight);
@@ -1378,6 +1383,7 @@ mod bow_type {
         assert!(matches!(BowType::from("3"), BowType::Ram(_)));
     }
 
+    #[test]
     fn index_roundtrip() {
         for v in BowType::ALL {
             assert_eq!(BowType::from_index(v.index()), *v);
@@ -1385,12 +1391,14 @@ mod bow_type {
         }
     }
 
+    #[test]
     fn from_unknown_falls_back_to_default() {
         assert_eq!(BowType::from("99"), BowType::default());
         assert_eq!(BowType::from("abc"), BowType::default());
         assert_eq!(BowType::from(""), BowType::default());
     }
 
+    #[test]
     fn labels_match_dropdown_order() {
         let labels: Vec<&str> = BowType::ALL.iter().map(|v| v.label()).collect();
         assert_eq!(
