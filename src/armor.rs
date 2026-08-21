@@ -307,11 +307,12 @@ mod belt {
 // BulkheadType {{{1
 /// Values for Armor::bh_kind
 ///
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug, Default)]
 pub enum BulkheadType {
     /// Simpler and thinner.
     Strengthened,
     /// Modern, multilayered and thicker.
+    #[default]
     Additional,
 }
 
