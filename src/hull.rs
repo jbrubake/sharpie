@@ -1153,20 +1153,11 @@ pub enum SternType {
     Round,
 }
 
-// Format layer: .sship order, parsing, report display {{{2
-sship_enum!(SternType {
-    Cruiser   => "a cruiser stern",
-    TransomSm => "a small transom stern",
-    TransomLg => "a large transom stern",
-    Round     => "a round stern",
-});
-
-// View layer: GUI dropdown labels {{{2
-gui_enum!(SternType {
-    Cruiser   => "Cruiser",
-    TransomSm => "Transom (small)",
-    TransomLg => "Transom (large)",
-    Round     => "Round",
+choice_enum!(SternType {
+    Cruiser   => ("Cruiser",         "a cruiser stern"),
+    TransomSm => ("Transom (small)", "a small transom stern"),
+    TransomLg => ("Transom (large)", "a large transom stern"),
+    Round     => ("Round",           "a round stern"),
 });
 
 impl SternType { // {{{2
@@ -1294,20 +1285,13 @@ pub enum BowType {
     Normal,
 }
 
-// Format layer: .sship order, parsing, report display {{{2
-sship_enum!(BowType {
-    Normal       => "a normal bow",
-    BulbStraight => "a straight bulbous bow",
-    BulbForward(Measurement::new(0.0, LengthLong, Units::Imperial)) => "an extended bulbous bow",
-    Ram(Measurement::new(0.0, LengthLong, Units::Imperial)) => "a ram bow",
-});
-
-// View layer: GUI dropdown labels {{{2
-gui_enum!(BowType {
-    Normal       => "Normal",
-    BulbStraight => "Bulbous (straight)",
-    BulbForward  => "Bulbous (forward)",
-    Ram          => "Ram",
+choice_enum!(BowType {
+    Normal       => ("Normal",             "a normal bow"),
+    BulbStraight => ("Bulbous (straight)", "a straight bulbous bow"),
+    BulbForward(Measurement::new(0.0, LengthLong, Units::Imperial))
+                 => ("Bulbous (forward)",  "an extended bulbous bow"),
+    Ram(Measurement::new(0.0, LengthLong, Units::Imperial))
+                 => ("Ram",                "a ram bow"),
 });
 
 impl BowType { // {{{2

@@ -316,16 +316,9 @@ pub enum BulkheadType {
     Additional,
 }
 
-// Format layer: .sship order, parsing, report display {{{2
-sship_enum!(BulkheadType {
-    Additional   => "Additional damage containing bulkheads",
-    Strengthened => "Strengthened structural bulkheads",
-});
-
-// View layer: GUI dropdown labels {{{2
-gui_enum!(BulkheadType {
-    Additional   => "Additional bulkheads",
-    Strengthened => "Strengthened bulkheads",
+choice_enum!(BulkheadType {
+    Additional   => ("Additional bulkheads",   "Additional damage containing bulkheads"),
+    Strengthened => ("Strengthened bulkheads", "Strengthened structural bulkheads"),
 });
 
 // BeltType {{{1
@@ -685,25 +678,13 @@ impl DeckType { // {{{2
     }
 }
 
-// Format layer: .sship order, parsing, report display {{{2
-sship_enum!(DeckType {
-    MultipleArmored   => "Armoured deck - multiple decks",
-    SingleArmored     => "Armoured deck - single deck",
-    MultipleProtected => "Protected deck - multiple decks",
-    SingleProtected   => "Protected deck - single deck",
-    BoxOverMachinery  => "Box over machinery",
-    BoxOverMagazine   => "Box over magazines",
-    BoxOverBoth       => "Box over machinery & magazines",
-});
-
-// View layer: GUI dropdown labels {{{2
-gui_enum!(DeckType {
-    MultipleArmored   => "Armoured deck - multiple decks",
-    SingleArmored     => "Armoured deck - single deck",
-    MultipleProtected => "Protected deck - multiple decks",
-    SingleProtected   => "Protected deck - single deck",
-    BoxOverMachinery  => "Box over machinery",
-    BoxOverMagazine   => "Box over magazines",
-    BoxOverBoth       => "Box over machinery & magazines",
+choice_enum!(DeckType {
+    MultipleArmored   => ("Armoured deck - multiple decks",  "Armoured deck - multiple decks"),
+    SingleArmored     => ("Armoured deck - single deck",     "Armoured deck - single deck"),
+    MultipleProtected => ("Protected deck - multiple decks", "Protected deck - multiple decks"),
+    SingleProtected   => ("Protected deck - single deck",    "Protected deck - single deck"),
+    BoxOverMachinery  => ("Box over machinery",              "Box over machinery"),
+    BoxOverMagazine   => ("Box over magazines",              "Box over magazines"),
+    BoxOverBoth       => ("Box over machinery & magazines",  "Box over machinery & magazines"),
 });
 

@@ -850,26 +850,14 @@ pub enum GunType {
     MachineGun,
 }
 
-// Format layer: .sship order, parsing, report display {{{2
-sship_enum!(GunType {
-    MuzzleLoading => "Muzzle loading",
-    BreechLoading => "Breech loading",
-    QuickFiring   => "Quick firing",
-    AntiAir       => "Anti-air",
-    DualPurpose   => "Dual purpose",
-    RapidFire     => "Auto rapid fire",
-    MachineGun    => "Machine",
-});
-
-// View layer: GUI dropdown labels {{{2
-gui_enum!(GunType {
-    MuzzleLoading => "Muzzle loading gun",
-    BreechLoading => "Breech loading gun",
-    QuickFiring   => "Quick firing gun",
-    AntiAir       => "Anti-air gun",
-    DualPurpose   => "Dual purpose gun",
-    RapidFire     => "Auto rapid fire gun",
-    MachineGun    => "Machine gun",
+choice_enum!(GunType {
+    MuzzleLoading => ("Muzzle loading gun",  "Muzzle loading"),
+    BreechLoading => ("Breech loading gun",  "Breech loading"),
+    QuickFiring   => ("Quick firing gun",    "Quick firing"),
+    AntiAir       => ("Anti-air gun",        "Anti-air"),
+    DualPurpose   => ("Dual purpose gun",    "Dual purpose"),
+    RapidFire     => ("Auto rapid fire gun", "Auto rapid fire"),
+    MachineGun    => ("Machine gun",         "Machine"),
 });
 
 impl GunType { // {{{2
@@ -1127,26 +1115,14 @@ pub enum MountType {
     Casemate,
 }
 
-// Format layer: .sship order, parsing, report display {{{2
-sship_enum!(MountType {
-    Broadside      => "broadside",
-    ColesTurret    => "Coles/Ericsson turret",
-    OpenBarbette   => "open barbette",
-    ClosedBarbette => "turret on barbette",
-    DeckAndHoist   => "deck and hoist",
-    Deck           => "deck",
-    Casemate       => "casemate",
-});
-
-// View layer: GUI dropdown labels {{{2
-gui_enum!(MountType {
-    Broadside      => "in broadside mount",
-    ColesTurret    => "in Coles/Ericsson turret mount",
-    OpenBarbette   => "in open barbette mount",
-    ClosedBarbette => "in turret on barbette mount",
-    DeckAndHoist   => "in deck and hoist mount",
-    Deck           => "in deck mount",
-    Casemate       => "in casemate mount",
+choice_enum!(MountType {
+    Broadside      => ("in broadside mount",             "broadside"),
+    ColesTurret    => ("in Coles/Ericsson turret mount", "Coles/Ericsson turret"),
+    OpenBarbette   => ("in open barbette mount",         "open barbette"),
+    ClosedBarbette => ("in turret on barbette mount",    "turret on barbette"),
+    DeckAndHoist   => ("in deck and hoist mount",        "deck and hoist"),
+    Deck           => ("in deck mount",                  "deck"),
+    Casemate       => ("in casemate mount",              "casemate"),
 });
 impl MountType { // {{{2
     // gunhouse_hgt_factor {{{3
@@ -1693,48 +1669,25 @@ pub enum GunDistributionType {
     SidesADAft,
 }
 
-// Format layer: .sship order, parsing, report display {{{2
-sship_enum!(GunDistributionType {
-    CenterlineEven   => "centerline - distributed",
-    CenterlineEndsFD => "centerline - ends (fore ≥ aft)",
-    CenterlineEndsAD => "centerline - ends (aft ≥ fore)",
-    CenterlineFDFwd  => "centerline - foredeck forward",
-    CenterlineFD     => "centerline - foredeck",
-    CenterlineFDAft  => "centerline - foredeck aft",
-    CenterlineADFwd  => "centerline - afterdeck forward",
-    CenterlineAD     => "centerline - afterdeck",
-    CenterlineADAft  => "centerline - afterdeck aft",
-    SidesEven        => "sides - distributed",
-    SidesEndsFD      => "sides - ends (fore ≥ aft)",
-    SidesEndsAD      => "sides - ends (aft ≥ fore)",
-    SidesFDFwd       => "sides - foredeck forward",
-    SidesFD          => "sides - foredeck",
-    SidesFDAft       => "sides - foredeck aft",
-    SidesADFwd       => "sides - afterdeck forward",
-    SidesAD          => "sides - afterdeck",
-    SidesADAft       => "sides - afterdeck aft",
-});
-
-// View layer: GUI dropdown labels {{{2
-gui_enum!(GunDistributionType {
-    CenterlineEven   => "Centreline - distributed",
-    CenterlineEndsFD => "Centreline - ends (fore >= aft)",
-    CenterlineEndsAD => "Centreline - ends (aft >= fore)",
-    CenterlineFDFwd  => "Centreline - fore deck forward",
-    CenterlineFD     => "Centreline - fore deck",
-    CenterlineFDAft  => "Centreline - fore deck aft",
-    CenterlineADFwd  => "Centreline - aft deck forward",
-    CenterlineAD     => "Centreline - aft deck",
-    CenterlineADAft  => "Centreline - aft deck aft",
-    SidesEven        => "Sides - distributed",
-    SidesEndsFD      => "Sides - ends (fore >= aft)",
-    SidesEndsAD      => "Sides - ends (aft >= fore)",
-    SidesFDFwd       => "Sides - fore deck forward",
-    SidesFD          => "Sides - fore deck",
-    SidesFDAft       => "Sides - fore deck aft",
-    SidesADFwd       => "Sides - aft deck forward",
-    SidesAD          => "Sides - aft deck",
-    SidesADAft       => "Sides - aft deck aft",
+choice_enum!(GunDistributionType {
+    CenterlineEven   => ("Centreline - distributed",        "centerline - distributed"),
+    CenterlineEndsFD => ("Centreline - ends (fore >= aft)", "centerline - ends (fore ≥ aft)"),
+    CenterlineEndsAD => ("Centreline - ends (aft >= fore)", "centerline - ends (aft ≥ fore)"),
+    CenterlineFDFwd  => ("Centreline - fore deck forward",  "centerline - foredeck forward"),
+    CenterlineFD     => ("Centreline - fore deck",          "centerline - foredeck"),
+    CenterlineFDAft  => ("Centreline - fore deck aft",      "centerline - foredeck aft"),
+    CenterlineADFwd  => ("Centreline - aft deck forward",   "centerline - afterdeck forward"),
+    CenterlineAD     => ("Centreline - aft deck",           "centerline - afterdeck"),
+    CenterlineADAft  => ("Centreline - aft deck aft",       "centerline - afterdeck aft"),
+    SidesEven        => ("Sides - distributed",             "sides - distributed"),
+    SidesEndsFD      => ("Sides - ends (fore >= aft)",      "sides - ends (fore ≥ aft)"),
+    SidesEndsAD      => ("Sides - ends (aft >= fore)",      "sides - ends (aft ≥ fore)"),
+    SidesFDFwd       => ("Sides - fore deck forward",       "sides - foredeck forward"),
+    SidesFD          => ("Sides - fore deck",               "sides - foredeck"),
+    SidesFDAft       => ("Sides - fore deck aft",           "sides - foredeck aft"),
+    SidesADFwd       => ("Sides - aft deck forward",        "sides - afterdeck forward"),
+    SidesAD          => ("Sides - aft deck",                "sides - afterdeck"),
+    SidesADAft       => ("Sides - aft deck aft",            "sides - afterdeck aft"),
 });
 
 impl GunDistributionType { // {{{2
@@ -2376,42 +2329,22 @@ pub enum GunLayoutType {
     Dec2Row,
 }
 
-// Format layer: .sship order, parsing, report display {{{2
-sship_enum!(GunLayoutType {
-    Single   => "Single",
-    Twin2Row => "2 row, twin",
-    Quad4Row => "4 row, quad",
-    Twin     => "Twin",
-    TwoGun   => "2-gun",
-    Quad2Row => "2 row, quad",
-    Triple   => "Triple",
-    ThreeGun => "3-gun",
-    Sex2Row  => "2 row, sextuple",
-    Quad     => "quad",
-    FourGun  => "4-gun",
-    Oct2Row  => "2 row, octuple",
-    Quint    => "quintuple",
-    FiveGun  => "5-gun",
-    Dec2Row  => "2 row, decuple",
-});
-
-// View layer: GUI dropdown labels {{{2
-gui_enum!(GunLayoutType {
-    Single   => "Single mount",
-    Twin2Row => "2 row twin mount",
-    Quad4Row => "4 row quad mount",
-    Twin     => "Twin mount",
-    TwoGun   => "2-gun mount",
-    Quad2Row => "2 row quad mount",
-    Triple   => "Triple mount",
-    ThreeGun => "3-gun mount",
-    Sex2Row  => "2 row sextuple mount",
-    Quad     => "Quad mount",
-    FourGun  => "4-gun mount",
-    Oct2Row  => "2 row octuple mount",
-    Quint    => "Quintuple mount",
-    FiveGun  => "5-gun mount",
-    Dec2Row  => "2 row decuple mount",
+choice_enum!(GunLayoutType {
+    Single   => ("Single mount",          "Single"),
+    Twin2Row => ("2 row twin mount",      "2 row, twin"),
+    Quad4Row => ("4 row quad mount",      "4 row, quad"),
+    Twin     => ("Twin mount",            "Twin"),
+    TwoGun   => ("2-gun mount",           "2-gun"),
+    Quad2Row => ("2 row quad mount",      "2 row, quad"),
+    Triple   => ("Triple mount",          "Triple"),
+    ThreeGun => ("3-gun mount",           "3-gun"),
+    Sex2Row  => ("2 row sextuple mount",  "2 row, sextuple"),
+    Quad     => ("Quad mount",            "quad"),
+    FourGun  => ("4-gun mount",           "4-gun"),
+    Oct2Row  => ("2 row octuple mount",   "2 row, octuple"),
+    Quint    => ("Quintuple mount",       "quintuple"),
+    FiveGun  => ("5-gun mount",           "5-gun"),
+    Dec2Row  => ("2 row decuple mount",   "2 row, decuple"),
 });
 
 impl GunLayoutType { // {{{2
@@ -2677,30 +2610,16 @@ pub enum TorpedoMountType {
     SubmergedReloads,
 }
 
-// Format layer: .sship order, parsing, report display {{{2
-sship_enum!(TorpedoMountType {
-    FixedTubes         => "deck mounted carriage/fixed tube",
-    DeckSideTubes      => "deck mounted side rotating tube",
-    CenterTubes        => "deck mounted centre rotating tube",
-    DeckReloads        => "deck mounted reload",
-    BowTubes           => "submerged bow tube",
-    SternTubes         => "submerged stern tube",
-    BowAndSternTubes   => "submerged bow & stern tube",
-    SubmergedSideTubes => "submerged side tube",
-    SubmergedReloads   => "below water reload",
-});
-
-// View layer: GUI dropdown labels {{{2
-gui_enum!(TorpedoMountType {
-    FixedTubes         => "deck mounted carriage/fixed tube",
-    DeckSideTubes      => "deck mounted side rotating tube",
-    CenterTubes        => "deck mounted centre rotating tube",
-    DeckReloads        => "deck mounted reload",
-    BowTubes           => "submerged bow tube",
-    SternTubes         => "submerged stern tube",
-    BowAndSternTubes   => "submerged bow & stern tube",
-    SubmergedSideTubes => "submerged side tube",
-    SubmergedReloads   => "below water reload",
+choice_enum!(TorpedoMountType {
+    FixedTubes         => ("deck mounted carriage/fixed tube", "deck mounted carriage/fixed tube"),
+    DeckSideTubes      => ("deck mounted side rotating tube",  "deck mounted side rotating tube"),
+    CenterTubes        => ("deck mounted centre rotating tube", "deck mounted centre rotating tube"),
+    DeckReloads        => ("deck mounted reload",              "deck mounted reload"),
+    BowTubes           => ("submerged bow tube",               "submerged bow tube"),
+    SternTubes         => ("submerged stern tube",             "submerged stern tube"),
+    BowAndSternTubes   => ("submerged bow & stern tube",       "submerged bow & stern tube"),
+    SubmergedSideTubes => ("submerged side tube",              "submerged side tube"),
+    SubmergedReloads   => ("below water reload",               "below water reload"),
 });
 
 impl TorpedoMountType { // {{{2
@@ -2997,20 +2916,11 @@ pub enum MineType {
     SideTubes,
 }
 
-// Format layer: .sship order, parsing, report display {{{2
-sship_enum!(MineType {
-    SternRails => "Above water - Stern racks/rails",
-    BowTubes   => "Below water - bow tubes",
-    SternTubes => "Below water - stern tubes",
-    SideTubes  => "Below water - side tubes",
-});
-
-// View layer: GUI dropdown labels {{{2
-gui_enum!(MineType {
-    SternRails => "Above water - Stern racks/rails",
-    BowTubes   => "Below water - bow tubes",
-    SternTubes => "Below water - stern tubes",
-    SideTubes  => "Below water - side tubes",
+choice_enum!(MineType {
+    SternRails => ("Above water - Stern racks/rails", "Above water - Stern racks/rails"),
+    BowTubes   => ("Below water - bow tubes",         "Below water - bow tubes"),
+    SternTubes => ("Below water - stern tubes",       "Below water - stern tubes"),
+    SideTubes  => ("Below water - side tubes",        "Below water - side tubes"),
 });
 
 impl MineType { // {{{2
@@ -3490,20 +3400,11 @@ pub enum ASWType {
     SquidMortars,
 }
 
-// Format layer: .sship order, parsing, report display {{{2
-sship_enum!(ASWType {
-    SternRacks   => "Stern depth charge racks",
-    Throwers     => "Depth charge throwers",
-    Hedgehogs    => "Hedgehog style A/S mortars",
-    SquidMortars => "Squid style A/S mortars",
-});
-
-// View layer: GUI dropdown labels {{{2
-gui_enum!(ASWType {
-    SternRacks   => "Stern depth charge racks",
-    Throwers     => "Depth charge throwers",
-    Hedgehogs    => "Hedgehog style A/S mortars",
-    SquidMortars => "Squid style A/S mortars",
+choice_enum!(ASWType {
+    SternRacks   => ("Stern depth charge racks",    "Stern depth charge racks"),
+    Throwers     => ("Depth charge throwers",       "Depth charge throwers"),
+    Hedgehogs    => ("Hedgehog style A/S mortars",  "Hedgehog style A/S mortars"),
+    SquidMortars => ("Squid style A/S mortars",     "Squid style A/S mortars"),
 });
 
 impl ASWType { // {{{2
