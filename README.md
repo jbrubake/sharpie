@@ -16,15 +16,28 @@ by hand for now. Running `sharpie` without any arguments launches the GUI.
 
 Load a ship FILE and print a report:
 
-    sharpie load [FILE]
+    sharpie load FILE
 
-Convert a `SpringSharp` file to `sharpie` format:
+Write the hull side profile as an SVG while loading:
 
-    sharpie convert [SpringSharp FILE] --to [OUTPUT FILE]
+    sharpie load FILE --image              # writes <file stem>-hull.svg
+    sharpie load FILE --image OUT.svg      # custom output name
 
-Convert a `SpringSharp` file to `sharpie` format and print a report:
+Convert a `SpringSharp` file to `sharpie` format and save it:
 
-    sharpie convert [SpringSharp FILE] --to [OUTPUT FILE] --report
+    sharpie convert SPRINGSHARP_FILE --to OUTPUT_FILE
+
+Convert a `SpringSharp` file to `sharpie` format without saving but show the
+report:
+
+    sharpie convert SPRINGSHARP_FILE --report
+
+Convert a `SpringSharp` file to `sharpie` format and save it plus show the
+report:
+
+    sharpie convert SPRINGSHARP_FILE --to OUTPUT_FILE --report
+
+Like `load`, `convert` accepts `--image [FILE]` to write the hull SVG.
 
 # Building
 
