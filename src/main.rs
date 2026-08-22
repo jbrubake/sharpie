@@ -1,6 +1,6 @@
 use clap::{Parser, Subcommand};
 use rfd::FileDialog;
-use sharpie::{SHIP_FILE_EXT, SS_SHIP_FILE_EXT, Ship};
+use sharpie::{hull_draw, SHIP_FILE_EXT, SS_SHIP_FILE_EXT, Ship};
 
 use std::error::Error;
 
@@ -26,6 +26,10 @@ struct Cli {
 enum Commands {
     Load {
         file: String,
+
+        #[arg(short, long, num_args = 0..=1)]
+        #[arg(help = "Write hull profile image (default name: <file stem>-hull.svg)")]
+        image: Option<Option<String>>,
     },
 
     Convert {
@@ -39,6 +43,10 @@ enum Commands {
         #[arg(short, long)]
         #[arg(help = "Show ship report after conversion")]
         report: bool,
+
+        #[arg(short, long, num_args = 0..=1)]
+        #[arg(help = "Write hull profile image (default name: <file stem>-hull.svg)")]
+        image: Option<Option<String>>,
     },
 }
 
@@ -139,37 +147,72 @@ fn run_gui() -> Result<(), Box<dyn Error>> {
 
 // Run the CLI {{{1
 //
+/// Derive the hull image filename from an input filename.
+///
+/// An explicit output name wins; otherwise use the input file's stem plus
+/// "-hull.svg".
+///
+fn image_path(file: &str, out: Option<String>) -> String {
+    out.unwrap_or_else(|| {
+        let path = std::path::Path::new(file);
+        let stem = path.file_stem().and_then(|s| s.to_str()).unwrap_or("hull");
+        format!("{stem}-hull.svg")
+    })
+}
+
+/// Write the hull side-profile SVG of a ship.
+///
+fn write_image(ship: &Ship, path: &str) -> Result<(), Box<dyn Error>> {
+    std::fs::write(path, hull_draw::hull_svg(&ship.hull, &ship.name))?;
+    println!("wrote {path}");
+
+    Ok(())
+}
+
 fn run(cli: Cli) -> Result<(), Box<dyn Error>> {
     match cli.command {
-        Some(Commands::Load { file }) => match Ship::load(file) {
-            Ok(ship) => {
-                println!("{}", ship.report());
-                #[cfg(debug_assertions)]
-                if cli.debug { eprintln!("{}", ship.internals()); }
+        Some(Commands::Load { file, image }) => {
+            // Compute the image name before moving the input filename.
+            //
+            let image = image.map(|out| image_path(&file, out));
 
-                Ok(())
-            }
+            match Ship::load(file) {
+                Ok(ship) => {
+                    println!("{}", ship.report());
+                    #[cfg(debug_assertions)]
+                    if cli.debug { eprintln!("{}", ship.internals()); }
 
-            Err(error) => Err(error),
-        },
-
-        Some(Commands::Convert { from, to, report }) => match Ship::convert(from) {
-            Ok(ship) => {
-                if report { println!("{}", ship.report()); }
-                #[cfg(debug_assertions)]
-                if cli.debug { eprintln!("{}", ship.internals()); }
-
-                match to {
-                    Some(to) => match ship.save(to) {
-                        Ok(_) => Ok(()),
-                        Err(error) => Err(error),
-                    },
-                    None => Ok(()),
+                    match image {
+                        Some(path) => write_image(&ship, &path),
+                        None       => Ok(()),
+                    }
                 }
-            }
 
-            Err(error) => Err(error),
-        },
+                Err(error) => Err(error),
+            }
+        }
+
+        Some(Commands::Convert { from, to, report, image }) => {
+            // Compute the image name before moving the input filename.
+            //
+            let image = image.map(|out| image_path(&from, out));
+
+            match Ship::convert(from) {
+                Ok(ship) => {
+                    if report { println!("{}", ship.report()); }
+                    #[cfg(debug_assertions)]
+                    if cli.debug { eprintln!("{}", ship.internals()); }
+
+                    if let Some(to) = to { ship.save(to)?; }
+
+                    if let Some(path) = image { write_image(&ship, &path)?; }
+
+                    Ok(())
+                }
+
+                Err(error) => Err(error),
+            }
+        }
 
         // No subcommand means launch the GUI
         None => run_gui(),
@@ -227,13 +270,22 @@ mod cli {
              None),
         cli_load:
             (["sharpie", "load", "ship.ship"],
-             Some(Commands::Load { ref file }) if file == "ship.ship"),
+             Some(Commands::Load { ref file, image: None }) if file == "ship.ship"),
+        cli_load_image_bare:
+            (["sharpie", "load", "ship.ship", "--image"],
+             Some(Commands::Load { image: Some(None), .. })),
+        cli_load_image_value:
+            (["sharpie", "load", "ship.ship", "-i", "out.svg"],
+             Some(Commands::Load { ref file, image: Some(ref image) })
+                 if file == "ship.ship" && *image == Some("out.svg".to_owned())),
         cli_convert_minimal:
             (["sharpie", "convert", "in.sship"],
-             Some(Commands::Convert { ref from, to: None, report: false }) if from == "in.sship"),
+             Some(Commands::Convert { ref from, to: None, report: false, image: None })
+                 if from == "in.sship"),
         cli_convert_to_long:
             (["sharpie", "convert", "in.sship", "--to", "out.ship"],
-             Some(Commands::Convert { ref from, to: Some(ref to), report: false }) if from == "in.sship" && to == "out.ship"),
+             Some(Commands::Convert { ref from, to: Some(ref to), report: false, image: None })
+                 if from == "in.sship" && to == "out.ship"),
         cli_convert_to_short:
             (["sharpie", "convert", "in.sship", "-t", "out.ship"],
              Some(Commands::Convert { to: Some(ref to), .. }) if to == "out.ship"),
@@ -243,6 +295,13 @@ mod cli {
         cli_convert_report_short:
             (["sharpie", "convert", "in.sship", "-r"],
             Some(Commands::Convert { report: true, .. })),
+        cli_convert_image_bare:
+            (["sharpie", "convert", "in.sship", "--image"],
+             Some(Commands::Convert { image: Some(None), .. })),
+        cli_convert_image_value:
+            (["sharpie", "convert", "in.sship", "-i", "out.svg"],
+             Some(Commands::Convert { image: Some(ref image), .. })
+                 if *image == Some("out.svg".to_owned())),
     }
 
     // Test cli_parse_err {{{3

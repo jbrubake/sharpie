@@ -84,6 +84,8 @@ macro_rules! choice_enum {
 pub mod hull;
 use hull::{BowType, Hull};
 
+pub mod hull_draw;
+
 pub mod armor;
 use armor::{Armor, Belt, BulkheadType};
 
