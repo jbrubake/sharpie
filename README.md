@@ -12,7 +12,7 @@ in [CHANGELOG.md](CHANGELOG.md).
 # Usage
 
 `sharpie` can convert `SpringSharp` files to its own format, load its own
-`*.ship` files and generate reports for both. `sharpie` files can only be edited
+`*.ship` files and generate reports for both. `*.ship` files can only be edited
 by hand for now. Running `sharpie` without any arguments launches the GUI.
 
 Load a ship FILE and print a report:
@@ -23,6 +23,11 @@ Write the hull side profile as an SVG while loading:
 
     sharpie load FILE --image              # writes <file stem>-hull.svg
     sharpie load FILE --image OUT.svg      # custom output name
+
+On debug builds, the global `--debug` flag (before the subcommand) prints
+internal values:
+
+    sharpie --debug load FILE
 
 Convert a `SpringSharp` file to `sharpie` format and save it:
 
@@ -64,7 +69,7 @@ you can use the included `chkreport` script to compare `sharpie`'s report:
 
     ./chkreport path/to/SHIP.sship
 
-This will use `vimdiff` if available.
+This will use `vimdiff` if available, falling back to a side-by-side `diff`.
 
 Please file an [issue](https://github.com/orionarts/sharpie/issues/new/choose)
 for any `sharpie` reports that differ from `SpringSharp`. Include both the
