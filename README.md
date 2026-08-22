@@ -1,4 +1,4 @@
-[![Rust](https://github.com/jbrubake/sharpie/actions/workflows/test.yaml/badge.svg)](https://github.com/jbrubake/sharpie/actions/workflows/test.yaml)
+[![Rust](https://github.com/orionarts/sharpie/actions/workflows/test.yaml/badge.svg)](https://github.com/orionarts/sharpie/actions/workflows/test.yaml)
 
 # Sharpie
 
@@ -6,7 +6,8 @@ A [SpringSharp](http://springsharp.com) remake.
 
 **Version 1** is intended to be a bug-for-bug clone of `SpringSharp v3b3`
 (excluding some difficult to reproduce bugs related to how `SpringSharp` stores
-values). New features will be added in **Version 2**.
+values). New features will be added in **Version 2**. Release history is kept
+in [CHANGELOG.md](CHANGELOG.md).
 
 # Usage
 
@@ -51,7 +52,7 @@ Run the test suite with:
 
 A `Makefile` provides convenience targets: `make build`, `make gui` (build and
 launch the GUI), `make preview` (preview the UI with `slint-viewer`),
-`make live-preview` and `make docs`.
+`make live-preview`, `make docs` and `make view-docs`.
 
 # Comparing Sharpie reports to SpringSharp reports
 
@@ -59,13 +60,13 @@ The report output by `sharpie` is supposed to be formatted exactly like a
 `SpringSharp` report, except for differences in spacing. If you place the
 `*.sship` file and a corresponding `*.report` file that contains the
 `SpringSharp` report (i.e., `foo.sship` and `foo.report` in the same directory),
-you can use the included `chkreport` script to compare `sharpie's` report:
+you can use the included `chkreport` script to compare `sharpie`'s report:
 
-`./chkreport path/to/SHIP.sship`
+    ./chkreport path/to/SHIP.sship
 
 This will use `vimdiff` if available.
 
-Please file an [issue](https://github.com/jbrubake/sharpie/issues/new/choose)
+Please file an [issue](https://github.com/orionarts/sharpie/issues/new/choose)
 for any `sharpie` reports that differ from `SpringSharp`. Include both the
 original `.sship` file and information on which lines are different.
 
