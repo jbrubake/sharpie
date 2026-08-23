@@ -336,7 +336,7 @@ impl Battery { // {{{2
 #[cfg(debug_assertions)]
 impl Battery {
     pub fn internals(&self, hull: Hull, wgt_broad: f64) {
-        eprintln!("units = {}", self.units);
+        eprintln!("units = {:?}", self.units);
         eprintln!("num = {}", self.num);
         eprintln!("diam = {}", self.diam.imp());
         eprintln!("len = {}", self.len);

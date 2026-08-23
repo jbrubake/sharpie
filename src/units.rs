@@ -1,5 +1,4 @@
 use serde::{Deserialize, Serialize};
-use std::fmt;
 
 // Units {{{1
 #[derive(PartialEq, Serialize, Deserialize, Clone, Copy, Debug, Default)]
@@ -21,17 +20,6 @@ impl From<&str> for Units {
             "1" => Self::Metric,
             _   => Self::Imperial, // "0" and unknown strings default to imperial
         }
-    }
-}
-
-impl fmt::Display for Units { // {{{2
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}",
-            match self {
-                Self::Imperial => "imperial",
-                Self::Metric   => "metric",
-            }
-        )
     }
 }
 
@@ -113,26 +101,6 @@ mod tests {
         from_invalid:  (Units::Imperial, "2"),
         from_garbage:  (Units::Imperial, "garbage"),
         from_empty:    (Units::Imperial, ""),
-    }
-
-    // Test display {{{2
-    macro_rules! test_display {
-        ($($name:ident: $value:expr,)*) => {
-            $(
-                #[test]
-                fn $name() {
-                    let (expected, units) = $value;
-
-                    assert_eq!(expected, format!("{}", units));
-                }
-            )*
-        }
-    }
-
-    test_display! {
-        // name:            (display, units)
-        display_imperial:  ("imperial", Units::Imperial),
-        display_metric:    ("metric", Units::Metric),
     }
 
     // Test default {{{2
