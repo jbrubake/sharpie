@@ -283,9 +283,10 @@ impl Ship { // {{{2
     /// Year adjustment factor for various calculations.
     ///
     pub fn year_adj(year: u32) -> f64 {
-             if year <= 1890 { 1.0 - (1890 - year) as f64 / 66.666664 }
+             if year >= YEAR_MIN &&
+                year <= 1890     { 1.0 - (1890 - year) as f64 / 66.666664 }
         else if year <= YEAR_MAX { 1.0 }
-        else                 { 0.0 }
+        else                     { 0.0 }
     }
 
     // deck_space {{{3
