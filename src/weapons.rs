@@ -285,7 +285,7 @@ impl Battery { // {{{2
     pub fn gun_wgt(&self) -> f64 {
         if self.diam.imp() == 0.0 { return 0.0; }
 
-        self.shell_wgt_est() * (self.len / 812.289434917877 *
+        self.shell_wgt_est() * (self.len / 812.389434917877 *
             (1.0 + (1.0 / self.diam.imp()).powf(2.3297949327695))
             ) * self.num as f64
     }
@@ -747,7 +747,7 @@ mod battery {
     test_gun_wgt! {
         // name: (gun_wgt, diam, len)
         gun_wgt_cal_eq_0: (0.0, 0.0, 0.0),
-        gun_wgt_test: (28.07, 10.0, 45.0),
+        gun_wgt_test: (28.06, 10.0, 45.0),
     }
 
     // Test mount_wgt {{{3
@@ -784,8 +784,8 @@ mod battery {
         // name: (mount_wgt, mount_kind, diam)
         mount_wgt_cal_eq_0: (0.0, MountType::Broadside, 0.0),
         mount_wgt_sm_mount: (47.19, MountType::Broadside, 10.0),
-        mount_wgt_lg_mount: (111.88, MountType::ColesTurret, 10.0),
-        mount_wgt_lg_cal: (112.98, MountType::ColesTurret, 11.0),
+        mount_wgt_lg_mount: (111.87, MountType::ColesTurret, 10.0),
+        mount_wgt_lg_cal: (112.97, MountType::ColesTurret, 11.0),
         mount_wgt_sm_cal: (0.06, MountType::ColesTurret, 1.0),
     }
 
