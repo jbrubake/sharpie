@@ -1537,7 +1537,7 @@ impl Ship { // {{{2
 
 impl Ship { // Convenience wrappers {{{2
     pub fn ct_wgt(&self) -> f64 { // {{{3
-        self.armor.ct_fwd.wgt(self.hull.d()) + self.armor.ct_fwd.wgt(self.hull.d())
+        self.armor.ct_fwd.wgt(self.hull.d()) + self.armor.ct_aft.wgt(self.hull.d())
     }
 
     pub fn deck_wgt(&self) -> f64 { // {{{3
