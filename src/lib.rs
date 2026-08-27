@@ -588,6 +588,16 @@ impl Ship { // {{{2
             && (self.engine.vmax < 24.0 || self.hull.d() > 4000.0)
     }
 
+    // bh_beam_too_wide {{{3
+    /// If bulkhead beam is too wide
+    ///
+    fn bh_beam_too_wide(&self) -> bool {
+        match self.armor.bh_kind {
+            BulkheadType::Strengthened => self.armor.bh_beam.imp() >= (self.hull.b.imp() - 6.0),
+            BulkheadType::Additional   => self.armor.bh_beam.imp() >   self.hull.b.imp(),
+        }
+    }
+
     // is_steady {{{3
     /// If ship is a steady gun platform.
     ///
@@ -2239,6 +2249,9 @@ impl Ship { // {{{3
         addto!(r, "    {} accommodation and workspace room", self.deck_room_quality());
         for s in self.seakeeping_desc() {
             addto!(r, "    {}", s);
+        }
+        if self.bh_beam_too_wide() {
+            addto!(r, "Beam between bulkheads too wide");
         }
 
         addto!(r);
