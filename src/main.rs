@@ -37,6 +37,10 @@ enum Commands {
         #[arg(short, long, num_args = 0..=1)]
         #[arg(help = "Write hull profile image (default name: <file stem>-hull.svg)")]
         image: Option<Option<String>>,
+
+        #[arg(short, long)]
+        #[arg(help = "Show ship report (the default)")]
+        report: bool,
     },
 
     #[command(group(
@@ -184,7 +188,7 @@ fn write_image(ship: &Ship, path: &str) -> Result<(), Box<dyn Error>> {
 
 fn run(cli: Cli) -> Result<(), Box<dyn Error>> {
     match cli.command {
-        Some(Commands::Load { file, image }) => {
+        Some(Commands::Load { file, image, report: _ }) => {
             // Compute the image name before moving the input filename.
             //
             let image = image.map(|out| image_path(&file, out));
