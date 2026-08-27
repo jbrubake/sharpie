@@ -199,10 +199,19 @@ impl Battery { // {{{2
 
         if self.mount_num == 0 { return 0.0; } // catch divide by zero
 
-        let a = u32::min(
-            if self.mount_kind.wgt_adj() > 0.5 { 4 } else { 5 },
-            guns / self.mount_num,
-        );
+        let a =
+            if self.mount_kind.wgt_adj() > 0.5 {
+                u32::min(4, guns / self.mount_num)
+            } else {
+                // TODO: This replicates what is most likely a SpringSharp bug in armWeightCalc()
+                guns / self.mount_num
+            };
+
+        // This is **probably** what the code **should** be:
+        // let a = u32::min(
+            // if self.mount_kind.wgt_adj() > 0.5 { 4 } else { 5 },
+            // guns / self.mount_num,
+        // );
 
         let b = self.mount_kind.armor_barb_wgt();
 
