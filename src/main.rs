@@ -19,7 +19,6 @@ slint::include_modules!();
     "Written by Jeremy Brubaker.\n",
 ))]
 #[command(about = "SpringSharp 3b3 clone", long_about = None)]
-#[command(propagate_version = true)]
 struct Cli {
     #[command(subcommand)]
     command: Option<Commands>,
