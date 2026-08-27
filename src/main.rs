@@ -9,7 +9,15 @@ slint::include_modules!();
 // Command line parsing {{{1
 //
 #[derive(Parser)]
-#[command(version)]
+#[command(version = concat!(
+    env!("CARGO_PKG_VERSION"), "\n",
+    "Copyright (C) 2024 Jeremy Brubaker\n",
+    "License GPLv3+: GNU GPL version 3 or later <https://gnu.org/licenses/gpl.html>.\n",
+    "This is free software: you are free to change and redistribute it.\n",
+    "There is NO WARRANTY, to the extent permitted by law.\n",
+    "\n",
+    "Written by Jeremy Brubaker.\n",
+))]
 #[command(about = "SpringSharp 3b3 clone", long_about = None)]
 #[command(propagate_version = true)]
 struct Cli {
