@@ -5,6 +5,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- `convert` subcommand requires `--to` and/or `--report`
+
 ### Fixed
 
 - `Hull::free_cap()` now returns a lower freeboard if a ship has **any** guns

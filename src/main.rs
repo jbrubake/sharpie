@@ -39,6 +39,12 @@ enum Commands {
         image: Option<Option<String>>,
     },
 
+    #[command(group(
+        clap::ArgGroup::new("to_or_report")
+            .args(["to", "report"])
+            .multiple(true)
+            .required(true)
+    ))]
     Convert {
         #[arg(help = "SpringSharp 3 file to convert")]
         from: String,
