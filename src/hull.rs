@@ -281,17 +281,15 @@ impl Hull { // {{{2
     /// Waterplane Area Coefficient (Parsons).
     ///
     pub fn cwp(&self) -> f64 {
-        let (a, f) = 
-            if self.boxy || self.cb() >= 0.75 {
-                (0.175, 0.875)
-            } else {
-                self.stern_type.wp_calc()
-            };
-        
-        let cwp = f64::min(
-            a + f * Hull::cp( f64::max(self.cb(), 0.4) ),
-            1.0
-        );
+        let cp = Hull::cp(f64::max(self.cb(), 0.4));
+
+        let (a, f) = match self.stern_type {
+            SternType::TransomLg | SternType::TransomSm => self.stern_type.wp_calc(),
+            _ if self.boxy || self.cb() >= 0.75 => (0.175, 0.875),
+            _ => self.stern_type.wp_calc(),
+        };
+
+        let cwp = f64::min(a + f * cp, 1.0);
 
         cwp - if self.cb() < 0.4 {
                   0.0281 - (self.cb() - 0.3).powf(1.55)
@@ -634,24 +632,26 @@ mod tests {
             $(
                 #[test]
                 fn $name() {
-                    let (expected, boxy, cb) = $value;
+                    let (expected, boxy, cb, stern) = $value;
 
                     let mut hull = Hull::default();
                     hull.set_cb(cb);
                     hull.boxy = boxy;
+                    hull.stern_type = stern;
 
-                    println!("{}", hull.cwp());
                     assert_eq!(expected, to_place(hull.cwp(), 5));
                 }
             )*
         }
     }
     test_cwp! {
-        // name: (cwp, boxy, cb)
-        cwp_test_1: (0.64045, true, 0.5),
-        cwp_test_2: (0.83761, false, 0.75),
-        cwp_test_3: (0.66628, false, 0.5),
-        cwp_test_4: (0.59708, false, 0.35),
+        // name:                (cwp,     boxy,  cb,    stern)
+        cwp_test_1:             (0.64045, true,  0.5,   SternType::Cruiser),
+        cwp_test_2:             (0.83761, false, 0.75,  SternType::Cruiser),
+        cwp_test_3:             (0.66628, false, 0.5,   SternType::Cruiser),
+        cwp_test_4:             (0.59708, false, 0.35,  SternType::Cruiser),
+        cwp_transom_lg_high_cb: (0.87539, false, 0.75,  SternType::TransomLg),
+        cwp_transom_sm_high_cb: (0.86024, false, 0.75,  SternType::TransomSm),
     }
 
     // ws {{{3
