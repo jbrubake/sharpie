@@ -733,10 +733,10 @@ impl Ship { // {{{2
     ///
     pub fn cap_calc_broadside(&self) -> bool {
         for b in self.batteries.iter() {
-            if ! b.broad_and_below() { return false; }
+            if b.broad_and_below() { return true; }
         }
 
-        true
+        false
     }
 
     // flotation {{{3
