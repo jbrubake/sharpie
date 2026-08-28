@@ -65,7 +65,8 @@ impl Default for Armor { // {{{2
 }
 
 impl Armor { // {{{2
-    // XXX: I do not know what this does.
+    // Factor to calculate the weight of X ft²*in of armor
+    // 1 ft²*in armor => INCH tons
     pub const INCH: f64 = 0.0185;
 
     // wgt {{{3

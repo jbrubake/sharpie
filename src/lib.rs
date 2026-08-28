@@ -407,7 +407,8 @@ impl Ship { // {{{2
     }
 
     // room {{{3
-    /// XXX: I do not know what this does.
+    /// Ratio of the sum of weights of the engine, magazines, ship's stores, torpedo
+    /// bulkheads, hull mounted torpedoes and miscellaneous weights to displacement.
     ///
     fn room(&self) -> f64 {
         (
@@ -421,8 +422,7 @@ impl Ship { // {{{2
     }
 
     // hull_room {{{3
-    /// Ratio of the sum of weights of the engine, magazines, ship's stores, torpedo
-    /// bulkheads, hull mounted torpedoes and miscellaneous weights to displacement.
+    /// A numerical measure of the amount of available space within the hull.
     ///
     pub fn hull_room(&self) -> f64 {
         self.room() *
@@ -435,7 +435,7 @@ impl Ship { // {{{2
     }
 
     // deck_room {{{3
-    /// XXX: Deck analog of hull_room()
+    /// A numerical measure of the amount of available deck space.
     ///
     pub fn deck_room(&self) -> f64 {
         self.hull.wp().imp() /
@@ -729,7 +729,7 @@ impl Ship { // {{{2
     }
 
     // cap_calc_broadside {{{3
-    /// XXX: I do not know what this does.
+    /// Return true if the ship has any below deck broadside guns.
     ///
     pub fn cap_calc_broadside(&self) -> bool {
         for b in self.batteries.iter() {
@@ -985,7 +985,7 @@ impl Ship { // {{{2
     }
 
     // wgt_borne {{{3
-    /// XXX: I do not know what this does
+    /// Sum of gun barrel and mount weights.
     ///
     fn wgt_borne(&self) -> f64 {
         let mut wgt = 0.0;

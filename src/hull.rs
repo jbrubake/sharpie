@@ -415,7 +415,7 @@ impl Hull { // {{{2
     }
 
     // freeboard_dist {{{3
-    /// XXX: I do not know what this does.
+    /// Mean freeboard over the fore and aft decks ("distributed" freeboard)
     ///
     pub fn freeboard_dist(&self) -> f64 {
         (self.fd() * self.fd_len + self.ad() * self.ad_len()) / (self.fd_len + self.ad_len())
@@ -457,7 +457,8 @@ impl Hull { // {{{2
     }
 
     // free_cap {{{3
-    /// XXX: I do not know what this does.
+    /// Freeboard "capped" if freeboard is greater than b / 3 or if the ship has any broadside guns
+    /// below deck
     ///
     pub fn free_cap(&self, cap_calc_broadside: bool) -> f64 {
         if self.freeboard().imp() > (self.b.imp() / 3.0) {
@@ -1162,7 +1163,7 @@ choice_enum!(SternType {
 
 impl SternType { // {{{2
     // wp_calc {{{3
-    /// XXX: I do not know what this does.
+    /// Values for calculating CWp
     ///
     pub fn wp_calc(&self) -> (f64, f64) {
         match self {
@@ -1174,7 +1175,7 @@ impl SternType { // {{{2
     }
 
     // leff {{{3
-    /// XXX: I do not know what this does.
+    /// Transom sterns increase the effective waterline length
     ///
     pub fn leff(&self, lwl: f64, bb: f64, cs: f64) -> f64 {
         if cs == 0.0 { return 0.0 } // catch divide by zero
