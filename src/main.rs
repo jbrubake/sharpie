@@ -283,42 +283,77 @@ mod cli {
     test_cli_parse_ok! {
         // name: (args, pattern)
         cli_no_subcommand:
-            (["sharpie"],
-             None),
+            (["sharpie"], None),
         cli_load:
             (["sharpie", "load", "ship.ship"],
-             Some(Commands::Load { ref file, image: None }) if file == "ship.ship"),
+             Some(Commands::Load {
+                 ref file, report: false, image: None })
+             if file == "ship.ship"),
         cli_load_image_bare:
             (["sharpie", "load", "ship.ship", "--image"],
-             Some(Commands::Load { image: Some(None), .. })),
+             Some(Commands::Load {
+                 ref file, report: false, image: Some(None) })
+             if file == "ship.ship"),
         cli_load_image_value:
             (["sharpie", "load", "ship.ship", "-i", "out.svg"],
-             Some(Commands::Load { ref file, image: Some(ref image) })
-                 if file == "ship.ship" && *image == Some("out.svg".to_owned())),
-        cli_convert_minimal:
-            (["sharpie", "convert", "in.sship"],
-             Some(Commands::Convert { ref from, to: None, report: false, image: None })
-                 if from == "in.sship"),
+             Some(Commands::Load {
+                 ref file, report: false, image: Some(ref image) })
+             if file == "ship.ship" && *image == Some("out.svg".to_owned())),
+        cli_load_report_long:
+            (["sharpie", "load", "ship.ship", "--report"],
+             Some(Commands::Load {
+                 ref file, report: true, image: None })
+             if file == "ship.ship"),
+        cli_load_report_short:
+            (["sharpie", "load", "ship.ship", "-r"],
+             Some(Commands::Load {
+                 ref file, report: true, image: None })
+             if file == "ship.ship"),
         cli_convert_to_long:
             (["sharpie", "convert", "in.sship", "--to", "out.ship"],
-             Some(Commands::Convert { ref from, to: Some(ref to), report: false, image: None })
-                 if from == "in.sship" && to == "out.ship"),
+             Some(Commands::Convert {
+                 ref from, to: Some(ref to), report: false, image: None })
+             if from == "in.sship" && to == "out.ship"),
         cli_convert_to_short:
             (["sharpie", "convert", "in.sship", "-t", "out.ship"],
-             Some(Commands::Convert { to: Some(ref to), .. }) if to == "out.ship"),
+             Some(Commands::Convert {
+                 ref from, to: Some(ref to), report: false, image: None })
+             if from == "in.sship" && to == "out.ship"),
         cli_convert_report_long:
             (["sharpie", "convert", "in.sship", "--report"],
-            Some(Commands::Convert { ref from, report: true, .. }) if from == "in.sship"),
+            Some(Commands::Convert {
+                ref from, to: None, report: true, image: None })
+            if from == "in.sship"),
         cli_convert_report_short:
             (["sharpie", "convert", "in.sship", "-r"],
-            Some(Commands::Convert { report: true, .. })),
+            Some(Commands::Convert {
+                ref from, to: None, report: true, image: None })
+            if from == "in.sship"),
         cli_convert_image_bare:
-            (["sharpie", "convert", "in.sship", "--image"],
-             Some(Commands::Convert { image: Some(None), .. })),
+            (["sharpie", "convert", "in.sship", "--image", "--to", "out.ship"],
+             Some(Commands::Convert {
+                 ref from, to: Some(ref to), report: false, image: Some(None) })
+             if from == "in.sship" && to == "out.ship"),
         cli_convert_image_value:
-            (["sharpie", "convert", "in.sship", "-i", "out.svg"],
-             Some(Commands::Convert { image: Some(ref image), .. })
-                 if *image == Some("out.svg".to_owned())),
+            (["sharpie", "convert", "in.sship", "-i", "out.svg", "--to", "out.ship"],
+             Some(Commands::Convert {
+                 ref from, to: Some(ref to), report: false, image: Some(ref image) })
+             if from == "in.sship" && to == "out.ship" && *image == Some("out.svg".to_owned())),
+        cli_convert_to_and_report:
+            (["sharpie", "convert", "in.sship", "--to", "out.ship", "--report"],
+             Some(Commands::Convert {
+                 ref from, to: Some(ref to), report: true, image: None })
+             if from == "in.sship" && to == "out.ship"),
+        cli_convert_image_bare_report:
+            (["sharpie", "convert", "in.sship", "--image", "-r"],
+             Some(Commands::Convert {
+                 ref from, to: None, report: true, image: Some(_) })
+             if from == "in.sship"),
+        cli_convert_image_value_report:
+            (["sharpie", "convert", "in.sship", "-i", "out.svg", "-r"],
+             Some(Commands::Convert {
+                 ref from, to: None, report: true, image: Some(ref image) })
+             if from == "in.sship" && *image == Some("out.svg".to_owned())),
     }
 
     // Test cli_parse_err {{{3
@@ -334,10 +369,13 @@ mod cli {
     }
 
     test_cli_parse_err! {
-        // name:              (args)
-        cli_err_load:        (["sharpie", "load"]),
-        cli_err_convert:     (["sharpie", "convert"]),
-        cli_err_bogus:       (["sharpie", "bogus"]),
+        // name:                    (args)
+        cli_err_load:              (["sharpie", "load"]),
+        cli_err_load_extra:        (["sharpie", "load", "a.ship", "b.ship"]),
+        cli_err_convert:           (["sharpie", "convert"]),
+        cli_err_convert_no_action: (["sharpie", "convert", "in.sship"]),
+        cli_err_convert_to_noval:  (["sharpie", "convert", "in.sship", "--to"]),
+        cli_err_bogus:             (["sharpie", "bogus"]),
     }
 
     // Test cli_debug {{{3
