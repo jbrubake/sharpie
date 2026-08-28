@@ -174,19 +174,23 @@ impl Battery { // {{{2
     /// Weight of battery back armor.
     ///
     pub fn armor_back_wgt(&self) -> f64 {
-        let (bw1, bw2) = self.mount_kind.armor_back_wgt();
+        let (shell_k, base_k) = self.mount_kind.armor_back_wgt();
 
-        let mut a = 0.0;
+        // Compute cylindrical shell
+        let mut shell = 0.0;
         for g in self.groups.iter() {
-            a += g.diameter_calc(self.diam.imp()) * g.num_mounts() as f64;
+            shell += g.diameter_calc(self.diam.imp()) * g.num_mounts() as f64;
         }
+        shell *= self.house_hgt() * shell_k;
 
-        let mut b = 0.0;
+        // Compute circular base
+        let mut base = 0.0;
         for g in self.groups.iter() {
-            b += (g.diameter_calc(self.diam.imp()) / 2.0).powf(2.0) * g.num_mounts() as f64;
+            base += (g.diameter_calc(self.diam.imp()) / 2.0).powf(2.0) * g.num_mounts() as f64;
         }
+        base *= PI * base_k;
 
-        (bw1 * a * self.house_hgt() + PI * bw2 * b) * self.armor_back.imp() * Armor::INCH
+        (shell + base) * self.armor_back.imp() * Armor::INCH
     }
     // armor_barb_wgt {{{3
     /// Weight of battery barbette armor
