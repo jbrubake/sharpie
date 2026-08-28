@@ -2326,9 +2326,7 @@ impl Ship {
         s.push(format!("main belt = {}", self.armor.main.wgt(self.hull.d(), self.hull.cwp(), self.hull.b.imp())));
         s.push(format!("upper belt = {}", self.armor.upper.wgt(self.hull.d(), self.hull.cwp(), self.hull.b.imp())));
         s.push(format!("end belt = {}", self.armor.end.wgt(self.hull.d(), self.hull.cwp(), self.hull.b.imp())));
-        // TODO: Replace with the following once circular references are fixed:
-        // s.push(format!("deck = {}", self.armor.deck.wgt(self.hull.clone(), self.wgt_mag(), self.wgt_engine())));
-        s.push(format!("deck = {}", self.armor.deck.wgt(self.hull.clone(), self.wgt_mag(), 0.0)));
+        s.push(format!("deck = {}", self.armor.deck.wgt(self.hull.clone(), self.wgt_mag(), self.wgt_engine())));
         s.push("".to_string());
 
         s.push(format!("wgt_engine = {}", self.wgt_engine()));
