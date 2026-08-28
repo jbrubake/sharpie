@@ -1772,11 +1772,14 @@ impl Ship { // {{{3
                                 GunDistributionType::CenterlineAD |
                                 GunDistributionType::SidesEven |
                                 GunDistributionType::SidesFD |
-                                GunDistributionType::SidesAD => "",
+                                GunDistributionType::SidesAD |
+                                GunDistributionType::None => "",
 
                                 _ => match b.mount_kind {
                                     MountType::Broadside => "",
                                     MountType::ColesTurret => "",
+                                    MountType::OpenBarbette => "",
+                                    MountType::Casemate => "",
 
                                     _ => " - superfiring",
                                 },
