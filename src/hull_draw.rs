@@ -344,7 +344,7 @@ pub fn hull_svg(hull: &Hull, name: &str) -> String {
 
 // Tests {{{1
 #[cfg(test)]
-mod hull_draw {
+mod tests {
     use crate::test_support::*;
     use super::*;
 
