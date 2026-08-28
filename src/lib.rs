@@ -1747,10 +1747,10 @@ impl Ship { // {{{3
 
             for (i, sb) in b.groups.iter().enumerate() {
                 let sb_super = match i {
+                    // TODO: This duplicates SpringSharp but might be a bug. See gunString()
                     0 => sb.above < (b.mount_num - b.groups[1].above),
-                    // TODO: SpringSharp BUG. Correct line is the below commented line:
-                    // 1 => sb.above < (b.mount_num - b.groups[0].above),
-                    _ => sb.above < (2 * sb.num_mounts() - sb.above),
+                    1 => sb.above < (2 * sb.num_mounts() - sb.above),
+                    _ => panic!("Only two sub-batteries supported!"),
                 };
 
                 if sb.num_mounts() == 0 { continue; }
