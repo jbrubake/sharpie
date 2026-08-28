@@ -196,10 +196,8 @@ impl Hull { // {{{2
     // cm {{{3
     /// Midship section area Coefficient (Keslen).
     ///
-    // XXX: Should this be a method?
     pub fn cm(block: f64) -> f64 {
         match block {
-            // XXX: Does this matter? cb should never by less than 0.3
             0.0 => 1.006, // The float math doesn't work out if block == 0.0
             _   => 1.006 - 0.0056 * block.powf(-3.56),
         }
@@ -208,7 +206,6 @@ impl Hull { // {{{2
     // cp {{{3
     /// Prismatic Coefficient.
     ///
-    // XXX: Should this be a method?
     pub fn cp(block: f64) -> f64 {
         block / Hull::cm(block)
     }
@@ -227,7 +224,6 @@ impl Hull { // {{{2
     // cb_calc {{{3
     /// Calculate the Block Coefficient for a given displacement.
     ///
-    // XXX: Should this only return values between 0.3 and 1.0 (inclusive)?
     pub fn cb_calc(&self, d: f64, t: f64) -> f64 {
         let volume = self.lwl().imp() * self.bb.imp() * t;
 

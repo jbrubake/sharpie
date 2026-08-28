@@ -39,7 +39,7 @@ pub struct Engine {
 }
 
 impl Engine { // {{{2
-    /// XXX: self.range is divided by this in bunker()
+    /// XXX: I do not know what this is.
     const RANGE: f64 = 7000.0;
 
     // set_shafts {{{3

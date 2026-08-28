@@ -2113,8 +2113,6 @@ impl Ship { // {{{3
 
             if self.armor.deck.fc.imp() + self.armor.deck.md.imp() + self.armor.deck.qd.imp() > 0.0 {
                 addto!(r, "    - Armour Deck: {}",
-                    // TODO: Replace with the following once the circular references are fixed:
-                    // self.percent_calc(self.deck.wgt()),
                     self.percent_calc(self.deck_wgt()),
                 );
             }
