@@ -104,8 +104,6 @@ use units::UnitType::*;
 use units::Units::*;
 use units::Measurement;
 
-use format_num::format_num;
-
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
@@ -1648,9 +1646,11 @@ macro_rules! addif {
 ///
 // This is a macro instead of a function to avoid having to cast
 // floats to ints or ints to floats
+pub use format_num::format_num;
+#[macro_export]
 macro_rules! num {
     ($val:expr, $digits: expr) => {
-        format_num!(&*format!(",.{}", $digits), $val)
+        $crate::format_num!(&*format!(",.{}", $digits), $val)
     };
 }
 
