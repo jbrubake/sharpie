@@ -1151,10 +1151,10 @@ pub enum SternType {
 }
 
 choice_enum!(SternType {
-    Cruiser   => ("Cruiser",         "a cruiser stern"),
-    TransomSm => ("Transom (small)", "a small transom stern"),
-    TransomLg => ("Transom (large)", "a large transom stern"),
-    Round     => ("Round",           "a round stern"),
+    Cruiser   => ("Cruiser stern",         "a cruiser stern"),
+    TransomSm => ("Transom stern - small", "a small transom stern"),
+    TransomLg => ("Transom stern - large", "a large transom stern"),
+    Round     => ("Round stern",           "a round stern"),
 });
 
 impl SternType { // {{{2
@@ -1263,7 +1263,7 @@ mod stern_type {
         let labels: Vec<&str> = SternType::ALL.iter().map(|v| v.label()).collect();
         assert_eq!(
             labels,
-            ["Cruiser", "Transom (small)", "Transom (large)", "Round"]
+            ["Cruiser stern", "Transom stern - small", "Transom stern - large", "Round stern"]
         );
     }
 }
@@ -1283,12 +1283,12 @@ pub enum BowType {
 }
 
 choice_enum!(BowType {
-    Normal       => ("Normal",             "a normal bow"),
-    BulbStraight => ("Bulbous (straight)", "a straight bulbous bow"),
+    Normal       => ("Normal bow",             "a normal bow"),
+    BulbStraight => ("Bulbous bow - straight", "a straight bulbous bow"),
     BulbForward(Measurement::new(0.0, LengthLong, Units::Imperial))
-                 => ("Bulbous (forward)",  "an extended bulbous bow"),
+                 => ("Bulbous bow - forward",  "an extended bulbous bow"),
     Ram(Measurement::new(0.0, LengthLong, Units::Imperial))
-                 => ("Ram",                "a ram bow"),
+                 => ("Ram Bow",                "a ram bow"),
 });
 
 impl BowType { // {{{2
@@ -1386,7 +1386,7 @@ mod bow_type {
         let labels: Vec<&str> = BowType::ALL.iter().map(|v| v.label()).collect();
         assert_eq!(
             labels,
-            ["Normal", "Bulbous (straight)", "Bulbous (forward)", "Ram"]
+            ["Normal bow", "Bulbous bow - straight", "Bulbous bow - forward", "Ram Bow"]
         );
     }
 }
