@@ -1,12 +1,24 @@
-use super::hull::{BowType, Hull};
-use super::armor::{Armor, Belt, BulkheadType};
-use super::engine::{BoilerType, DriveType, Engine, FuelType};
-use super::weapons::{ASW, Battery, Mines, Torpedoes};
-use super::weapons::{GunDistributionType, MountType};
-use super::weights::MiscWgts;
-use super::units::UnitType::*;
-use super::units::Units::*;
-use super::units::{Measurement};
+use crate::calc::{
+    ASW,
+    Armor,
+    Battery,
+    Belt,
+    BoilerType,
+    BowType,
+    BulkheadType,
+    DriveType,
+    Engine,
+    FuelType,
+    GunDistributionType,
+    Hull,
+    Measurement,
+    Mines,
+    MiscWgts,
+    MountType,
+    Torpedoes,
+    UnitType::*,
+    Units::*,
+};
 use crate::format_num;
 
 use serde::{Deserialize, Serialize};
@@ -14,8 +26,7 @@ use serde_json::Value;
 
 use std::cell::Cell;
 use std::error::Error;
-use std::fs;
-use std::fs::{File, OpenOptions};
+use std::fs::{self, File, OpenOptions};
 use std::io::{BufRead, BufReader, Write};
 
 /// Earliest valid year for a ship.
@@ -42,12 +53,11 @@ struct Version {
 // Testing support {{{1
 #[cfg(test)]
 pub(crate) mod test_support {
-    use crate::Ship;
-    use crate::Hull;
-    use crate::Engine;
-    use crate::engine::{BoilerType, DriveType, FuelType};
-    use crate::units::{Measurement, Units};
-    use crate::units::UnitType::*;
+    use crate::calc::Ship;
+    use crate::calc::Hull;
+    use crate::calc::Engine;
+    use crate::calc::engine::{BoilerType, DriveType, FuelType};
+    use crate::calc::units::{Measurement, Units, UnitType::*};
 
     // Round a float to a given number of digits
     //
@@ -2230,7 +2240,7 @@ impl Ship {
 mod ship {
     use super::*;
     use crate::calc::test_support::*;
-    use crate::weapons::TorpedoMountType;
+    use crate::calc::weapons::TorpedoMountType;
     use tempfile::NamedTempFile;
 
     // Test year_adj {{{3

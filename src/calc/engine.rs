@@ -1,4 +1,4 @@
-use crate::{Hull, YEAR_MAX};
+use crate::calc::{Hull, YEAR_MAX};
 
 use bitflags::{bitflags, bitflags_match};
 use serde::{Deserialize, Serialize};

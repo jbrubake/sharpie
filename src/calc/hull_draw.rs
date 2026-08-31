@@ -12,8 +12,7 @@
 //
 use std::fmt::Write as _;
 
-use crate::hull::{BowType, Hull, SternType};
-use crate::units::Units;
+use crate::calc::{BowType, Hull, SternType, Units};
 
 // Constants {{{1
 /// Canvas width in pixels.
@@ -355,9 +354,9 @@ mod tests {
     /// the overhang to LOA), draft 20 ft.
     ///
     fn flat_hull() -> Hull {
-        let m = crate::units::Measurement::new;
-        let u = crate::units::Units::Imperial;
-        use crate::units::UnitType::LengthLong;
+        let m = crate::calc::units::Measurement::new;
+        let u = crate::calc::units::Units::Imperial;
+        use crate::calc::units::UnitType::LengthLong;
 
         let mut h = Hull::default();
         h.set_lwl(400.0, u);

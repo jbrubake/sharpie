@@ -1,8 +1,4 @@
-use crate::Hull;
-use crate::units::Units;
-use crate::units::UnitType;
-use crate::units::Measurement;
-use crate::{Armor, Ship};
+use crate::calc::{Armor, Hull, Measurement, Ship, UnitType, Units};
 
 use serde::{Deserialize, Serialize};
 
@@ -1158,8 +1154,6 @@ impl MountType { // {{{2
     /// Multiplier for determining the weight of a mount's face armor.
     ///
     pub fn armor_face_wgt(&self, armor_back: f64) -> f64 {
-        use std::f64::consts::PI;
-
         let mut wgt = match self {
             Self::Broadside      => 1.0,
             Self::ColesTurret    => PI / 2.0,
@@ -1261,8 +1255,6 @@ impl MountType { // {{{2
 #[cfg(test)]
 mod mount_type {
     use super::*;
-
-    use std::f64::consts::PI;
 
     // Test armor_wgt_adj {{{3
     macro_rules! test_armor_wgt_adj {
@@ -2689,8 +2681,6 @@ impl TorpedoMountType { // {{{2
     /// Deck space taken up by torpedo mounts.
     ///
     pub fn deck_space(&self, b: f64, num: u32, len: f64, diam: f64, mounts: u32) -> f64 {
-        use std::f64::consts::PI;
-
         let num = num as f64;
         let mounts = mounts as f64;
 

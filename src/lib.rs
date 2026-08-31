@@ -1,6 +1,4 @@
-// Macros {{{1
-//
-// choice_enum {{{2
+// choice_enum! {{{1
 /// Generate boilerplate for enums representing a list of user choices, e.g., BowType and GunType.
 ///
 /// Expands to:
@@ -83,7 +81,7 @@ macro_rules! choice_enum {
     };
 }
 
-// num {{{2
+// num! {{{1
 /// Format a number with commas and the specified number of
 /// significant digits, 0 by default.
 ///
@@ -98,7 +96,7 @@ macro_rules! num {
     };
 }
 
-// pct {{{2
+// pct! {{{1
 /// Treat a number as a percent and format a number with commas and the specified number of
 /// significant digits, 0 by default. A trailing '%' is deliberately ommitted.
 ///
@@ -111,7 +109,7 @@ macro_rules! pct {
     };
 }
 
-// addto {{{2
+// addto! {{{1
 /// Pass arguments to format!() and push to a Vec<String>.
 ///
 #[macro_export]
@@ -124,7 +122,7 @@ macro_rules! addto {
     };
 }
 
-// addif {{{2
+// addif! {{{1
 /// Return a formatted string if the condition is true.
 /// Otherwise return an empty string.
 ///
@@ -141,16 +139,6 @@ macro_rules! addif {
 
 // Imports {{{1
 //
+// Last so that the macros get pulled in as well
 pub mod calc;
 pub use calc::*;
-
-// Re-export the calc modules at the crate root so that paths like
-// `crate::units::X` continue to work for external and internal callers.
-pub use calc::armor;
-pub use calc::engine;
-pub use calc::hull;
-pub use calc::hull_draw;
-pub use calc::ship;
-pub use calc::units;
-pub use calc::weapons;
-pub use calc::weights;

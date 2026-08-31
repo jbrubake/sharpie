@@ -1,5 +1,4 @@
-use crate::Hull;
-use crate::units::{Measurement, UnitType::{LengthSmall, LengthLong}, Units};
+use crate::calc::{Hull, Measurement, UnitType::{LengthSmall, LengthLong}, Units};
 
 use serde::{Deserialize, Serialize};
 
