@@ -149,7 +149,7 @@ mod tests {
                     ship.armor.incline = incline;
 
                     assert_eq!(
-                        to_place(ship.armor.max_belt_hgt(t, ship.hull.freeboard_dist()), 2),
+                        to_place(ship.armor.max_belt_hgt(t, ship.hull.freeboard.distributed()), 2),
                         expected
                     );
                 }
@@ -428,8 +428,8 @@ impl Deck { // {{{2
         let d      = hull.d();
         let lwl    = hull.lwl().imp();
         let b      = hull.b.imp();
-        let fc_len = hull.fc_len;
-        let qd_len = hull.qd_len;
+        let fc_len = hull.freeboard.fc_len;
+        let qd_len = hull.freeboard.qd_len;
         let cwp    = hull.cwp();
         let wp     = hull.wp().imp();
 

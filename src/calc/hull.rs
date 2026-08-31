@@ -1,4 +1,4 @@
-use crate::calc::{Measurement, Units, UnitType::{Area, LengthLong}};
+use crate::calc::{Freeboard, Measurement, Units, UnitType::{Area, LengthLong}};
 
 use serde::{Deserialize, Serialize};
 
@@ -67,32 +67,8 @@ pub struct Hull {
     /// Length of stern overhang
     pub stern_overhang: Measurement,
 
-    /// Forecastle length as a fraction of the total deck.
-    pub fc_len: f64,
-    /// Height of forecastle forward.
-    pub fc_fwd: Measurement,
-    /// Height of forecastle aft.
-    pub fc_aft: Measurement,
-
-    /// Foredeck length as a fraction of the total deck.
-    pub fd_len: f64,
-    /// Height of foredeck forward.
-    pub fd_fwd: Measurement,
-    /// Height of foredeck aft.
-    pub fd_aft: Measurement,
-
-    // NOTE: ad_len() is calculated from fc_len and fd_len
-    /// Height of aftdeck forward.
-    pub ad_fwd: Measurement,
-    /// Height of aftdeck aft.
-    pub ad_aft: Measurement,
-
-    /// Quarterdeck length as a fraction of the total deck.
-    pub qd_len: f64,
-    /// Height of quarterdeck forward.
-    pub qd_fwd: Measurement,
-    /// Height of quarterdeck aft.
-    pub qd_aft: Measurement,
+    /// Freeboard of the ship's deck sections.
+    pub freeboard: Freeboard,
 
     /// Average rake of stem from waterline to staff.
     /// Positive angles indicate an overhang.
@@ -117,20 +93,7 @@ impl Default for Hull { // {{{2
             stern_type: SternType::Cruiser,
             stern_overhang: Measurement::new(0.0, LengthLong, Units::Imperial),
 
-            fc_len: 0.0,
-            fc_fwd: Measurement::new(0.0, LengthLong, Units::Imperial),
-            fc_aft: Measurement::new(0.0, LengthLong, Units::Imperial),
-
-            fd_len: 0.0,
-            fd_fwd: Measurement::new(0.0, LengthLong, Units::Imperial),
-            fd_aft: Measurement::new(0.0, LengthLong, Units::Imperial),
-
-            ad_fwd: Measurement::new(0.0, LengthLong, Units::Imperial),
-            ad_aft: Measurement::new(0.0, LengthLong, Units::Imperial),
-
-            qd_len: 0.0,
-            qd_fwd: Measurement::new(0.0, LengthLong, Units::Imperial),
-            qd_aft: Measurement::new(0.0, LengthLong, Units::Imperial),
+            freeboard: Freeboard::default(),
 
             bow_angle: 0.0,
         }
@@ -156,27 +119,27 @@ impl Hull { // {{{2
         let mut s: Vec<String> = Vec::new();
 
         // TODO: This matches SpringSharp but some non-flush decks could match here
-        if self.fc_aft == self.fd_fwd &&
-           self.fd_aft == self.ad_fwd &&
-           self.ad_aft == self.qd_fwd {
+        if self.freeboard.fc_aft == self.freeboard.fd_fwd &&
+           self.freeboard.fd_aft == self.freeboard.ad_fwd &&
+           self.freeboard.ad_aft == self.freeboard.qd_fwd {
 
             s.push("a flush deck".into());
         } else {
-            if self.fc_aft.imp() > self.fd_fwd.imp() {
+            if self.freeboard.fc_aft.imp() > self.freeboard.fd_fwd.imp() {
                 s.push("raised forecastle".into());
-            } else if self.fc_aft.imp() < self.fd_fwd.imp() {
+            } else if self.freeboard.fc_aft.imp() < self.freeboard.fd_fwd.imp() {
                 s.push("low forecastle".into());
             }
 
-            if self.fd_aft.imp() > self.ad_fwd.imp() {
+            if self.freeboard.fd_aft.imp() > self.freeboard.ad_fwd.imp() {
                 s.push("rise forward of midbreak".into());
-            } else if self.fd_aft.imp() < self.ad_fwd.imp() {
+            } else if self.freeboard.fd_aft.imp() < self.freeboard.ad_fwd.imp() {
                 s.push("rise aft of midbreak".into());
             }
 
-            if self.ad_aft.imp() > self.qd_fwd.imp() {
+            if self.freeboard.ad_aft.imp() > self.freeboard.qd_fwd.imp() {
                 s.push("low quarterdeck".into());
-            } else if self.ad_aft.imp() < self.qd_fwd.imp() {
+            } else if self.freeboard.ad_aft.imp() < self.freeboard.qd_fwd.imp() {
                 s.push("raised quarterdeck".into());
             }
         }
@@ -377,14 +340,6 @@ impl Hull { // {{{2
         (Hull::cm(self.cb()) * 2.0 - 1.0) * self.t.imp()
     }
 
-    // ad_len {{{3
-    /// Length of the after deck as a fraction of the total
-    /// deck based on forecastle, fore and aft decks.
-    ///
-    pub fn ad_len(&self) -> f64 {
-        1.0 - self.fc_len - self.fd_len - self.qd_len
-    }
-
     // stem_len {{{3
     /// Increase or decrease to length due to the angle of the bow.
     ///
@@ -393,63 +348,15 @@ impl Hull { // {{{2
             // Avoid returning infinity
             0.0
         } else {
-            self.fc_fwd.imp() * f64::tan(self.bow_angle * PI / 180.0)
+            self.freeboard.fc_fwd.imp() * f64::tan(self.bow_angle * PI / 180.0)
         }
-    }
-
-    // freeboard {{{3
-    /// Average freeboard.
-    ///
-    pub fn freeboard(&self) -> Measurement {
-        Measurement::new(
-            self.fc() * self.fc_len +
-            self.fd() * self.fd_len +
-            self.ad() * self.ad_len() +
-            self.qd() * self.qd_len,
-            LengthLong, Units::Imperial
-        )
-    }
-
-    // freeboard_dist {{{3
-    /// Mean freeboard over the fore and aft decks ("distributed" freeboard)
-    ///
-    pub fn freeboard_dist(&self) -> f64 {
-        (self.fd() * self.fd_len + self.ad() * self.ad_len()) / (self.fd_len + self.ad_len())
     }
 
     // is_wet_fwd {{{3
     /// Does the ship tend to be wet forward?
     ///
     pub fn is_wet_fwd(&self) -> bool {
-        self.fc_fwd.imp() < (1.1 * self.lwl().imp().sqrt())
-    }
-
-    // fc {{{3
-    /// Average forecastle height (weighted to slope up toward the bow).
-    ///
-    pub fn fc(&self) -> f64 {
-        self.fc_aft.imp() + (self.fc_fwd.imp() - self.fc_aft.imp()) * 0.4
-    }
-
-    // fd {{{3
-    /// Average foredeck height.
-    ///
-    pub fn fd(&self) -> f64 {
-        self.fd_fwd.imp() + (self.fd_aft.imp() - self.fd_fwd.imp()) * 0.5
-    }
-
-    // ad {{{3
-    /// Average afterdeck height.
-    ///
-    pub fn ad(&self) -> f64 {
-        self.ad_fwd.imp() + (self.ad_aft.imp() - self.ad_fwd.imp()) * 0.5
-    }
-
-    // qd {{{3
-    /// Average quarterdeck height.
-    ///
-    pub fn qd(&self) -> f64 {
-        self.qd_fwd.imp() + (self.qd_aft.imp() - self.qd_fwd.imp()) * 0.5
+        self.freeboard.fc_fwd.imp() < (1.1 * self.lwl().imp().sqrt())
     }
 
     // free_cap {{{3
@@ -457,12 +364,12 @@ impl Hull { // {{{2
     /// below deck
     ///
     pub fn free_cap(&self, cap_calc_broadside: bool) -> f64 {
-        if self.freeboard().imp() > (self.b.imp() / 3.0) {
-            self.freeboard().imp().powf(2.0) * 3.0 / self.b.imp()
+        if self.freeboard.average().imp() > (self.b.imp() / 3.0) {
+            self.freeboard.average().imp().powf(2.0) * 3.0 / self.b.imp()
         } else if cap_calc_broadside {
-            self.freeboard().imp() - 6.0
+            self.freeboard.average().imp() - 6.0
         } else {
-            self.freeboard().imp()
+            self.freeboard.average().imp()
         }
     }
 
@@ -686,7 +593,7 @@ mod tests {
 
                     let mut hull = Hull::default();
                     hull.len = Length::Loa(Measurement::new(100.0, LengthLong, Units::Imperial));
-                    hull.fc_fwd = Measurement::new(10.0, LengthLong, Units::Imperial);
+                    hull.freeboard.fc_fwd = Measurement::new(10.0, LengthLong, Units::Imperial);
                     hull.bow_angle = angle;
                     hull.stern_overhang = Measurement::new(stern, LengthLong, Units::Imperial);
 
@@ -722,7 +629,7 @@ mod tests {
 
                     let mut hull = Hull::default();
                     hull.set_lwl(100.0, Units::Imperial);
-                    hull.fc_fwd = Measurement::new(10.0, LengthLong, Units::Imperial);
+                    hull.freeboard.fc_fwd = Measurement::new(10.0, LengthLong, Units::Imperial);
                     hull.bow_angle = angle;
                     hull.stern_overhang = Measurement::new(stern, LengthLong, Units::Imperial);
 
@@ -800,30 +707,6 @@ mod tests {
         ts_t:         (9.72, 10.0),
     }
 
-    // ad_len {{{3
-    macro_rules! test_ad_len {
-        ($($name:ident: $value:expr,)*) => {
-            $(
-                #[test]
-                fn $name() {
-                    let (expected, fc_len) = $value;
-
-                    let mut hull = Hull::default();
-                    hull.fc_len = fc_len;
-                    hull.fd_len = 0.25;
-                    hull.qd_len = 0.25;
-
-                    assert_eq!(expected, to_place(hull.ad_len(), 2));
-                }
-            )*
-        }
-    }
-    test_ad_len! {
-        // name: (ad_len, fc_len)
-        ad_len_zero: (0.0, 0.5),
-        ad_len_test: (0.25, 0.25),
-    }
-
     // stem_len {{{3
     macro_rules! test_stem_len {
         ($($name:ident: $value:expr,)*) => {
@@ -833,7 +716,7 @@ mod tests {
                     let (expected, angle) = $value;
 
                     let mut hull = Hull::default();
-                    hull.fc_fwd = Measurement::new(10.0, LengthLong, Units::Imperial);
+                    hull.freeboard.fc_fwd = Measurement::new(10.0, LengthLong, Units::Imperial);
                     hull.bow_angle = angle;
 
                     assert_eq!(expected, to_place(hull.stem_len(), 2));
@@ -849,75 +732,6 @@ mod tests {
         stem_len_90:        (0.0, 90.0),
     }
 
-    // freeboard {{{3
-    macro_rules! test_freeboard {
-        ($($name:ident: $value:expr,)*) => {
-            $(
-                #[test]
-                fn $name() {
-                    let (expected, fc_len) = $value;
-
-                    let mut hull = Hull::default();
-
-                    hull.fc_len = fc_len;
-                    hull.fc_fwd = Measurement::new(10.0, LengthLong, Units::Imperial);
-                    hull.fc_aft = Measurement::new(10.0, LengthLong, Units::Imperial);
-
-                    hull.fd_len = (1.0 - fc_len) * 0.4;
-                    hull.fd_fwd = Measurement::new(hull.fc_fwd.imp() + 5.0, LengthLong, Units::Imperial);
-                    hull.fd_aft = hull.fc_fwd;
-
-                    hull.ad_fwd = Measurement::new(hull.fc_fwd.imp() + 10.0, LengthLong, Units::Imperial);
-                    hull.ad_aft = hull.fc_fwd;
-
-                    hull.qd_len = (1.0 - fc_len) * 0.4;
-                    hull.qd_fwd = Measurement::new(hull.fc_fwd.imp() - 5.0, LengthLong, Units::Imperial);
-                    hull.qd_aft = hull.fc_fwd;
-
-                    assert_eq!(expected, to_place(hull.freeboard().imp(), 3));
-                }
-            )*
-        }
-    }
-    test_freeboard! {
-        // name: (freeboard, fc_len)
-        freeboard_test: (10.75, 0.25),
-    }
-
-    // freeboard_dist {{{3
-    macro_rules! test_freeboard_dist {
-        ($($name:ident: $value:expr,)*) => {
-            $(
-                #[test]
-                fn $name() {
-                    let (expected, fc_len) = $value;
-
-                    let mut hull = Hull::default();
-
-                    hull.fc_len = fc_len;
-                    hull.fc_fwd = Measurement::new(10.0, LengthLong, Units::Imperial);
-                    hull.fc_aft = Measurement::new(10.0, LengthLong, Units::Imperial);
-
-                    hull.fd_len = (1.0 - fc_len) * 0.4;
-                    hull.fd_fwd = Measurement::new(hull.fc_fwd.imp() + 5.0, LengthLong, Units::Imperial);
-                    hull.fd_aft = hull.fc_fwd;
-
-                    hull.ad_fwd = Measurement::new(hull.fc_fwd.imp() + 10.0, LengthLong, Units::Imperial);
-                    hull.ad_aft = hull.fc_fwd;
-
-                    hull.qd_len = (1.0 - fc_len) * 0.4;
-                    hull.qd_fwd = Measurement::new(hull.fc_fwd.imp() - 5.0, LengthLong, Units::Imperial);
-                    hull.qd_aft = hull.fc_fwd;
-
-                    assert_eq!(expected, to_place(hull.freeboard_dist(), 2));
-                }
-            )*
-        }
-    }
-    test_freeboard_dist! {
-        // name:             (dist, fc_len)
-        freeboard_dist_test: (13.33, 10.0),
-    }
     // is_wet_fwd {{{3
     macro_rules! test_is_wet_fwd {
         ($($name:ident: $value:expr,)*) => {
@@ -927,7 +741,7 @@ mod tests {
                     let (expected, fc_fwd) = $value;
 
                     let mut hull = Hull::default();
-                    hull.fc_fwd = Measurement::new(fc_fwd, LengthLong, Units::Imperial);
+                    hull.freeboard.fc_fwd = Measurement::new(fc_fwd, LengthLong, Units::Imperial);
                     hull.set_lwl(100.0, Units::Imperial);
 
                     assert_eq!(expected, hull.is_wet_fwd());
@@ -942,109 +756,6 @@ mod tests {
         is_wet_fwd_false: (false, 20.0),
     }
 
-    // fc {{{3
-    macro_rules! test_fc {
-        ($($name:ident: $value:expr,)*) => {
-            $(
-                #[test]
-                fn $name() {
-                    let (expected, fc_fwd, fc_aft) = $value;
-
-                    let mut hull = Hull::default();
-
-                    hull.fc_fwd = Measurement::new(fc_fwd, LengthLong, Units::Imperial);
-                    hull.fc_aft = Measurement::new(fc_aft, LengthLong, Units::Imperial);
-
-                    assert_eq!(expected, hull.fc());
-                }
-            )*
-        }
-    }
-
-    test_fc! {
-        // name:           (fc, fc_fwd, fc_aft)
-        fc_test_eq:        (10.0, 10.0, 10.0),
-        fc_test_slope_fwd: (4.0, 10.0, 0.0),
-        fc_test_slope_aft: (6.0, 0.0, 10.0),
-    }
-
-    // fd {{{3
-    macro_rules! test_fd {
-        ($($name:ident: $value:expr,)*) => {
-            $(
-                #[test]
-                fn $name() {
-                    let (expected, fd_fwd, fd_aft) = $value;
-
-                    let mut hull = Hull::default();
-
-                    hull.fd_fwd = Measurement::new(fd_fwd, LengthLong, Units::Imperial);
-                    hull.fd_aft = Measurement::new(fd_aft, LengthLong, Units::Imperial);
-
-                    assert_eq!(expected, hull.fd());
-                }
-            )*
-        }
-    }
-
-    test_fd! {
-        // name:           (fd, fd_fwd, fd_aft)
-        fd_test_eq:        (10.0, 10.0, 10.0),
-        fd_test_slope_fwd: (5.0, 10.0, 0.0),
-        fd_test_slope_aft: (5.0, 0.0, 10.0),
-    }
-
-    // ad {{{3
-    macro_rules! test_ad {
-        ($($name:ident: $value:expr,)*) => {
-            $(
-                #[test]
-                fn $name() {
-                    let (expected, ad_fwd, ad_aft) = $value;
-
-                    let mut hull = Hull::default();
-                    hull.ad_fwd = Measurement::new(ad_fwd, LengthLong, Units::Imperial);
-                    hull.ad_aft = Measurement::new(ad_aft, LengthLong, Units::Imperial);
-
-                    assert_eq!(expected, hull.ad());
-                }
-            )*
-        }
-    }
-
-    test_ad! {
-        // name:           (ad, ad_fwd, ad_aft)
-        ad_test_eq:        (10.0, 10.0, 10.0),
-        ad_test_slope_fwd: (5.0, 10.0, 0.0),
-        ad_test_slope_aft: (5.0, 0.0, 10.0),
-    }
-
-    // qd {{{3
-    macro_rules! test_qd {
-        ($($name:ident: $value:expr,)*) => {
-            $(
-                #[test]
-                fn $name() {
-                    let (expected, qd_fwd, qd_aft) = $value;
-
-                    let mut hull = Hull::default();
-
-                    hull.qd_fwd = Measurement::new(qd_fwd, LengthLong, Units::Imperial);
-                    hull.qd_aft = Measurement::new(qd_aft, LengthLong, Units::Imperial);
-
-                    assert_eq!(expected, hull.qd());
-                }
-            )*
-        }
-    }
-
-    test_qd! {
-        // name:           (qd, qd_fwd, qd_aft)
-        qd_test_eq:        (10.0, 10.0, 10.0),
-        qd_test_slope_fwd: (5.0, 10.0, 0.0),
-        qd_test_slope_aft: (5.0, 0.0, 10.0),
-    }
-
     // free_cap {{{3
     macro_rules! test_free_cap {
         ($($name:ident: $value:expr,)*) => {
@@ -1057,20 +768,20 @@ mod tests {
 
                     hull.b = Measurement::new(b, LengthLong, Units::Imperial);
 
-                    hull.fc_len = 0.25;
-                    hull.fc_fwd = Measurement::new(10.0, LengthLong, Units::Imperial);
-                    hull.fc_aft = Measurement::new(10.0, LengthLong, Units::Imperial);
+                    hull.freeboard.fc_len = 0.25;
+                    hull.freeboard.fc_fwd = Measurement::new(10.0, LengthLong, Units::Imperial);
+                    hull.freeboard.fc_aft = Measurement::new(10.0, LengthLong, Units::Imperial);
 
-                    hull.fd_len = 0.25;
-                    hull.fd_fwd = hull.fc_fwd;
-                    hull.fd_aft = hull.fc_fwd;
+                    hull.freeboard.fd_len = 0.25;
+                    hull.freeboard.fd_fwd = hull.freeboard.fc_fwd;
+                    hull.freeboard.fd_aft = hull.freeboard.fc_fwd;
 
-                    hull.ad_fwd = hull.fc_fwd;
-                    hull.ad_aft = hull.fc_fwd;
+                    hull.freeboard.ad_fwd = hull.freeboard.fc_fwd;
+                    hull.freeboard.ad_aft = hull.freeboard.fc_fwd;
 
-                    hull.qd_len = 0.25;
-                    hull.qd_fwd = hull.fc_fwd;
-                    hull.qd_aft = hull.fc_fwd;
+                    hull.freeboard.qd_len = 0.25;
+                    hull.freeboard.qd_fwd = hull.freeboard.fc_fwd;
+                    hull.freeboard.qd_aft = hull.freeboard.fc_fwd;
 
                     assert_eq!(expected, hull.free_cap(cap_calc_broad));
                 }
@@ -1339,7 +1050,10 @@ mod bow_type {
     fn lwl_bulb_forward() {
         let hull = Hull {
             len: Length::Loa(Measurement::new(100.0, LengthLong, Units::Imperial)),
-            fc_fwd: Measurement::new(10.0, LengthLong, Units::Imperial),
+            freeboard: Freeboard {
+                fc_fwd: Measurement::new(10.0, LengthLong, Units::Imperial),
+                ..Default::default()
+            },
             bow_type: BowType::BulbForward(Measurement::new(15.0, LengthLong, Units::Imperial)),
             ..Default::default()
         };
@@ -1351,7 +1065,7 @@ mod bow_type {
     fn loa_bulb_forward() {
         let mut hull = Hull::default();
         hull.set_lwl(100.0, Units::Imperial);
-        hull.fc_fwd = Measurement::new(10.0, LengthLong, Units::Imperial);
+        hull.freeboard.fc_fwd = Measurement::new(10.0, LengthLong, Units::Imperial);
         hull.bow_type = BowType::BulbForward(Measurement::new(15.0, LengthLong, Units::Imperial));
 
         assert_eq!(115.0, to_place(hull.loa().imp(), 2));

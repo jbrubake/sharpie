@@ -79,20 +79,20 @@ pub(crate) mod test_support {
         hull.bb = Measurement::new(hull.b.imp(), LengthLong, Units::Imperial);
         hull.t  = Measurement::new(10.0, LengthLong, Units::Imperial);
 
-        hull.fc_len = 0.2;
-        hull.fc_fwd = Measurement::new(10.0, LengthLong, Units::Imperial);
-        hull.fc_aft = hull.fc_fwd;
+        hull.freeboard.fc_len = 0.2;
+        hull.freeboard.fc_fwd = Measurement::new(10.0, LengthLong, Units::Imperial);
+        hull.freeboard.fc_aft = hull.freeboard.fc_fwd;
 
-        hull.fd_len = 0.3;
-        hull.fd_fwd = hull.fc_fwd;
-        hull.fd_aft = hull.fc_fwd;
+        hull.freeboard.fd_len = 0.3;
+        hull.freeboard.fd_fwd = hull.freeboard.fc_fwd;
+        hull.freeboard.fd_aft = hull.freeboard.fc_fwd;
 
-        hull.ad_fwd = hull.fc_fwd;
-        hull.ad_aft = hull.fc_fwd;
+        hull.freeboard.ad_fwd = hull.freeboard.fc_fwd;
+        hull.freeboard.ad_aft = hull.freeboard.fc_fwd;
 
-        hull.qd_len = 0.15;
-        hull.qd_fwd = hull.fc_fwd;
-        hull.qd_aft = hull.fc_fwd;
+        hull.freeboard.qd_len = 0.15;
+        hull.freeboard.qd_fwd = hull.freeboard.fc_fwd;
+        hull.freeboard.qd_aft = hull.freeboard.fc_fwd;
 
         let mut engine = Engine::default();
         engine.set_shafts(2, &mut hull);
@@ -354,7 +354,7 @@ impl Ship { // {{{2
         self.hull.wp().imp() /
             Hull::FT3_PER_TON_SEA /
             15.0 * (1.0 - self.deck_space()) /
-            self.crew_min() as f64 * self.hull.freeboard_dist()
+            self.crew_min() as f64 * self.hull.freeboard.distributed()
     }
 
     // deck_room_quality {{{3
@@ -414,7 +414,7 @@ impl Ship { // {{{2
     ///
     pub fn recoil(&self) -> f64 {
         (
-            (self.wgt_broad().imp()/self.hull.d() * self.hull.freeboard_dist() * self.gun_super_factor() / self.hull.bb.imp()) *
+            (self.wgt_broad().imp()/self.hull.d() * self.hull.freeboard.distributed() * self.gun_super_factor() / self.hull.bb.imp()) *
 
             ( self.hull.d().powf(1.0 / 3.0) / self.hull.bb.imp() * 3.0 ).powf(2.0) * 7.0
         ) /
@@ -603,7 +603,7 @@ impl Ship { // {{{2
             self.armor.main.wgt(self.hull.d(), self.hull.cwp(), self.hull.b.imp()) +
             self.armor.end.wgt(self.hull.d(), self.hull.cwp(), self.hull.b.imp()) +
             self.deck_wgt() +
-            (self.wgt_hull_plus() + self.wgt_guns() + self.wgt_gun_mounts() - self.wgt_borne()) * 1.5 * self.hull.freeboard().imp() / self.hull.t.imp();
+            (self.wgt_hull_plus() + self.wgt_guns() + self.wgt_gun_mounts() - self.wgt_borne()) * 1.5 * self.hull.freeboard.average().imp() / self.hull.t.imp();
 
         let b = a +
             if self.deck_room() < 1.0 {
@@ -661,7 +661,7 @@ impl Ship { // {{{2
             if self.cap_calc_broadside() {
                 self.hull.free_cap(self.cap_calc_broadside())
             } else {
-                self.hull.freeboard_dist()
+                self.hull.freeboard.distributed()
             };
 
         let b = (a * self.hull.wp().imp() / Hull::FT3_PER_TON_SEA + self.hull.d()) / 2.0;
@@ -687,7 +687,7 @@ impl Ship { // {{{2
             concentration = 1.0 + self.gun_concentration();
         }
 
-        let mut str_cross = self.wgt_struct().imp() / f64::sqrt(self.hull.bb.imp() * (self.hull.t.imp() + self.hull.freeboard_dist())) /
+        let mut str_cross = self.wgt_struct().imp() / f64::sqrt(self.hull.bb.imp() * (self.hull.t.imp() + self.hull.freeboard.distributed())) /
             ((self.hull.d() + ((self.wgt_broad().imp() + self.wgt_borne() + self.wgt_gun_armor() + self.armor.ct_fwd.wgt(self.hull.d()) + self.armor.ct_aft.wgt(self.hull.d())) * (concentration * self.gun_super_factor()) + f64::max(self.hp_max().imp(), 0.0) / 100.0)) / self.hull.d()) * 0.6;
 
         if self.year < 1900 {
@@ -1038,8 +1038,8 @@ impl Ship { // {{{2
                 ) || (
                     self.batteries[0].groups[0].num_mounts() > 0 &&
                     self.batteries[0].groups[1].num_mounts() > 0 &&
-                    (self.batteries[0].groups[0].distribution.g1_gun_position(self.hull.fd_len, self.hull.ad_len()) -
-                     self.batteries[0].groups[1].distribution.g2_gun_position(self.hull.fd_len, self.hull.ad_len())).abs() < 0.2
+                    (self.batteries[0].groups[0].distribution.g1_gun_position(self.hull.freeboard.fd_len, self.hull.freeboard.ad_len()) -
+                     self.batteries[0].groups[1].distribution.g2_gun_position(self.hull.freeboard.fd_len, self.hull.freeboard.ad_len())).abs() < 0.2
                 )
             {
                 0.8 * self.gun_super_factor()
@@ -1099,21 +1099,23 @@ impl Ship { // {{{2
         ship.hull.stern_type = lines.next().unwrap().into();
         ship.hull.set_cb(lines.next().unwrap().parse()?);
 
-        ship.hull.qd_aft         = Measurement::new(lines.next().unwrap().parse()?, LengthLong, ship.hull.units);
+        ship.hull.freeboard.qd_aft         = Measurement::new(lines.next().unwrap().parse()?, LengthLong, ship.hull.units);
+
         ship.hull.stern_overhang = Measurement::new(lines.next().unwrap().parse()?, LengthLong, ship.hull.units);
-        ship.hull.qd_len         = lines.next().unwrap().parse()?;
-        ship.hull.qd_len /= 100.0; // convert from % to decimal
-        ship.hull.qd_fwd         = Measurement::new(lines.next().unwrap().parse()?, LengthLong, ship.hull.units);
-        ship.hull.ad_aft         = Measurement::new(lines.next().unwrap().parse()?, LengthLong, ship.hull.units);
-        ship.hull.fd_len         = lines.next().unwrap().parse()?;
-        ship.hull.fd_len /= 100.0; // convert from % to decimal
-        ship.hull.ad_fwd         = Measurement::new(lines.next().unwrap().parse()?, LengthLong, ship.hull.units);
-        ship.hull.fd_aft         = Measurement::new(lines.next().unwrap().parse()?, LengthLong, ship.hull.units);
-        ship.hull.fc_len         = lines.next().unwrap().parse()?;
-        ship.hull.fc_len /= 100.0; // convert from % to decimal
-        ship.hull.fd_fwd         = Measurement::new(lines.next().unwrap().parse()?, LengthLong, ship.hull.units);
-        ship.hull.fc_aft         = Measurement::new(lines.next().unwrap().parse()?, LengthLong, ship.hull.units);
-        ship.hull.fc_fwd         = Measurement::new(lines.next().unwrap().parse()?, LengthLong, ship.hull.units);
+
+        ship.hull.freeboard.qd_len         = lines.next().unwrap().parse()?;
+        ship.hull.freeboard.qd_len /= 100.0; // convert from % to decimal
+        ship.hull.freeboard.qd_fwd         = Measurement::new(lines.next().unwrap().parse()?, LengthLong, ship.hull.units);
+        ship.hull.freeboard.ad_aft         = Measurement::new(lines.next().unwrap().parse()?, LengthLong, ship.hull.units);
+        ship.hull.freeboard.fd_len         = lines.next().unwrap().parse()?;
+        ship.hull.freeboard.fd_len /= 100.0; // convert from % to decimal
+        ship.hull.freeboard.ad_fwd         = Measurement::new(lines.next().unwrap().parse()?, LengthLong, ship.hull.units);
+        ship.hull.freeboard.fd_aft         = Measurement::new(lines.next().unwrap().parse()?, LengthLong, ship.hull.units);
+        ship.hull.freeboard.fc_len         = lines.next().unwrap().parse()?;
+        ship.hull.freeboard.fc_len /= 100.0; // convert from % to decimal
+        ship.hull.freeboard.fd_fwd         = Measurement::new(lines.next().unwrap().parse()?, LengthLong, ship.hull.units);
+        ship.hull.freeboard.fc_aft         = Measurement::new(lines.next().unwrap().parse()?, LengthLong, ship.hull.units);
+        ship.hull.freeboard.fc_fwd         = Measurement::new(lines.next().unwrap().parse()?, LengthLong, ship.hull.units);
         ship.hull.bow_angle      = lines.next().unwrap().parse()?;
 
         for b in ship.batteries.iter_mut() {
@@ -1436,7 +1438,7 @@ impl Ship { // {{{2
             if has_belt {
                 if main_broad_no_back || sec_broad_no_back || ter_broad_no_back {
                     s.push("Armoured Casemate Ship".into());
-                } else if self.hull.fc_len + self.hull.fd_len < 0.5 {
+                } else if self.hull.freeboard.fc_len + self.hull.freeboard.fd_len < 0.5 {
                     if main_broad_below || sec_broad_below || ter_broad_below {
                         s.push("Armoured Frigate (Broadside Ironclad)".into());
                     } else {
@@ -1633,7 +1635,7 @@ impl Ship { // {{{3
                     sb.num_mounts(),
                     sb.layout,
                     plural(sb.num_mounts()),
-                    sb.distribution.desc(sb.num_mounts(), self.hull.fc_len + self.hull.fd_len)
+                    sb.distribution.desc(sb.num_mounts(), self.hull.freeboard.fc_len + self.hull.freeboard.fd_len)
                 );
                 if sb.above > 0 {
                     addto!(r, "        {} {}raised mount{}{}",
@@ -2073,19 +2075,19 @@ impl Ship { // {{{3
         addto!(r, "    Freeboard (% = length of deck as a percentage of waterline length):");
         addto!(r, "            Fore end, Aft end");
         addto!(r, "    - Forecastle:    {} %, {:.2} ft / {:.2} m, {:.2} ft / {:.2} m",
-            pct!(self.hull.fc_len, 2),   self.hull.fc_fwd.imp(), self.hull.fc_fwd.metric(), self.hull.fc_aft.imp(), self.hull.fc_aft.metric()
+            pct!(self.hull.freeboard.fc_len, 2),   self.hull.freeboard.fc_fwd.imp(), self.hull.freeboard.fc_fwd.metric(), self.hull.freeboard.fc_aft.imp(), self.hull.freeboard.fc_aft.metric()
         );
         addto!(r, "    - Forward deck:    {} %, {:.2} ft / {:.2} m, {:.2} ft / {:.2} m",
-            pct!(self.hull.fd_len, 2),   self.hull.fd_fwd.imp(), self.hull.fd_fwd.metric(), self.hull.fd_aft.imp(), self.hull.fd_aft.metric()
+            pct!(self.hull.freeboard.fd_len, 2),   self.hull.freeboard.fd_fwd.imp(), self.hull.freeboard.fd_fwd.metric(), self.hull.freeboard.fd_aft.imp(), self.hull.freeboard.fd_aft.metric()
         );
         addto!(r, "    - Aft deck:    {} %, {:.2} ft / {:.2} m, {:.2} ft / {:.2} m",
-            pct!(self.hull.ad_len(), 2), self.hull.ad_fwd.imp(), self.hull.ad_fwd.metric(), self.hull.ad_aft.imp(), self.hull.ad_aft.metric()
+            pct!(self.hull.freeboard.ad_len(), 2), self.hull.freeboard.ad_fwd.imp(), self.hull.freeboard.ad_fwd.metric(), self.hull.freeboard.ad_aft.imp(), self.hull.freeboard.ad_aft.metric()
         );
         addto!(r, "    - Quarter deck:    {} %, {:.2} ft / {:.2} m, {:.2} ft / {:.2} m",
-            pct!(self.hull.qd_len, 2),   self.hull.qd_fwd.imp(), self.hull.qd_fwd.metric(), self.hull.qd_aft.imp(), self.hull.qd_aft.metric()
+            pct!(self.hull.freeboard.qd_len, 2),   self.hull.freeboard.qd_fwd.imp(), self.hull.freeboard.qd_fwd.metric(), self.hull.freeboard.qd_aft.imp(), self.hull.freeboard.qd_aft.metric()
         );
         addto!(r, "    - Average freeboard:        {:.2} ft / {:.2} m",
-            self.hull.freeboard().imp(), self.hull.freeboard().metric()
+            self.hull.freeboard.average().imp(), self.hull.freeboard.average().metric()
         );
         if self.hull.is_wet_fwd() {
             addto!(r, "    Ship tends to be wet forward");
@@ -2180,7 +2182,7 @@ impl Ship {
         s.push(format!("Stem length = {}", self.hull.stem_len()));
         if let BowType::Ram(len) = self.hull.bow_type { s.push(format!("Ram length = {}", len.imp())); }
         if let BowType::BulbForward(len) = self.hull.bow_type { s.push(format!("Bulb length = {}", len.imp())); }
-        s.push(format!("Freeboard dist = {}", self.hull.freeboard_dist()));
+        s.push(format!("Freeboard dist = {}", self.hull.freeboard.distributed()));
         s.push(format!("Leff = {}", self.hull.leff()));
         s.push("".to_string());
         s.push(format!("Rf max = {}", self.engine.rf_max(self.hull.ws())));

@@ -76,20 +76,20 @@ fn profile(hull: &Hull) -> Option<Profile> {
     let stern_overhang = hull.stern_overhang.imp();
     let ram            = hull.bow_type.ram_len().imp();
 
-    let fc_len = hull.fc_len;
-    let fc_fwd = hull.fc_fwd.imp();
-    let fc_aft = hull.fc_aft.imp();
+    let fc_len = hull.freeboard.fc_len;
+    let fc_fwd = hull.freeboard.fc_fwd.imp();
+    let fc_aft = hull.freeboard.fc_aft.imp();
 
-    let fd_len = hull.fd_len;
-    let fd_fwd = hull.fd_fwd.imp();
-    let fd_aft = hull.fd_aft.imp();
+    let fd_len = hull.freeboard.fd_len;
+    let fd_fwd = hull.freeboard.fd_fwd.imp();
+    let fd_aft = hull.freeboard.fd_aft.imp();
 
-    let ad_fwd = hull.ad_fwd.imp();
-    let ad_aft = hull.ad_aft.imp();
+    let ad_fwd = hull.freeboard.ad_fwd.imp();
+    let ad_aft = hull.freeboard.ad_aft.imp();
 
-    let qd_len = hull.qd_len;
-    let qd_fwd = hull.qd_fwd.imp();
-    let qd_aft = hull.qd_aft.imp();
+    let qd_len = hull.freeboard.qd_len;
+    let qd_fwd = hull.freeboard.qd_fwd.imp();
+    let qd_aft = hull.freeboard.qd_aft.imp();
 
     // Above-water outline:
     //   0:    stern top
@@ -366,20 +366,20 @@ mod tests {
         h.stern_type = SternType::Cruiser;
         h.stern_overhang = m(40.0, LengthLong, u);
 
-        h.fc_len = 0.25;
-        h.fc_fwd = m(16.0, LengthLong, u);
-        h.fc_aft = m(12.0, LengthLong, u);
+        h.freeboard.fc_len = 0.25;
+        h.freeboard.fc_fwd = m(16.0, LengthLong, u);
+        h.freeboard.fc_aft = m(12.0, LengthLong, u);
 
-        h.fd_len = 0.25;
-        h.fd_fwd = m(10.0, LengthLong, u);
-        h.fd_aft = m(8.0, LengthLong, u);
+        h.freeboard.fd_len = 0.25;
+        h.freeboard.fd_fwd = m(10.0, LengthLong, u);
+        h.freeboard.fd_aft = m(8.0, LengthLong, u);
 
-        h.ad_fwd = m(8.0, LengthLong, u);
-        h.ad_aft = m(8.0, LengthLong, u);
+        h.freeboard.ad_fwd = m(8.0, LengthLong, u);
+        h.freeboard.ad_aft = m(8.0, LengthLong, u);
 
-        h.qd_len = 0.15;
-        h.qd_fwd = m(8.0, LengthLong, u);
-        h.qd_aft = m(8.0, LengthLong, u);
+        h.freeboard.qd_len = 0.15;
+        h.freeboard.qd_fwd = m(8.0, LengthLong, u);
+        h.freeboard.qd_aft = m(8.0, LengthLong, u);
 
         h
     }

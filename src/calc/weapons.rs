@@ -465,16 +465,16 @@ mod battery {
                     btry.groups[1].distribution = GunDistributionType::CenterlineEven;
 
                     let mut hull = Hull::default();
-                    hull.fc_len = 0.2;
+                    hull.freeboard.fc_len = 0.2;
 
-                    hull.fd_len = 0.3;
-                    hull.fd_fwd = Measurement::new(10.0, UnitType::LengthLong, Units::Imperial);
-                    hull.fd_aft = Measurement::new(0.0, UnitType::LengthLong, Units::Imperial);
+                    hull.freeboard.fd_len = 0.3;
+                    hull.freeboard.fd_fwd = Measurement::new(10.0, UnitType::LengthLong, Units::Imperial);
+                    hull.freeboard.fd_aft = Measurement::new(0.0, UnitType::LengthLong, Units::Imperial);
 
-                    hull.ad_fwd = Measurement::new(20.0, UnitType::LengthLong, Units::Imperial);
-                    hull.ad_aft = Measurement::new(0.0, UnitType::LengthLong, Units::Imperial);
+                    hull.freeboard.ad_fwd = Measurement::new(20.0, UnitType::LengthLong, Units::Imperial);
+                    hull.freeboard.ad_aft = Measurement::new(0.0, UnitType::LengthLong, Units::Imperial);
 
-                    hull.qd_len = 0.15;
+                    hull.freeboard.qd_len = 0.15;
 
                     assert_eq!(expected, to_place(btry.super_(hull), 5));
                 }
@@ -506,16 +506,16 @@ mod battery {
                     btry.groups[1].distribution = GunDistributionType::CenterlineEven;
 
                     let mut hull = Hull::default();
-                    hull.fc_len = 0.2;
+                    hull.freeboard.fc_len = 0.2;
 
-                    hull.fd_len = 0.3;
-                    hull.fd_fwd = Measurement::new(10.0, UnitType::LengthLong, Units::Imperial);
-                    hull.fd_aft = Measurement::new(0.0, UnitType::LengthLong, Units::Imperial);
+                    hull.freeboard.fd_len = 0.3;
+                    hull.freeboard.fd_fwd = Measurement::new(10.0, UnitType::LengthLong, Units::Imperial);
+                    hull.freeboard.fd_aft = Measurement::new(0.0, UnitType::LengthLong, Units::Imperial);
 
-                    hull.ad_fwd = Measurement::new(20.0, UnitType::LengthLong, Units::Imperial);
-                    hull.ad_aft = Measurement::new(0.0, UnitType::LengthLong, Units::Imperial);
+                    hull.freeboard.ad_fwd = Measurement::new(20.0, UnitType::LengthLong, Units::Imperial);
+                    hull.freeboard.ad_aft = Measurement::new(0.0, UnitType::LengthLong, Units::Imperial);
 
-                    hull.qd_len = 0.15;
+                    hull.freeboard.qd_len = 0.15;
 
                     assert_eq!(expected, to_place(btry.free(hull), 3));
                 }
@@ -640,16 +640,16 @@ mod battery {
                     btry.groups[0].distribution = GunDistributionType::CenterlineEven;
 
                     let mut hull = Hull::default();
-                    hull.fc_len = 0.2;
+                    hull.freeboard.fc_len = 0.2;
 
-                    hull.fd_len = 0.3;
-                    hull.fd_fwd = Measurement::new(10.0, UnitType::LengthLong, Units::Imperial);
-                    hull.fd_aft = Measurement::new(0.0, UnitType::LengthLong, Units::Imperial);
+                    hull.freeboard.fd_len = 0.3;
+                    hull.freeboard.fd_fwd = Measurement::new(10.0, UnitType::LengthLong, Units::Imperial);
+                    hull.freeboard.fd_aft = Measurement::new(0.0, UnitType::LengthLong, Units::Imperial);
 
-                    hull.ad_fwd = Measurement::new(20.0, UnitType::LengthLong, Units::Imperial);
-                    hull.ad_aft = Measurement::new(0.0, UnitType::LengthLong, Units::Imperial);
+                    hull.freeboard.ad_fwd = Measurement::new(20.0, UnitType::LengthLong, Units::Imperial);
+                    hull.freeboard.ad_aft = Measurement::new(0.0, UnitType::LengthLong, Units::Imperial);
 
-                    hull.qd_len = 0.15;
+                    hull.freeboard.qd_len = 0.15;
 
                     assert_eq!(expected, to_place(btry.armor_barb_wgt(hull), 2));
                 }
@@ -1627,16 +1627,16 @@ mod sub_battery {
                     sub_btry.below = 0;
 
                     let mut hull = Hull::default();
-                    hull.fc_len = 0.2;
+                    hull.freeboard.fc_len = 0.2;
 
-                    hull.fd_len = 0.3;
-                    hull.fd_fwd = Measurement::new(10.0, UnitType::LengthLong, Units::Imperial);
-                    hull.fd_aft = Measurement::new(0.0, UnitType::LengthLong, Units::Imperial);
+                    hull.freeboard.fd_len = 0.3;
+                    hull.freeboard.fd_fwd = Measurement::new(10.0, UnitType::LengthLong, Units::Imperial);
+                    hull.freeboard.fd_aft = Measurement::new(0.0, UnitType::LengthLong, Units::Imperial);
 
-                    hull.ad_fwd = Measurement::new(20.0, UnitType::LengthLong, Units::Imperial);
-                    hull.ad_aft = Measurement::new(0.0, UnitType::LengthLong, Units::Imperial);
+                    hull.freeboard.ad_fwd = Measurement::new(20.0, UnitType::LengthLong, Units::Imperial);
+                    hull.freeboard.ad_aft = Measurement::new(0.0, UnitType::LengthLong, Units::Imperial);
 
-                    hull.qd_len = 0.15;
+                    hull.freeboard.qd_len = 0.15;
 
                     assert_eq!(expected, to_place(sub_btry.free(hull), 2));
                 }
@@ -1868,15 +1868,15 @@ impl GunDistributionType { // {{{2
         if num_mounts == 0 { return 0.0; } // catch divide by zero
 
         // Get these as floats to avoid casts later
-        let fwd = self.mounts_fwd(num_mounts, hull.fc_len + hull.fd_len) as f64;
+        let fwd = self.mounts_fwd(num_mounts, hull.freeboard.fc_len + hull.freeboard.fd_len) as f64;
         let tot = num_mounts as f64;
 
-        let fd     = hull.fd();
-        let ad     = hull.ad();
-        let fd_fwd = hull.fd_fwd.imp();
-        let fd_aft = hull.fd_aft.imp();
-        let ad_fwd = hull.ad_fwd.imp();
-        let ad_aft = hull.ad_aft.imp();
+        let fd     = hull.freeboard.fd();
+        let ad     = hull.freeboard.ad();
+        let fd_fwd = hull.freeboard.fd_fwd.imp();
+        let fd_aft = hull.freeboard.fd_aft.imp();
+        let ad_fwd = hull.freeboard.ad_fwd.imp();
+        let ad_aft = hull.freeboard.ad_aft.imp();
 
         match self {
             Self::None             => 0.0,
@@ -2116,16 +2116,16 @@ mod gun_dist_type {
                 fn $name() {
                     let (expected, num, dist) = $value;
                     let mut hull = Hull::default();
-                    hull.fc_len = 0.2;
+                    hull.freeboard.fc_len = 0.2;
 
-                    hull.fd_len = 0.3;
-                    hull.fd_fwd = Measurement::new(10.0, UnitType::LengthLong, Units::Imperial);
-                    hull.fd_aft = Measurement::new(0.0, UnitType::LengthLong, Units::Imperial);
+                    hull.freeboard.fd_len = 0.3;
+                    hull.freeboard.fd_fwd = Measurement::new(10.0, UnitType::LengthLong, Units::Imperial);
+                    hull.freeboard.fd_aft = Measurement::new(0.0, UnitType::LengthLong, Units::Imperial);
 
-                    hull.ad_fwd = Measurement::new(20.0, UnitType::LengthLong, Units::Imperial);
-                    hull.ad_aft = Measurement::new(0.0, UnitType::LengthLong, Units::Imperial);
+                    hull.freeboard.ad_fwd = Measurement::new(20.0, UnitType::LengthLong, Units::Imperial);
+                    hull.freeboard.ad_aft = Measurement::new(0.0, UnitType::LengthLong, Units::Imperial);
 
-                    hull.qd_len = 0.15;
+                    hull.freeboard.qd_len = 0.15;
 
                     assert_eq!(expected, to_place(dist.free(num, hull), 3));
                 }
