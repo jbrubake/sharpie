@@ -32,14 +32,13 @@ pub enum UnitType { // {{{1
     WeightPerArea,
 }
 
-// Conversion constants {{{2
-const INCH2MM: f64         = 25.4; // exact
-const FEET2METERS: f64     = 0.3048; // exact
-const SQFEET2SQMETERS: f64 = 0.09290304;
-const POUND2KG: f64        = 0.45359237; // exact
-const HP2KW: f64           = 0.74569987;
-
 impl UnitType {
+    const INCH2MM: f64         = 25.4; // exact
+    const FEET2METERS: f64     = 0.3048; // exact
+    const SQFEET2SQMETERS: f64 = 0.09290304;
+    const POUND2KG: f64        = 0.45359237; // exact
+    const HP2KW: f64           = 0.74569987;
+
     const fn imperial_to_metric(&self) -> f64 {
         match self {
             Self::LengthSmall   => Self::INCH2MM,
@@ -81,6 +80,12 @@ impl Measurement { // {{{2
 mod tests {
     use super::*;
     use crate::test_support::*;
+
+    const INCH2MM: f64         = 25.4;
+    const FEET2METERS: f64     = 0.3048;
+    const SQFEET2SQMETERS: f64 = 0.09290304;
+    const POUND2KG: f64        = 0.45359237;
+    const HP2KW: f64           = 0.74569987;
 
     // Test from {{{2
     macro_rules! test_from {
