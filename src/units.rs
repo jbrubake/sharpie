@@ -33,11 +33,11 @@ pub enum UnitType { // {{{1
 }
 
 // Conversion constants {{{2
-const INCH2MM: f64         = 25.4;
-const FEET2METERS: f64     = 0.3048;
-const SQFEET2SQMETERS: f64 = 0.092903;
-const POUND2KG: f64        = 0.45359236;
-const HP2KW: f64           = 0.746;
+const INCH2MM: f64         = 25.4; // exact
+const FEET2METERS: f64     = 0.3048; // exact
+const SQFEET2SQMETERS: f64 = 0.09290304;
+const POUND2KG: f64        = 0.45359237; // exact
+const HP2KW: f64           = 0.74569987;
 
 // Measurement {{{1
 //
