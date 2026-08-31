@@ -1655,6 +1655,19 @@ macro_rules! num {
     };
 }
 
+// pct {{{3
+/// Treat a number as a percent and format a number with commas and the specified number of
+/// significant digits, 0 by default. A trailing '%' is deliberately ommitted.
+///
+// This is a macro instead of a function to avoid having to cast
+// floats to ints or ints to floats
+#[macro_export]
+macro_rules! pct {
+    ($val:expr)                => { pct!($val, 0) };
+    ($val:expr, $digits: expr) => { $crate::num!($val as f64 * 100.0, $digits)
+    };
+}
+
 // plural {{{3
 /// Return an "s" if num is anything other than 1.
 ///
@@ -1928,8 +1941,8 @@ impl Ship { // {{{3
             }
 
             if self.armor.main.thick.imp() > 0.0 {
-                addto!(r, "    Main Belt covers {:.0} % of normal length",
-                    self.armor.belt_coverage(self.hull.lwl().imp())*100.0
+                addto!(r, "    Main Belt covers {} % of normal length",
+                    pct!(self.armor.belt_coverage(self.hull.lwl().imp()))
                 );
                 if self.armor.belt_coverage(self.hull.lwl().imp()) < self.hull_room() {
                     addto!(r, "    Main belt does not fully cover magazines and engineering spaces");
@@ -2040,7 +2053,7 @@ impl Ship { // {{{3
             );
             addto!(r, "    Bunker at max displacement = {} tons{}",
                 num!(self.bunker_max()),
-                if self.engine.pct_coal > 0.0 { format!(" ({:.0}% coal)", self.engine.pct_coal * 100.0) } else { "".into() }
+                if self.engine.pct_coal > 0.0 { format!(" ({}% coal)", pct!(self.engine.pct_coal)) } else { "".into() }
             );
             let ratio = self.hp_max().imp() / self.engine.shafts() as f64;
 
@@ -2189,7 +2202,7 @@ impl Ship { // {{{3
         addto!(r, "    Block coefficient (normal/deep): {:.3} / {:.3}", self.hull.cb(), self.cb_max());
         addto!(r, "    Length to Beam Ratio: {:.2} : 1", self.hull.len2beam());
         addto!(r, "    'Natural speed' for length: {:.2} kts", self.hull.vn());
-        addto!(r, "    Power going to wave formation at top speed: {:.0} %", self.pw_max() * 100.0);
+        addto!(r, "    Power going to wave formation at top speed: {} %", pct!(self.pw_max()));
         addto!(r, "    Trim (Max stability = 0, Max steadiness = 100): {}", self.trim);
         addto!(r, "    Bow angle (Positive = bow angles forward): {:.2} degrees", self.hull.bow_angle);
         addto!(r, "    Stern overhang: {:.2} ft / {:.2} m",
@@ -2198,17 +2211,17 @@ impl Ship { // {{{3
         );
         addto!(r, "    Freeboard (% = length of deck as a percentage of waterline length):");
         addto!(r, "            Fore end, Aft end");
-        addto!(r, "    - Forecastle:    {:.2} %, {:.2} ft / {:.2} m, {:.2} ft / {:.2} m",
-            self.hull.fc_len*100.0,   self.hull.fc_fwd.imp(), self.hull.fc_fwd.metric(), self.hull.fc_aft.imp(), self.hull.fc_aft.metric()
+        addto!(r, "    - Forecastle:    {} %, {:.2} ft / {:.2} m, {:.2} ft / {:.2} m",
+            pct!(self.hull.fc_len, 2),   self.hull.fc_fwd.imp(), self.hull.fc_fwd.metric(), self.hull.fc_aft.imp(), self.hull.fc_aft.metric()
         );
-        addto!(r, "    - Forward deck:    {:.2} %, {:.2} ft / {:.2} m, {:.2} ft / {:.2} m",
-            self.hull.fd_len*100.0,   self.hull.fd_fwd.imp(), self.hull.fd_fwd.metric(), self.hull.fd_aft.imp(), self.hull.fd_aft.metric()
+        addto!(r, "    - Forward deck:    {} %, {:.2} ft / {:.2} m, {:.2} ft / {:.2} m",
+            pct!(self.hull.fd_len, 2),   self.hull.fd_fwd.imp(), self.hull.fd_fwd.metric(), self.hull.fd_aft.imp(), self.hull.fd_aft.metric()
         );
-        addto!(r, "    - Aft deck:    {:.2} %, {:.2} ft / {:.2} m, {:.2} ft / {:.2} m",
-            self.hull.ad_len()*100.0, self.hull.ad_fwd.imp(), self.hull.ad_fwd.metric(), self.hull.ad_aft.imp(), self.hull.ad_aft.metric()
+        addto!(r, "    - Aft deck:    {} %, {:.2} ft / {:.2} m, {:.2} ft / {:.2} m",
+            pct!(self.hull.ad_len(), 2), self.hull.ad_fwd.imp(), self.hull.ad_fwd.metric(), self.hull.ad_aft.imp(), self.hull.ad_aft.metric()
         );
-        addto!(r, "    - Quarter deck:    {:.2} %, {:.2} ft / {:.2} m, {:.2} ft / {:.2} m",
-            self.hull.qd_len*100.0,   self.hull.qd_fwd.imp(), self.hull.qd_fwd.metric(), self.hull.qd_aft.imp(), self.hull.qd_aft.metric()
+        addto!(r, "    - Quarter deck:    {} %, {:.2} ft / {:.2} m, {:.2} ft / {:.2} m",
+            pct!(self.hull.qd_len, 2),   self.hull.qd_fwd.imp(), self.hull.qd_fwd.metric(), self.hull.qd_aft.imp(), self.hull.qd_aft.metric()
         );
         addto!(r, "    - Average freeboard:        {:.2} ft / {:.2} m",
             self.hull.freeboard().imp(), self.hull.freeboard().metric()
@@ -2219,18 +2232,18 @@ impl Ship { // {{{3
         addto!(r);
 
         addto!(r, "Ship space, strength and comments:"); // {{{5
-        addto!(r, "    Space    - Hull below water (magazines/engines, low = better): {:.1} %",
-            self.hull_room() * 100.0
+        addto!(r, "    Space    - Hull below water (magazines/engines, low = better): {} %",
+            pct!(self.hull_room(), 1)
         );
-        addto!(r, "        - Above water (accommodation/working, high = better): {:.1} %",
-            self.deck_room() * 100.0
+        addto!(r, "        - Above water (accommodation/working, high = better): {} %",
+            pct!(self.deck_room(), 1)
         );
         addto!(r, "    Waterplane Area: {} Square feet or {} Square metres",
-            num!(self.hull.wp().imp(), 0),
-            num!(self.hull.wp().metric(), 0)
+            num!(self.hull.wp().imp()),
+            num!(self.hull.wp().metric())
         );
-        addto!(r, "    Displacement factor (Displacement / loading): {:.0} %",
-            self.d_factor() * 100.0
+        addto!(r, "    Displacement factor (Displacement / loading): {} %",
+            pct!(self.d_factor())
         );
         addto!(r, "    Structure weight / hull surface area: {:.0} lbs/sq ft or {:.0} Kg/sq metre",
             self.wgt_struct().imp(),
