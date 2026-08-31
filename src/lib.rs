@@ -1642,13 +1642,14 @@ macro_rules! addif {
 
 // num {{{3
 /// Format a number with commas and the specified number of
-/// significant digits.
+/// significant digits, 0 by default.
 ///
 // This is a macro instead of a function to avoid having to cast
 // floats to ints or ints to floats
 pub use format_num::format_num;
 #[macro_export]
 macro_rules! num {
+    ($val:expr) => { num!($val, 0) };
     ($val:expr, $digits: expr) => {
         $crate::format_num!(&*format!(",.{}", $digits), $val)
     };
@@ -1696,10 +1697,10 @@ impl Ship { // {{{3
 
         addto!(r, "Displacement:"); // {{{5
         addto!(r, "    {} t light; {} t standard; {} t normal; {} t full load",
-            num!(self.d_lite(), 0),
-            num!(self.d_std(), 0),
-            num!(self.hull.d(), 0),
-            num!(self.d_max(), 0)
+            num!(self.d_lite()),
+            num!(self.d_std()),
+            num!(self.hull.d()),
+            num!(self.d_max())
         );
         addto!(r);
 
@@ -1735,7 +1736,7 @@ impl Ship { // {{{3
                 plural(b.num),
                 num!(b.shell_wgt().imp(), 2),
                 num!(b.shell_wgt().metric(), 2),
-                num!(b.shells, 0),
+                num!(b.shells),
             );
             addto!(r, "        {} gun{} in {} mount{}, {} Model",
                 b.kind,
@@ -1818,8 +1819,8 @@ impl Ship { // {{{3
             }
         }
         addto!(r, "    Weight of broadside {} lbs / {} kg",
-            num!(self.wgt_broad().imp(), 0),
-            num!(self.wgt_broad().metric(), 0),
+            num!(self.wgt_broad().imp()),
+            num!(self.wgt_broad().metric()),
         );
 
         // Weapons {{{5
@@ -2028,17 +2029,17 @@ impl Ship { // {{{3
                 self.engine.drive,
                 self.engine.shafts(),
                 plural(self.engine.shafts()),
-                num!(self.hp_max().imp(), 0),
+                num!(self.hp_max().imp()),
                 self.engine.boiler.hp_type(),
-                num!(self.hp_max().metric(), 0),
+                num!(self.hp_max().metric()),
                 self.engine.vmax
             );
             addto!(r, "    Range {}nm at {:.2} kts",
-                num!(self.engine.range, 0),
+                num!(self.engine.range),
                 self.engine.vcruise
             );
             addto!(r, "    Bunker at max displacement = {} tons{}",
-                num!(self.bunker_max(), 0),
+                num!(self.bunker_max()),
                 if self.engine.pct_coal > 0.0 { format!(" ({:.0}% coal)", self.engine.pct_coal * 100.0) } else { "".into() }
             );
             let ratio = self.hp_max().imp() / self.engine.shafts() as f64;
@@ -2142,13 +2143,13 @@ impl Ship { // {{{3
             self.percent_calc(self.wgts.wgt() as f64),
         );
         if self.wgts.vital > 0 { addto!(r, "    - Hull below water: {} tons", 
-                num!(self.wgts.vital, 0)
+                num!(self.wgts.vital)
             );
         }
         if self.wgts.void > 0 {
             addto!(r, "    - {} void weights: {} tons",
                 if self.hull.bb.imp() > self.hull.b.imp() { "Bulge" } else { "Hull" },
-                num!(self.wgts.void, 0),
+                num!(self.wgts.void),
             );
         }
         if self.wgts.hull > 0  { addto!(r, "    - Hull above water: {:.0} tons", self.wgts.hull) };
@@ -2160,8 +2161,8 @@ impl Ship { // {{{3
         addto!(r, "Overall survivability and seakeeping ability:"); // {{{5
         addto!(r, "    Survivability (Non-critical penetrating hits needed to sink ship):");
         addto!(r, "    {} lbs / {} Kg = {:.1} x {:.1} \" / {:.0} mm shells or {:.1} torpedoes",
-            num!(self.flotation().imp(), 0),
-            num!(self.flotation().metric(), 0),
+            num!(self.flotation().imp()),
+            num!(self.flotation().metric()),
             self.damage_shell_num(),
             self.damage_shell_size().imp(),
             self.damage_shell_size().metric(),
