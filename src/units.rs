@@ -39,6 +39,19 @@ const SQFEET2SQMETERS: f64 = 0.09290304;
 const POUND2KG: f64        = 0.45359237; // exact
 const HP2KW: f64           = 0.74569987;
 
+impl UnitType {
+    const fn imperial_to_metric(&self) -> f64 {
+        match self {
+            Self::LengthSmall   => Self::INCH2MM,
+            Self::LengthLong    => Self::FEET2METERS,
+            Self::Area          => Self::SQFEET2SQMETERS,
+            Self::Weight        => Self::POUND2KG,
+            Self::Power         => Self::HP2KW,
+            Self::WeightPerArea => Self::POUND2KG / Self::SQFEET2SQMETERS,
+        }
+    }
+}
+
 // Measurement {{{1
 //
 #[derive(PartialEq, Serialize, Deserialize, Clone, Copy, Debug, Default)]
@@ -50,18 +63,7 @@ pub struct Measurement {
 
 impl Measurement { // {{{2
     pub const fn new(v: f64, unit_type: UnitType, units: Units) -> Self {
-        Self { v, units, factor: Self::factor_for(unit_type) }
-    }
-
-    const fn factor_for(unit_type: UnitType) -> f64 {
-        match unit_type {
-            UnitType::LengthSmall   => INCH2MM,
-            UnitType::LengthLong    => FEET2METERS,
-            UnitType::Area          => SQFEET2SQMETERS,
-            UnitType::Weight        => POUND2KG,
-            UnitType::Power         => HP2KW,
-            UnitType::WeightPerArea => POUND2KG / SQFEET2SQMETERS,
-        }
+        Self { v, units, factor: unit_type.imperial_to_metric() }
     }
 
     pub fn metric(&self) -> f64 {
