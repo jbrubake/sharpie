@@ -352,7 +352,7 @@ mod tests {
     /// Build a hull with hand-checkable round numbers.
     ///
     /// LWL = 400 ft, stern overhang 40 ft so LOA = 440 ft (sharpie adds
-    /// the overhang to LOA), draught 20 ft.
+    /// the overhang to LOA), draft 20 ft.
     ///
     fn flat_hull() -> Hull {
         let m = crate::units::Measurement::new;
@@ -410,10 +410,10 @@ mod tests {
 
         assert_eq!(p.bottom[0], (61, 100));
         assert_eq!(p.bottom[1], (477, 100));
-        assert_eq!(p.bottom[2], (477, 120)); // vertical stem, draught 20 ft
+        assert_eq!(p.bottom[2], (477, 120)); // vertical stem, draft 20 ft
         assert_eq!(p.bottom[4], (477, 120));
         assert_eq!(p.bottom[5], (123, 120)); // keel fwd at 15% length
-        assert_eq!(p.bottom[6], (102, 106)); // cruiser stern, 1/3 draught
+        assert_eq!(p.bottom[6], (102, 106)); // cruiser stern, 1/3 draft
     }
 
     // Test raked bow {{{2
@@ -446,7 +446,7 @@ mod tests {
 
         // LOA grows to 400 + 10 + 40 = 450 ft.
         assert_eq!(p.bottom[2], (467, 100)); // ram hinges at the waterline
-        assert_eq!(p.bottom[3], (477, 113)); // ram tip at 2/3 draught
+        assert_eq!(p.bottom[3], (477, 113)); // ram tip at 2/3 draft
         assert_eq!(p.bottom[4], (467, 120));
     }
 
@@ -464,8 +464,8 @@ mod tests {
         let p = profile(&h).unwrap();
 
         // LOA grows to 400 + 10 + 40 = 450 ft.
-        assert_eq!(p.bottom[2], (467, 106)); // bulb starts at 1/3 draught
-        assert_eq!(p.bottom[3], (477, 113)); // bulb tip at 2/3 draught
+        assert_eq!(p.bottom[2], (467, 106)); // bulb starts at 1/3 draft
+        assert_eq!(p.bottom[3], (477, 113)); // bulb tip at 2/3 draft
         assert_eq!(p.bottom[4], (467, 120));
     }
 
@@ -480,7 +480,7 @@ mod tests {
         // No curved overhang point; stern closes vertically.
         assert_eq!(p.deck[9], (20, 92));
         assert_eq!(p.deck[10], (20, 92));
-        // Large transom runs the bottom out at half draught.
+        // Large transom runs the bottom out at half draft.
         assert_eq!(p.bottom[6], (102, 110));
     }
 
