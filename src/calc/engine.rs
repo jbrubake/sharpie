@@ -218,7 +218,7 @@ impl Engine { // {{{2
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_support::*;
+    use crate::calc::test_support::*;
 
     // Test hp {{{3
     macro_rules! test_hp {
@@ -790,7 +790,7 @@ impl BoilerType {
 #[cfg(test)]
 mod boiler_type {
     use super::*;
-    use crate::test_support::*;
+    use crate::calc::test_support::*;
 
     // Test d_engine_factor {{{3
     macro_rules! test_d_engine_factor {
@@ -866,4 +866,3 @@ impl fmt::Display for DriveType { // {{{2
         )
     }
 }
-

@@ -393,7 +393,7 @@ impl Battery {
 #[cfg(test)]
 mod battery {
     use super::*;
-    use crate::test_support::*;
+    use crate::calc::test_support::*;
 
     // Test broad_and_below {{{3
     macro_rules! test_broad_and_below {
@@ -1537,7 +1537,7 @@ impl SubBattery { // {{{2
 #[cfg(test)]
 mod sub_battery {
     use super::*;
-    use crate::test_support::*;
+    use crate::calc::test_support::*;
 
     // Test super_ {{{3
     macro_rules! test_super_ {
@@ -2023,7 +2023,7 @@ impl GunDistributionType { // {{{2
 #[cfg(test)] // GunDistributionType {{{2
 mod gun_dist_type {
     use super::*;
-    use crate::test_support::*;
+    use crate::calc::test_support::*;
 
     // Test g1_gun_position {{{3
     macro_rules! test_gun_position {
@@ -2761,7 +2761,7 @@ impl TorpedoMountType { // {{{2
 #[cfg(test)]
 mod torpedo_mount_type {
     use super::*;
-    use crate::test_support::*;
+    use crate::calc::test_support::*;
 
     // Test wgt_factor {{{3
     macro_rules! test_wgt_factor {
@@ -3087,7 +3087,7 @@ impl ASW { // {{{2
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_support::*;
+    use crate::calc::test_support::*;
     use crate::units::UnitType;
 
     // Formula for Torpedoes::wgt_weaps().
@@ -3532,4 +3532,3 @@ mod asw_type {
         );
     }
 }
-

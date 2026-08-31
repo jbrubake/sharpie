@@ -62,4 +62,3 @@ mod misc_wgts {
         wgt_void:    (1, MiscWgts { void:  1, ..Default::default() }),
     }
 }
-

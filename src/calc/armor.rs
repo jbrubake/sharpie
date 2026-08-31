@@ -113,7 +113,7 @@ impl Armor { // {{{2
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_support::*;
+    use crate::calc::test_support::*;
 
     // Test belt_coverage {{{3
     macro_rules! test_belt_coverage {
@@ -271,7 +271,7 @@ impl Belt { // {{{2
 #[cfg(test)]
 mod belt {
     use super::*;
-    use crate::test_support::*;
+    use crate::calc::test_support::*;
 
     // Test wgt {{{3
     macro_rules! test_wgt {
@@ -369,7 +369,7 @@ impl CT { // {{{2
 #[cfg(test)]
 mod ct {
     use super::*;
-    use crate::test_support::*;
+    use crate::calc::test_support::*;
 
     // Test wgt {{{3
     macro_rules! test_wgt {
@@ -452,7 +452,7 @@ impl Deck { // {{{2
 #[cfg(test)]
 mod deck {
     use super::*;
-    use crate::test_support::*;
+    use crate::calc::test_support::*;
 
     // Test wgt {{{3
     macro_rules! test_wgt {
@@ -645,7 +645,7 @@ impl DeckType { // {{{2
     ///
     #[allow(clippy::too_many_arguments)]
     pub fn wgt_factor(&self,
-        d: f64, lwl: f64, b: f64, 
+        d: f64, lwl: f64, b: f64,
         fc_len: f64, qd_len:f64,
         wp: f64, cwp: f64,
         wgt_engine: f64, wgt_mag: f64) -> f64 {
@@ -689,4 +689,3 @@ choice_enum!(DeckType {
     BoxOverMagazine   => ("Box over magazines",              "Box over magazines"),
     BoxOverBoth       => ("Box over machinery & magazines",  "Box over machinery & magazines"),
 });
-

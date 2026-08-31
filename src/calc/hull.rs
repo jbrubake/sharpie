@@ -487,7 +487,7 @@ impl Hull { // {{{2
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_support::*;
+    use crate::calc::test_support::*;
 
     // Cs {{{3
     macro_rules! test_cs {
@@ -1187,7 +1187,7 @@ impl SternType { // {{{2
 #[cfg(test)] // SternType {{{2
 mod stern_type {
     use super::*;
-    use crate::test_support::*;
+    use crate::calc::test_support::*;
 
     // Test wp_calc {{{3
     macro_rules! test_wp_calc {
@@ -1306,7 +1306,7 @@ impl BowType { // {{{2
 #[cfg(test)] // BowType {{{1
 mod bow_type {
     use super::*;
-    use crate::test_support::*;
+    use crate::calc::test_support::*;
 
     // Test ram_len {{{2
     macro_rules! test_ram_len {

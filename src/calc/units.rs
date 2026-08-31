@@ -79,7 +79,7 @@ impl Measurement { // {{{2
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_support::*;
+    use crate::calc::test_support::*;
 
     const INCH2MM: f64         = 25.4;
     const FEET2METERS: f64     = 0.3048;
