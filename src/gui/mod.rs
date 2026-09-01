@@ -4,7 +4,7 @@
 //! binary crate, where the `slint::include_modules!()` types are available.
 
 use rfd::FileDialog;
-use sharpie::{SHIP_FILE_EXT, SS_SHIP_FILE_EXT, Ship};
+use crate::calc::{SHIP_FILE_EXT, SS_SHIP_FILE_EXT, Ship};
 use slint::ComponentHandle;
 
 use std::error::Error;

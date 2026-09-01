@@ -13,6 +13,7 @@
 /// Parsing accepts any non-negative decimal integer; unknown or out-of-range values
 /// yield the default variant.
 ///
+#[macro_export]
 macro_rules! choice_enum {
     ($name:ident { $( $variant:ident $( ( $init:expr ) )? => ( $label:expr, $display:expr ) ),+ $(,)? }) => {
         choice_enum!(@impl $name {
@@ -32,6 +33,7 @@ macro_rules! choice_enum {
             pub const ALL: &'static [$name] = &[ $( $name::$variant $( ( $init ) )? ),+ ];
 
             /// Convert variant into "menu" label.
+            #[allow(dead_code)]
             pub fn label(&self) -> &'static str {
                 match self {
                     $( $name::$variant { .. } => $label ),+
@@ -39,6 +41,7 @@ macro_rules! choice_enum {
             }
 
             /// Get index into choice_enum!::ALL.
+            #[allow(dead_code)]
             pub fn index(&self) -> usize {
                 Self::ALL
                     .iter()
@@ -47,6 +50,7 @@ macro_rules! choice_enum {
             }
 
             /// Convert index into variant.
+            #[allow(dead_code)]
             pub fn from_index(index: usize) -> Self {
                 Self::ALL.get(index).cloned().unwrap_or_default()
             }
@@ -87,12 +91,11 @@ macro_rules! choice_enum {
 ///
 // This is a macro instead of a function to avoid having to cast
 // floats to ints or ints to floats
-pub use format_num::format_num;
 #[macro_export]
 macro_rules! num {
     ($val:expr) => { num!($val, 0) };
     ($val:expr, $digits: expr) => {
-        $crate::format_num!(&*format!(",.{}", $digits), $val)
+        format_num::format_num!(&*format!(",.{}", $digits), $val)
     };
 }
 
@@ -136,9 +139,3 @@ macro_rules! addif {
         }
     }
 }
-
-// Imports {{{1
-//
-// Last so that the macros get pulled in as well
-pub mod calc;
-pub use calc::*;

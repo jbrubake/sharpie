@@ -8,6 +8,7 @@ pub mod ship;
 pub mod units;
 pub mod weapons;
 pub mod weights;
+pub mod macros;
 
 #[cfg(test)]
 pub(crate) use ship::test_support;

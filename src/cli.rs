@@ -1,7 +1,7 @@
 //! Command-line execution for the sharpie binary.
 
 use clap::{Parser, Subcommand};
-use sharpie::{hull_draw, Ship};
+use crate::calc::{hull_draw, Ship};
 use crate::gui;
 
 use std::error::Error;

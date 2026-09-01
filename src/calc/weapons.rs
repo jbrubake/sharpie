@@ -1,4 +1,5 @@
 use crate::calc::{Measurement, Ship, Units};
+use crate::choice_enum;
 
 use serde::{Deserialize, Serialize};
 
@@ -538,7 +539,7 @@ impl ASW { // {{{2
 mod tests {
     use super::*;
     use crate::calc::test_support::*;
-    use crate::units::UnitType;
+    use crate::calc::UnitType;
 
     // Formula for Torpedoes::wgt_weaps().
     fn torp_weaps_wgt(diam: f64, len: f64, num: u32, year: u32) -> f64 {

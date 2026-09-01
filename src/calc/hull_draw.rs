@@ -433,12 +433,12 @@ mod tests {
     // Test ram bow {{{2
     #[test]
     fn profile_ram_bow() {
-        let m = crate::units::Measurement::new;
+        let m = crate::calc::Measurement::new;
         let mut h = flat_hull();
         h.bow_type = BowType::Ram(m(
             10.0,
-            crate::units::UnitType::LengthLong,
-            crate::units::Units::Imperial,
+            crate::calc::UnitType::LengthLong,
+            crate::calc::Units::Imperial,
         ));
 
         let p = profile(&h).unwrap();
@@ -452,12 +452,12 @@ mod tests {
     // Test bulbous forward bow {{{2
     #[test]
     fn profile_bulb_forward_bow() {
-        let m = crate::units::Measurement::new;
+        let m = crate::calc::Measurement::new;
         let mut h = flat_hull();
         h.bow_type = BowType::BulbForward(m(
             10.0,
-            crate::units::UnitType::LengthLong,
-            crate::units::Units::Imperial,
+            crate::calc::UnitType::LengthLong,
+            crate::calc::Units::Imperial,
         ));
 
         let p = profile(&h).unwrap();
@@ -510,7 +510,7 @@ mod tests {
     #[test]
     fn svg_metric_scale_bar() {
         let mut h = flat_hull();
-        h.units = crate::units::Units::Metric;
+        h.units = crate::calc::Units::Metric;
 
         let svg = hull_svg(&h, "x");
 

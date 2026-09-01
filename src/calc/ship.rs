@@ -19,7 +19,7 @@ use crate::calc::{
     UnitType::*,
     Units::*,
 };
-use crate::format_num;
+use crate::{addto, addif, num, pct};
 
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -1052,7 +1052,7 @@ impl Ship { // {{{2
     /// Return the ratio of a value to the displacement as a percentage.
     ///
     fn percent_calc(&self, portion: f64) -> String {
-        format!("{} tons, {:.1} %", format_num!(",.0", portion),
+        format!("{} tons, {:.1} %", num!(portion),
             if self.hull.d() > 0.0 {
                 (portion / self.hull.d()) * 100.0
             } else {

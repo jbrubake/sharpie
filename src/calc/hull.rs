@@ -1,4 +1,5 @@
 use crate::calc::{Freeboard, Measurement, Units, UnitType::{Area, LengthLong}};
+use crate::choice_enum;
 
 use serde::{Deserialize, Serialize};
 
