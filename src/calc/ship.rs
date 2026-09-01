@@ -1282,7 +1282,7 @@ impl Ship { // {{{2
         // Handle opening older ship file formats
         //
         let version: Version = serde_json::from_value(stream.next().ok_or("")??)?;
-        if version.version == 1 {
+        if version.version == SHIP_FILE_VERSION {
             // No special handling required
         } else { // Cannot open any other versions
             let err = format!("Cannot open ship files of this version: {}!", version.version);
