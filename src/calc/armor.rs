@@ -110,109 +110,6 @@ impl Armor { // {{{2
     }
 }
 
-// Testing Armor {{{2
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::calc::test_support::*;
-
-    // Test belt_coverage {{{3
-    macro_rules! test_belt_coverage {
-        ($($name:ident: $value:expr,)*) => {
-            $(
-                #[test]
-                fn $name() {
-                    let (expected, belt_len, lwl) = $value;
-
-                    let mut armor = Armor::default();
-                    armor.main.len = Measurement::new(belt_len, LengthLong, Units::Imperial);
-
-                    assert_eq!(expected, to_place(armor.belt_coverage(lwl), 2));
-                }
-            )*
-        }
-    }
-    test_belt_coverage! {
-        // name:       (belt_coverage, belt_len, lwl)
-        belt_coverage: (1.0, 0.65, 1.0),
-    }
-
-    // Test max_hgt {{{3
-    macro_rules! test_max_hgt {
-        ($($name:ident: $value:expr,)*) => {
-            $(
-                #[test]
-                fn $name() {
-                    let (expected, incline) = $value;
-
-                    let t = 10.0;
-
-                    let mut ship = test_ship();
-                    ship.armor.incline = incline;
-
-                    assert_eq!(
-                        to_place(ship.armor.max_belt_hgt(t, ship.hull.freeboard.distributed()), 2),
-                        expected
-                    );
-                }
-            )*
-        }
-    }
-    test_max_hgt! {
-        // name:            (max_hgt, incline)
-        max_belt_hgt_0:     (20.02, 0.0),
-        max_belt_hgt_45:     (28.3, 45.0),
-        max_belt_hgt_neg_45: (28.3, -45.0),
-    }
-
-    // Test wgt {{{3
-
-    // All-zero armor weighs nothing.
-    #[test]
-    fn wgt_zero() {
-        let ship = test_ship();
-
-        assert_eq!(to_place(ship.armor.wgt(ship.hull, 100.0, 100.0), 2), 0.0);
-    }
-
-    // The aggregate wgt() is the sum of every belt, the deck and both
-    // conning towers.
-    #[test]
-    fn wgt_all() {
-        let ship = test_ship();
-        let mut armor = ship.armor;
-
-        armor.main.thick = Measurement::new(1.0, LengthSmall, Units::Imperial);
-        armor.main.len   = Measurement::new(20.0, LengthLong, Units::Imperial);
-        armor.main.hgt   = Measurement::new(5.0, LengthLong, Units::Imperial);
-
-        armor.end.thick = Measurement::new(1.0, LengthSmall, Units::Imperial);
-        armor.end.len   = Measurement::new(20.0, LengthLong, Units::Imperial);
-        armor.end.hgt   = Measurement::new(5.0, LengthLong, Units::Imperial);
-
-        armor.upper.thick = Measurement::new(1.0, LengthSmall, Units::Imperial);
-        armor.upper.len   = Measurement::new(20.0, LengthLong, Units::Imperial);
-        armor.upper.hgt   = Measurement::new(5.0, LengthLong, Units::Imperial);
-
-        armor.bulge.thick = Measurement::new(1.0, LengthSmall, Units::Imperial);
-        armor.bulge.len   = Measurement::new(20.0, LengthLong, Units::Imperial);
-        armor.bulge.hgt   = Measurement::new(5.0, LengthLong, Units::Imperial);
-
-        armor.bulkhead.thick = Measurement::new(1.0, LengthSmall, Units::Imperial);
-        armor.bulkhead.len   = Measurement::new(20.0, LengthLong, Units::Imperial);
-        armor.bulkhead.hgt   = Measurement::new(5.0, LengthLong, Units::Imperial);
-
-        armor.deck.fc = Measurement::new(0.5, LengthSmall, Units::Imperial);
-        armor.deck.md = Measurement::new(1.0, LengthSmall, Units::Imperial);
-        armor.deck.qd = Measurement::new(0.5, LengthSmall, Units::Imperial);
-
-        armor.ct_fwd.thick = Measurement::new(1.0, LengthSmall, Units::Imperial);
-        armor.ct_aft.thick = Measurement::new(2.0, LengthSmall, Units::Imperial);
-
-        assert_eq!(to_place(armor.wgt(ship.hull, 100.0, 100.0), 2), 110.32);
-    }
-}
-
 // Belt {{{1
 /// Belt, bulkhead and torpedo bulge armor.
 ///
@@ -265,44 +162,6 @@ impl Belt { // {{{2
             hgt:   Measurement::new(0.0, LengthLong, Units::Imperial),
             kind,
         }
-    }
-}
-
-// Testing Belt {{{2
-#[cfg(test)]
-mod belt {
-    use super::*;
-    use crate::calc::test_support::*;
-
-    // Test wgt {{{3
-    macro_rules! test_wgt {
-        ($($name:ident: $value:expr,)*) => {
-            $(
-                #[test]
-                fn $name() {
-                    let lwl = 500.0;
-                    let cwp = 0.5;
-                    let b = 10.0;
-
-                    let (expected, thick, len, hgt, kind) = $value;
-                    let mut belt = Belt::new(kind);
-                    belt.thick = Measurement::new(thick, LengthSmall, Units::Imperial);
-                    belt.len   = Measurement::new(len, LengthLong, Units::Imperial);
-                    belt.hgt   = Measurement::new(hgt, LengthLong, Units::Imperial);
-
-                    assert_eq!(expected, to_place(belt.wgt(lwl, cwp, b), 2));
-                }
-            )*
-        }
-    }
-    test_wgt! {
-        // name:      (wgt, thick, len, hgt, kind)
-        wgt_zero:     (0.0, 0.0, 0.0, 0.0, BeltType::Main),
-        wgt_main:     (40.31, 1.0, 100.0, 10.0, BeltType::Main),
-        wgt_end:      (37.0, 1.0, 100.0, 10.0, BeltType::End),
-        wgt_upper:    (40.31, 1.0, 100.0, 10.0, BeltType::Upper),
-        wgt_bulge:    (37.0, 1.0, 100.0, 10.0, BeltType::Bulge),
-        wgt_bulkhead: (37.0, 1.0, 100.0, 10.0, BeltType::Bulkhead),
     }
 }
 
@@ -366,35 +225,6 @@ impl CT { // {{{2
     }
 }
 
-// Testing CT {{{2
-#[cfg(test)]
-mod ct {
-    use super::*;
-    use crate::calc::test_support::*;
-
-    // Test wgt {{{3
-    macro_rules! test_wgt {
-        ($($name:ident: $value:expr,)*) => {
-            $(
-                #[test]
-                fn $name() {
-                    let d = 1000.0;
-                    let (expected, thick) = $value;
-                    let mut ct = CT::default();
-                    ct.thick = Measurement::new(thick, LengthSmall, Units::Imperial);
-
-                    assert_eq!(expected, to_place(ct.wgt(d), 2));
-                }
-            )*
-        }
-    }
-    test_wgt! {
-        //  name: (wgt, thick)
-        wgt_zero: (0.0, 0.0),
-        wgt_test: (2.15, 1.0),
-    }
-}
-
 // Deck {{{1
 /// Deck armor.
 ///
@@ -446,182 +276,6 @@ impl Deck { // {{{2
             (2.0 + 2.0_f64.powf(1.0 - cwp));
 
         (main_deck * self.md.imp() + fc_deck * self.fc.imp() + qd_deck * self.qd.imp()) * Armor::INCH
-    }
-}
-
-// Testing Deck {{{2
-#[cfg(test)]
-mod deck {
-    use super::*;
-    use crate::calc::test_support::*;
-
-    // Test wgt {{{3
-    macro_rules! test_wgt {
-        ($($name:ident: $value:expr,)*) => {
-            $(
-                #[test]
-                fn $name() {
-                    let (expected, kind, fc, md, qd) = $value;
-
-                    let mut ship = test_ship();
-
-                    ship.armor.deck.kind = kind;
-                    ship.armor.deck.fc = Measurement::new(fc, LengthSmall, Units::Imperial);
-                    ship.armor.deck.md = Measurement::new(md, LengthSmall, Units::Imperial);
-                    ship.armor.deck.qd = Measurement::new(qd, LengthSmall, Units::Imperial);
-
-                    let wgt_mag    = 100.0;
-                    let wgt_engine = ship.wgt_engine();
-
-                    assert_eq!(
-                        to_place(ship.armor.deck.wgt(ship.hull, wgt_mag, wgt_engine), 2),
-                        expected
-                    );
-                }
-            )*
-        }
-    }
-
-    test_wgt! {
-        //  name:             (wgt, deck, fc, md, qd)
-        wgt_mult_arm_fc:      (6.67,   DeckType::MultipleArmored,    1.0, 0.0, 0.0),
-        wgt_mult_arm_md:      (60.58,  DeckType::MultipleArmored,    0.0, 1.0, 0.0),
-        wgt_mult_arm_qd:      (7.49,   DeckType::MultipleArmored,    0.0, 0.0, 1.0),
-        wgt_mult_arm:         (74.74,  DeckType::MultipleArmored,    1.0, 1.0, 1.0),
-
-        wgt_one_arm_fc:       (6.67,   DeckType::SingleArmored,      1.0, 0.0, 0.0),
-        wgt_mult_prot_fc:     (6.67,   DeckType::MultipleProtected,  1.0, 0.0, 0.0),
-        wgt_one_prot_fc:      (6.67,   DeckType::SingleProtected,    1.0, 0.0, 0.0),
-        wgt_box_machinery_md: (194.5,  DeckType::BoxOverMachinery,   0.0, 1.0, 0.0),
-        wgt_box_magazine_md:  (23.24,  DeckType::BoxOverMagazine,    0.0, 1.0, 0.0),
-        // XXX: springsheet gives 202.77
-        wgt_box_both_md:      (202.95, DeckType::BoxOverBoth,        0.0, 1.0, 0.0),
-    }
-    // Test Display {{{3
-    macro_rules! test_display {
-        ($($name:ident: $value:expr,)*) => {
-            $(
-                #[test]
-                fn $name() {
-                    let (expected, layout) = $value;
-
-                    assert_eq!(expected, format!("{}", layout));
-                }
-            )*
-        }
-    }
-
-    test_display! {
-        display_multiple_armored: ("Armoured deck - multiple decks", DeckType::MultipleArmored),
-        display_single_armored: ("Armoured deck - single deck", DeckType::SingleArmored),
-        display_multiple_protected: ("Protected deck - multiple decks", DeckType::MultipleProtected),
-        display_single_protected: ("Protected deck - single deck", DeckType::SingleProtected),
-        display_box_machinery: ("Box over machinery", DeckType::BoxOverMachinery),
-        display_box_magazine: ("Box over magazines", DeckType::BoxOverMagazine),
-        display_box_both: ("Box over machinery & magazines", DeckType::BoxOverBoth),
-    }
-
-    // Test From<&str> {{{3
-    macro_rules! test_from_str {
-        ($($name:ident: $value:expr,)*) => {
-            $(
-                #[test]
-                fn $name() {
-                    let (expected, index) = $value;
-
-                    assert_eq!(expected, index.into());
-                }
-            )*
-        }
-    }
-
-    test_from_str! {
-        // name: (type, index)
-        from_str_default: (DeckType::MultipleArmored, "default"),
-        from_str_zero:    (DeckType::MultipleArmored, "0"),
-        from_str_one:     (DeckType::SingleArmored, "1"),
-        from_str_two:     (DeckType::MultipleProtected, "2"),
-        from_str_three:   (DeckType::SingleProtected, "3"),
-        from_str_four:    (DeckType::BoxOverMachinery, "4"),
-        from_str_five:    (DeckType::BoxOverMagazine, "5"),
-        from_str_six:     (DeckType::BoxOverBoth, "6"),
-    }
-
-    // Test from/index round-trip {{{3
-    #[test]
-    fn from_matches_sship_codes() {
-        assert_eq!(DeckType::from("0"), DeckType::MultipleArmored);
-        assert_eq!(DeckType::from("3"), DeckType::SingleProtected);
-        assert_eq!(DeckType::from("6"), DeckType::BoxOverBoth);
-    }
-
-    #[test]
-    fn index_roundtrip() {
-        for v in DeckType::ALL {
-            assert_eq!(DeckType::from_index(v.index()), *v);
-            assert_eq!(DeckType::from(v.index().to_string()), *v);
-        }
-    }
-
-    #[test]
-    fn from_unknown_falls_back_to_default() {
-        assert_eq!(DeckType::from("99"), DeckType::default());
-        assert_eq!(DeckType::from("abc"), DeckType::default());
-        assert_eq!(DeckType::from(""), DeckType::default());
-    }
-
-    #[test]
-    fn labels_match_dropdown_order() {
-        let labels: Vec<&str> = DeckType::ALL.iter().map(|v| v.label()).collect();
-        assert_eq!(
-            labels,
-            ["Armoured deck - multiple decks", "Armoured deck - single deck",
-             "Protected deck - multiple decks", "Protected deck - single deck",
-             "Box over machinery", "Box over magazines",
-             "Box over machinery & magazines"]
-        );
-    }
-}
-
-// Testing BulkheadType {{{1
-#[cfg(test)]
-mod bulkhead_type {
-    use super::*;
-
-    // Test from/index round-trip {{{3
-    #[test]
-    fn from_matches_sship_codes() {
-        assert_eq!(BulkheadType::from("0"), BulkheadType::Additional);
-        assert_eq!(BulkheadType::from("1"), BulkheadType::Strengthened);
-    }
-
-    #[test]
-    fn index_roundtrip() {
-        for v in BulkheadType::ALL {
-            assert_eq!(BulkheadType::from_index(v.index()), *v);
-            assert_eq!(BulkheadType::from(v.index().to_string()), *v);
-        }
-    }
-
-    #[test]
-    fn from_unknown_falls_back_to_default() {
-        assert_eq!(BulkheadType::from("99"), BulkheadType::default());
-        assert_eq!(BulkheadType::from("abc"), BulkheadType::default());
-        assert_eq!(BulkheadType::from(""), BulkheadType::default());
-    }
-
-    #[test]
-    fn default_is_additional() {
-        assert_eq!(BulkheadType::default(), BulkheadType::Additional);
-    }
-
-    #[test]
-    fn labels_match_dropdown_order() {
-        let labels: Vec<&str> = BulkheadType::ALL.iter().map(|v| v.label()).collect();
-        assert_eq!(
-            labels,
-            ["Additional bulkheads", "Strengthened bulkheads"]
-        );
     }
 }
 
@@ -690,3 +344,347 @@ choice_enum!(DeckType {
     BoxOverMagazine   => ("Box over magazines",              "Box over magazines"),
     BoxOverBoth       => ("Box over machinery & magazines",  "Box over machinery & magazines"),
 });
+
+// Tests {{{1
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::calc::test_support::*;
+
+    // Testing Armor {{{2
+    mod armor {
+        use super::*;
+
+        // Test belt_coverage {{{3
+        macro_rules! test_belt_coverage {
+            ($($name:ident: $value:expr,)*) => {
+                $(
+                    #[test]
+                    fn $name() {
+                        let (expected, belt_len, lwl) = $value;
+
+                        let mut armor = Armor::default();
+                        armor.main.len = Measurement::new(belt_len, LengthLong, Units::Imperial);
+
+                        assert_eq!(expected, to_place(armor.belt_coverage(lwl), 2));
+                    }
+                )*
+            }
+        }
+        test_belt_coverage! {
+            // name:       (belt_coverage, belt_len, lwl)
+            belt_coverage: (1.0, 0.65, 1.0),
+        }
+
+        // Test max_hgt {{{3
+        macro_rules! test_max_hgt {
+            ($($name:ident: $value:expr,)*) => {
+                $(
+                    #[test]
+                    fn $name() {
+                        let (expected, incline) = $value;
+
+                        let t = 10.0;
+
+                        let mut ship = test_ship();
+                        ship.armor.incline = incline;
+
+                        assert_eq!(
+                            to_place(ship.armor.max_belt_hgt(t, ship.hull.freeboard.distributed()), 2),
+                            expected
+                        );
+                    }
+                )*
+            }
+        }
+        test_max_hgt! {
+            // name:            (max_hgt, incline)
+            max_belt_hgt_0:     (20.02, 0.0),
+            max_belt_hgt_45:     (28.3, 45.0),
+            max_belt_hgt_neg_45: (28.3, -45.0),
+        }
+
+        // Test wgt {{{3
+
+        // All-zero armor weighs nothing.
+        #[test]
+        fn wgt_zero() {
+            let ship = test_ship();
+
+            assert_eq!(to_place(ship.armor.wgt(ship.hull, 100.0, 100.0), 2), 0.0);
+        }
+
+        // The aggregate wgt() is the sum of every belt, the deck and both
+        // conning towers.
+        #[test]
+        fn wgt_all() {
+            let ship = test_ship();
+            let mut armor = ship.armor;
+
+            armor.main.thick = Measurement::new(1.0, LengthSmall, Units::Imperial);
+            armor.main.len   = Measurement::new(20.0, LengthLong, Units::Imperial);
+            armor.main.hgt   = Measurement::new(5.0, LengthLong, Units::Imperial);
+
+            armor.end.thick = Measurement::new(1.0, LengthSmall, Units::Imperial);
+            armor.end.len   = Measurement::new(20.0, LengthLong, Units::Imperial);
+            armor.end.hgt   = Measurement::new(5.0, LengthLong, Units::Imperial);
+
+            armor.upper.thick = Measurement::new(1.0, LengthSmall, Units::Imperial);
+            armor.upper.len   = Measurement::new(20.0, LengthLong, Units::Imperial);
+            armor.upper.hgt   = Measurement::new(5.0, LengthLong, Units::Imperial);
+
+            armor.bulge.thick = Measurement::new(1.0, LengthSmall, Units::Imperial);
+            armor.bulge.len   = Measurement::new(20.0, LengthLong, Units::Imperial);
+            armor.bulge.hgt   = Measurement::new(5.0, LengthLong, Units::Imperial);
+
+            armor.bulkhead.thick = Measurement::new(1.0, LengthSmall, Units::Imperial);
+            armor.bulkhead.len   = Measurement::new(20.0, LengthLong, Units::Imperial);
+            armor.bulkhead.hgt   = Measurement::new(5.0, LengthLong, Units::Imperial);
+
+            armor.deck.fc = Measurement::new(0.5, LengthSmall, Units::Imperial);
+            armor.deck.md = Measurement::new(1.0, LengthSmall, Units::Imperial);
+            armor.deck.qd = Measurement::new(0.5, LengthSmall, Units::Imperial);
+
+            armor.ct_fwd.thick = Measurement::new(1.0, LengthSmall, Units::Imperial);
+            armor.ct_aft.thick = Measurement::new(2.0, LengthSmall, Units::Imperial);
+
+            assert_eq!(to_place(armor.wgt(ship.hull, 100.0, 100.0), 2), 110.32);
+        }
+    }
+
+    // Testing Belt {{{2
+    mod belt {
+        use super::*;
+
+        // Test wgt {{{3
+        macro_rules! test_wgt {
+            ($($name:ident: $value:expr,)*) => {
+                $(
+                    #[test]
+                    fn $name() {
+                        let lwl = 500.0;
+                        let cwp = 0.5;
+                        let b = 10.0;
+
+                        let (expected, thick, len, hgt, kind) = $value;
+                        let mut belt = Belt::new(kind);
+                        belt.thick = Measurement::new(thick, LengthSmall, Units::Imperial);
+                        belt.len   = Measurement::new(len, LengthLong, Units::Imperial);
+                        belt.hgt   = Measurement::new(hgt, LengthLong, Units::Imperial);
+
+                        assert_eq!(expected, to_place(belt.wgt(lwl, cwp, b), 2));
+                    }
+                )*
+            }
+        }
+        test_wgt! {
+            // name:      (wgt, thick, len, hgt, kind)
+            wgt_zero:     (0.0, 0.0, 0.0, 0.0, BeltType::Main),
+            wgt_main:     (40.31, 1.0, 100.0, 10.0, BeltType::Main),
+            wgt_end:      (37.0, 1.0, 100.0, 10.0, BeltType::End),
+            wgt_upper:    (40.31, 1.0, 100.0, 10.0, BeltType::Upper),
+            wgt_bulge:    (37.0, 1.0, 100.0, 10.0, BeltType::Bulge),
+            wgt_bulkhead: (37.0, 1.0, 100.0, 10.0, BeltType::Bulkhead),
+        }
+    }
+
+    // Testing CT {{{2
+    mod ct {
+        use super::*;
+
+        // Test wgt {{{3
+        macro_rules! test_wgt {
+            ($($name:ident: $value:expr,)*) => {
+                $(
+                    #[test]
+                    fn $name() {
+                        let d = 1000.0;
+                        let (expected, thick) = $value;
+                        let mut ct = CT::default();
+                        ct.thick = Measurement::new(thick, LengthSmall, Units::Imperial);
+
+                        assert_eq!(expected, to_place(ct.wgt(d), 2));
+                    }
+                )*
+            }
+        }
+        test_wgt! {
+            //  name: (wgt, thick)
+            wgt_zero: (0.0, 0.0),
+            wgt_test: (2.15, 1.0),
+        }
+    }
+
+    // Testing Deck {{{2
+    mod deck {
+        use super::*;
+
+        // Test wgt {{{3
+        macro_rules! test_wgt {
+            ($($name:ident: $value:expr,)*) => {
+                $(
+                    #[test]
+                    fn $name() {
+                        let (expected, kind, fc, md, qd) = $value;
+
+                        let mut ship = test_ship();
+
+                        ship.armor.deck.kind = kind;
+                        ship.armor.deck.fc = Measurement::new(fc, LengthSmall, Units::Imperial);
+                        ship.armor.deck.md = Measurement::new(md, LengthSmall, Units::Imperial);
+                        ship.armor.deck.qd = Measurement::new(qd, LengthSmall, Units::Imperial);
+
+                        let wgt_mag    = 100.0;
+                        let wgt_engine = ship.wgt_engine();
+
+                        assert_eq!(
+                            to_place(ship.armor.deck.wgt(ship.hull, wgt_mag, wgt_engine), 2),
+                            expected
+                        );
+                    }
+                )*
+            }
+        }
+
+        test_wgt! {
+            //  name:             (wgt, deck, fc, md, qd)
+            wgt_mult_arm_fc:      (6.67,   DeckType::MultipleArmored,    1.0, 0.0, 0.0),
+            wgt_mult_arm_md:      (60.58,  DeckType::MultipleArmored,    0.0, 1.0, 0.0),
+            wgt_mult_arm_qd:      (7.49,   DeckType::MultipleArmored,    0.0, 0.0, 1.0),
+            wgt_mult_arm:         (74.74,  DeckType::MultipleArmored,    1.0, 1.0, 1.0),
+
+            wgt_one_arm_fc:       (6.67,   DeckType::SingleArmored,      1.0, 0.0, 0.0),
+            wgt_mult_prot_fc:     (6.67,   DeckType::MultipleProtected,  1.0, 0.0, 0.0),
+            wgt_one_prot_fc:      (6.67,   DeckType::SingleProtected,    1.0, 0.0, 0.0),
+            wgt_box_machinery_md: (194.5,  DeckType::BoxOverMachinery,   0.0, 1.0, 0.0),
+            wgt_box_magazine_md:  (23.24,  DeckType::BoxOverMagazine,    0.0, 1.0, 0.0),
+            // XXX: springsheet gives 202.77
+            wgt_box_both_md:      (202.95, DeckType::BoxOverBoth,        0.0, 1.0, 0.0),
+        }
+        // Test Display {{{3
+        macro_rules! test_display {
+            ($($name:ident: $value:expr,)*) => {
+                $(
+                    #[test]
+                    fn $name() {
+                        let (expected, layout) = $value;
+
+                        assert_eq!(expected, format!("{}", layout));
+                    }
+                )*
+            }
+        }
+
+        test_display! {
+            display_multiple_armored: ("Armoured deck - multiple decks", DeckType::MultipleArmored),
+            display_single_armored: ("Armoured deck - single deck", DeckType::SingleArmored),
+            display_multiple_protected: ("Protected deck - multiple decks", DeckType::MultipleProtected),
+            display_single_protected: ("Protected deck - single deck", DeckType::SingleProtected),
+            display_box_machinery: ("Box over machinery", DeckType::BoxOverMachinery),
+            display_box_magazine: ("Box over magazines", DeckType::BoxOverMagazine),
+            display_box_both: ("Box over machinery & magazines", DeckType::BoxOverBoth),
+        }
+
+        // Test From<&str> {{{3
+        macro_rules! test_from_str {
+            ($($name:ident: $value:expr,)*) => {
+                $(
+                    #[test]
+                    fn $name() {
+                        let (expected, index) = $value;
+
+                        assert_eq!(expected, index.into());
+                    }
+                )*
+            }
+        }
+
+        test_from_str! {
+            // name: (type, index)
+            from_str_default: (DeckType::MultipleArmored, "default"),
+            from_str_zero:    (DeckType::MultipleArmored, "0"),
+            from_str_one:     (DeckType::SingleArmored, "1"),
+            from_str_two:     (DeckType::MultipleProtected, "2"),
+            from_str_three:   (DeckType::SingleProtected, "3"),
+            from_str_four:    (DeckType::BoxOverMachinery, "4"),
+            from_str_five:    (DeckType::BoxOverMagazine, "5"),
+            from_str_six:     (DeckType::BoxOverBoth, "6"),
+        }
+
+        // Test from/index round-trip {{{3
+        #[test]
+        fn from_matches_sship_codes() {
+            assert_eq!(DeckType::from("0"), DeckType::MultipleArmored);
+            assert_eq!(DeckType::from("3"), DeckType::SingleProtected);
+            assert_eq!(DeckType::from("6"), DeckType::BoxOverBoth);
+        }
+
+        #[test]
+        fn index_roundtrip() {
+            for v in DeckType::ALL {
+                assert_eq!(DeckType::from_index(v.index()), *v);
+                assert_eq!(DeckType::from(v.index().to_string()), *v);
+            }
+        }
+
+        #[test]
+        fn from_unknown_falls_back_to_default() {
+            assert_eq!(DeckType::from("99"), DeckType::default());
+            assert_eq!(DeckType::from("abc"), DeckType::default());
+            assert_eq!(DeckType::from(""), DeckType::default());
+        }
+
+        #[test]
+        fn labels_match_dropdown_order() {
+            let labels: Vec<&str> = DeckType::ALL.iter().map(|v| v.label()).collect();
+            assert_eq!(
+                labels,
+                ["Armoured deck - multiple decks", "Armoured deck - single deck",
+                 "Protected deck - multiple decks", "Protected deck - single deck",
+                 "Box over machinery", "Box over magazines",
+                 "Box over machinery & magazines"]
+            );
+        }
+    }
+
+    // Testing BulkheadType {{{2
+    mod bulkhead_type {
+        use super::*;
+
+        // Test from/index round-trip {{{3
+        #[test]
+        fn from_matches_sship_codes() {
+            assert_eq!(BulkheadType::from("0"), BulkheadType::Additional);
+            assert_eq!(BulkheadType::from("1"), BulkheadType::Strengthened);
+        }
+
+        #[test]
+        fn index_roundtrip() {
+            for v in BulkheadType::ALL {
+                assert_eq!(BulkheadType::from_index(v.index()), *v);
+                assert_eq!(BulkheadType::from(v.index().to_string()), *v);
+            }
+        }
+
+        #[test]
+        fn from_unknown_falls_back_to_default() {
+            assert_eq!(BulkheadType::from("99"), BulkheadType::default());
+            assert_eq!(BulkheadType::from("abc"), BulkheadType::default());
+            assert_eq!(BulkheadType::from(""), BulkheadType::default());
+        }
+
+        #[test]
+        fn default_is_additional() {
+            assert_eq!(BulkheadType::default(), BulkheadType::Additional);
+        }
+
+        #[test]
+        fn labels_match_dropdown_order() {
+            let labels: Vec<&str> = BulkheadType::ALL.iter().map(|v| v.label()).collect();
+            assert_eq!(
+                labels,
+                ["Additional bulkheads", "Strengthened bulkheads"]
+            );
+        }
+    }
+}
