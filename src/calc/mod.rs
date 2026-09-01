@@ -1,4 +1,5 @@
 pub mod armor;
+pub mod battery;
 pub mod engine;
 pub mod freeboard;
 pub mod hull;
@@ -12,6 +13,7 @@ pub mod weights;
 pub(crate) use ship::test_support;
 
 pub use armor::*;
+pub use battery::*;
 pub use engine::*;
 pub use freeboard::*;
 pub use hull::*;
