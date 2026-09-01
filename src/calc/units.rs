@@ -23,7 +23,8 @@ impl From<&str> for Units {
     }
 }
 
-pub enum UnitType { // {{{1
+// UnitType {{{1
+pub enum UnitType {
     LengthSmall,
     LengthLong,
     Area,
@@ -32,7 +33,7 @@ pub enum UnitType { // {{{1
     WeightPerArea,
 }
 
-impl UnitType {
+impl UnitType { // {{{2
     const INCH2MM: f64         = 25.4; // exact
     const FEET2METERS: f64     = 0.3048; // exact
     const SQFEET2SQMETERS: f64 = 0.09290304;

@@ -39,7 +39,7 @@ pub struct Freeboard {
     pub qd_aft: Measurement,
 }
 
-impl Default for Freeboard {
+impl Default for Freeboard { // {{{2
     fn default() -> Self {
         Freeboard {
             fc_len: 0.0,

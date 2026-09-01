@@ -26,7 +26,7 @@ impl MiscWgts { // {{{2
     }
 }
 
-// Testing {{{2
+// Tests {{{1
 //
 #[cfg(test)]
 mod tests {
