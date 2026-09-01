@@ -42,18 +42,18 @@ pub struct Freeboard {
 impl Default for Freeboard { // {{{2
     fn default() -> Self {
         Freeboard {
-            fc_len: 0.0,
+            fc_len: 0.2,
             fc_fwd: Measurement::new(0.0, LengthLong, Units::Imperial),
             fc_aft: Measurement::new(0.0, LengthLong, Units::Imperial),
 
-            fd_len: 0.0,
+            fd_len: 0.3,
             fd_fwd: Measurement::new(0.0, LengthLong, Units::Imperial),
             fd_aft: Measurement::new(0.0, LengthLong, Units::Imperial),
 
             ad_fwd: Measurement::new(0.0, LengthLong, Units::Imperial),
             ad_aft: Measurement::new(0.0, LengthLong, Units::Imperial),
 
-            qd_len: 0.0,
+            qd_len: 0.15,
             qd_fwd: Measurement::new(0.0, LengthLong, Units::Imperial),
             qd_aft: Measurement::new(0.0, LengthLong, Units::Imperial),
         }
