@@ -100,6 +100,7 @@ impl Armor { // {{{2
     // max_hgt {{{3
     /// Maximum allowable belt height.
     ///
+    #[allow(dead_code)]
     pub fn max_belt_hgt(&self, t: f64, dist: f64) -> f64 {
         use std::f64::consts::PI;
 

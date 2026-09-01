@@ -231,6 +231,7 @@ impl Hull { // {{{2
     // set_d {{{3
     /// Set the Displacement, replacing any Block Coefficient.
     ///
+    #[allow(dead_code)]
     pub fn set_d(&mut self, d: f64) -> f64 {
         self.disp = Displacement::D(d);
 

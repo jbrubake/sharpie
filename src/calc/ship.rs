@@ -307,6 +307,7 @@ impl Ship { // {{{2
     /// Forecastle and Quarterdeck length required
     /// to cover engine and magazine spaces.
     ///
+    #[allow(dead_code)]
     pub fn vitalspace(&self) -> f64 {
         (1.0 - 0.65 * self.hull_room()) * 50.0 - 0.01
     }
@@ -315,6 +316,7 @@ impl Ship { // {{{2
     /// Minimum armor belt length to cover
     /// engine and magazine spaces.
     ///
+    #[allow(dead_code)]
     pub fn vitalspace_length(&self) -> f64 {
         self.hull.lwl().imp() * 0.65 * self.hull_room() + 0.01
     }
@@ -1461,6 +1463,7 @@ impl Ship { // {{{2
 }
 
 impl Ship { // Convenience wrappers {{{2
+    #[allow(dead_code)]
     pub fn ct_wgt(&self) -> f64 { // {{{3
         self.armor.ct_fwd.wgt(self.hull.d()) + self.armor.ct_aft.wgt(self.hull.d())
     }
@@ -1469,10 +1472,12 @@ impl Ship { // Convenience wrappers {{{2
         self.armor.deck.wgt(self.hull.clone(), self.wgt_mag(), self.wgt_engine())
     }
 
+    #[allow(dead_code)]
     pub fn battery_armor_wgt(&self, btry: &Battery) -> f64 { // {{{3
         btry.armor_wgt(self.hull.clone())
     }
 
+    #[allow(dead_code)]
     pub fn belt_wgt(&self, belt: Belt) -> f64 { // {{{3
         belt.wgt(self.hull.lwl().imp(), self.hull.cwp(), self.hull.b.imp())
     }
@@ -1487,6 +1492,7 @@ impl Ship { // Convenience wrappers {{{2
         ), Power, Imperial)
     }
 
+    #[allow(dead_code)]
     pub fn hp_cruise(&self) -> f64 { // {{{3
         self.engine.hp_cruise(
             self.hull.d(),
@@ -1501,6 +1507,7 @@ impl Ship { // Convenience wrappers {{{2
         self.engine.rf_max(self.hull.ws())
     }
 
+    #[allow(dead_code)]
     pub fn rf_cruise(&self) -> f64 { // {{{3
         self.engine.rf_cruise(self.hull.ws())
     }
@@ -1509,6 +1516,7 @@ impl Ship { // Convenience wrappers {{{2
         self.engine.rw_max(self.hull.d(), self.hull.lwl().imp(), self.hull.cs())
     }
 
+    #[allow(dead_code)]
     pub fn rw_cruise(&self) -> f64 { // {{{3
         self.engine.rw_cruise(self.hull.d(), self.hull.lwl().imp(), self.hull.cs())
     }
@@ -1517,6 +1525,7 @@ impl Ship { // Convenience wrappers {{{2
         self.engine.pw_max(self.hull.d(), self.hull.lwl().imp(), self.hull.cs(), self.hull.ws())
     }
 
+    #[allow(dead_code)]
     pub fn pw_cruise(&self) -> f64 { // {{{3
         self.engine.pw_cruise(self.hull.d(), self.hull.lwl().imp(), self.hull.cs(), self.hull.ws())
     }
