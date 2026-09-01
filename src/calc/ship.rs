@@ -2251,7 +2251,7 @@ impl Ship {
 mod ship {
     use super::*;
     use crate::calc::test_support::*;
-    use crate::calc::weapons::TorpedoMountType;
+    use crate::calc::TorpedoMountType;
     use tempfile::NamedTempFile;
 
     // Test year_adj {{{3
