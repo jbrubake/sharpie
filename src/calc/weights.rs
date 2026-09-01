@@ -29,7 +29,7 @@ impl MiscWgts { // {{{2
 // Testing {{{2
 //
 #[cfg(test)]
-mod misc_wgts {
+mod tests {
     use super::*;
 
     // wgt {{{3
