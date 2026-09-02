@@ -85,6 +85,14 @@ impl Measurement { // {{{2
     pub fn imp(&self) -> f64 {
         if self.units == Units::Metric { self.v / self.factor } else { self.v }
     }
+
+    pub fn set_units(&mut self, u: Units) {
+        if self.units == u {
+            return;
+        }
+        self.v = if u == Units::Metric { self.metric() } else { self.imp() };
+        self.units = u;
+    }
 }
 
 // Testing {{{1
