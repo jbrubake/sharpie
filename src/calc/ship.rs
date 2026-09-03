@@ -89,7 +89,7 @@ pub struct Ship {
 
 impl Default for Ship { // {{{2
     fn default() -> Ship {
-        Ship {
+        let mut ship = Ship {
             name: "".into(),
             country: "".into(),
             kind: "".into(),
@@ -114,7 +114,10 @@ impl Default for Ship { // {{{2
 
             notes: Vec::new(),
             cached_wgt_engine: Cell::new(None),
-        }
+        };
+
+        ship.engine.year = ship.year;
+        ship
     }
 }
 
