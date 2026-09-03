@@ -438,8 +438,8 @@ impl Ship { // {{{2
     ///
     fn bh_beam_too_wide(&self) -> bool {
         match self.armor.bh_kind {
-            BulkheadType::Strengthened => self.armor.bh_beam.imp() >= (self.hull.b.imp() - 6.0),
-            BulkheadType::Additional   => self.armor.bh_beam.imp() >   self.hull.b.imp(),
+            BulkheadType::Additional => self.armor.bh_beam.imp() >= (self.hull.b.imp() - 6.0),
+            BulkheadType::Strengthened   => self.armor.bh_beam.imp() >   self.hull.b.imp(),
         }
     }
 
@@ -635,9 +635,9 @@ impl Ship { // {{{2
     pub fn str_long(&self) -> f64 {
         (
             self.wgt_hull_plus() + match self.armor.bh_kind {
-                BulkheadType::Strengthened =>
+                BulkheadType::Additional =>
                     self.armor.bulkhead.wgt(self.hull.lwl().imp(), self.hull.cwp(), self.hull.b.imp()),
-                BulkheadType::Additional => 0.0,
+                BulkheadType::Strengthened => 0.0,
             }
         ) /
             (
@@ -791,9 +791,9 @@ impl Ship { // {{{2
             (
                 self.wgt_hull_plus() +
                 match self.armor.bh_kind {
-                    BulkheadType::Strengthened =>
+                    BulkheadType::Additional =>
                         self.armor.bulkhead.wgt(self.hull.lwl().imp(), self.hull.cwp(), self.hull.b.imp()),
-                    BulkheadType::Additional => 0.0,
+                    BulkheadType::Strengthened => 0.0,
                 }
             ) * Self::POUND2TON / (
                 self.hull.ws() +
