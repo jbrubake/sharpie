@@ -209,7 +209,7 @@ impl Ship { // {{{2
     /// Draft at maximum displacement.
     ///
     pub fn t_max(&self) -> Measurement {
-        Measurement::new(self.hull.t_calc(self.d_max()), LengthLong, self.hull.units)
+        Measurement::new(self.hull.t_calc(self.d_max()), LengthLong, Imperial)
     }
 
     // cb_max {{{3
