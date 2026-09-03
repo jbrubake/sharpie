@@ -6,6 +6,7 @@ sed_filter() {
         s/[[:blank:]][[:blank:]]*/ /g
         s/^[[:blank:]]*//
         s/[[:space:]]*$//
+        s/\.00*//g
         '
 }
 
