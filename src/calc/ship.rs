@@ -1759,7 +1759,7 @@ impl Ship { // {{{3
 
             if self.armor.bulkhead.thick.imp() > 0.0 {
                 addto!(r);
-                addto!(r, "- Torpedo Bulkhead - {}", self.armor.bh_kind);
+                addto!(r, "- Torpedo Bulkhead - {}:", self.armor.bh_kind);
                 addto!(r, "        {}\" / {:.0} mm    {:.2} ft / {:.2} m    {:.2} ft / {:.2} m",
                     num!(self.armor.bulkhead.thick.imp(), if self.armor.bulkhead.thick.imp() < 10.0 { 2 } else { 1 }),
                     self.armor.bulkhead.thick.metric(),
