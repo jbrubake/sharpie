@@ -394,12 +394,13 @@ impl BoilerType {
     /// XXX: I do not know what this does.
     ///
     pub fn bunker_factor(&self, year: u32) -> f64 {
-        if self.is_reciprocating() || year < 1898 {
-            1.0 - (1910 - year) as f64 / 70.0
-        } else if year < 1920 {
-            1.0 + (year - 1910) as f64 / 20.0
-        } else if year < YEAR_MAX {
-            1.5 + (year - 1920) as f64 / 60.0
+        let year = year as f64;
+        if self.is_reciprocating() || year < 1898.0 {
+            1.0 - (1910.0 - year) / 70.0
+        } else if year < 1920.0 {
+            1.0 + (year - 1910.0) / 20.0
+        } else if year < YEAR_MAX as f64 {
+            1.5 + (year - 1920.0) / 60.0
         } else {
             2.0
         }
