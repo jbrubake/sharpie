@@ -8,11 +8,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - `convert` subcommand requires `--to` and/or `--report`
+- Use more accurate imperial<->metric conversions (exact if possible)
+- Decimal parts that would print as all 0s are now truncated in the report.
+    (This is more heavy-handed than how SpringSharp does it)
+- Freeboard deck lengths now default to their SpringSharp defaults instead of
+    zero
+- The `chkreport` script does a better job ignoring minor numerical formatting
+    differences
+- The "engine built" year now defaults to the "laid down" year when creating
+    a default Ship
 
 ### Fixed
 
 - `Hull::free_cap()` now returns a lower freeboard if a ship has **any** guns
     mounted broadside, below the deck
+- Missing parameters added to some gun calculations
+- The "deep draft" calculation is calculated as an imperial value however if the
+    hull's unit system were set to metric, "deep draft" was being returned as if
+    it were a metric value, making the report incorrect. This is now fixed
+- The two bulkhead types (additional and strengthened) were switched in the
+    logic so what should have been calculated for one was actually being
+    calculated for the other. They now function correctly
+- The bunker weight calculation was fixed to prevent a crash that resulted from
+    certain values for the "engine built" year
 
 ## [0.4.0] - 2026-08-27
 
